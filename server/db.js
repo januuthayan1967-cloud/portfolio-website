@@ -1,0 +1,279 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_DIR = path.join(__dirname, 'data');
+const DB_FILE = path.join(DATA_DIR, 'db.json');
+
+// Ensure data folder exists
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+const defaultData = {
+  profile: {
+    name: "Uthayagunasingam Vanojan",
+    shortName: "Vanojan",
+    title: "Full-Stack Software Engineer & Solutions Architect",
+    roleBadges: [
+      "Creative Technologist",
+      "Full-Stack Architect",
+      "High-Performance Systems",
+      "Three.js & WebGL Craftsman"
+    ],
+    tagline: "Bridging architectural rigour and cinematic aesthetic depth to engineer unforgettable software experiences.",
+    heroImage: "/hero/image2.jpeg",
+    aboutImage: "/hero/image1.jpeg",
+    bio: "Graduated with a Higher National Diploma in Computing & Software Engineering from ICBT Campus (affiliated with Cardiff Metropolitan University). I specialize in designing and engineering end-to-end distributed applications, resilient cloud backends, and high-performance interactive interfaces. Driven by architectural elegance, clean maintainable code, and high visual aesthetics.",
+    philosophy: "Great engineering is not merely functional—it possesses clarity, performance, and an undeniable artistic presence.",
+    location: "Jaffna, Sri Lanka",
+    email: "uthayanvanojan5@gmail.com",
+    phone: "+94 75 029 2685",
+    github: "https://github.com",
+    linkedin: "https://linkedin.com",
+    twitter: "https://twitter.com",
+    statusText: "Open for high-impact engineering & architecture engagements",
+    metrics: [
+      { label: "Years Experience", value: "3+", icon: "Sparkles" },
+      { label: "Delivered Systems", value: "12+", icon: "Layers" },
+      { label: "Code Commits", value: "950+", icon: "GitCommit" },
+      { label: "Satisfaction", value: "100%", icon: "ShieldCheck" }
+    ]
+  },
+  projects: [
+    {
+      id: "luxevista-resort",
+      title: "LuxeVista Resort Platform",
+      category: "Mobile & Hospitality",
+      subtitle: "Enterprise Hospitality & Room Reservation Mobile Suite",
+      description: "A premier Android application for luxury resort and hotel operations. Incorporates real-time suite discovery, dynamic room booking, multi-guest scheduling, amenities concierge, and local SQLite data persistence with transactional safety.",
+      techStack: ["Java", "Android Studio", "SQLite", "Material Design", "REST APIs", "Async Architecture"],
+      featured: true,
+      image: "/hero/project-luxevista.jpg",
+      gradient: "from-amber-600/30 to-blue-900/30",
+      liveUrl: "https://github.com",
+      githubUrl: "https://github.com",
+      highlights: [
+        "Real-time room availability matrix and reservation checkout",
+        "Offline-first transactional local cache powered by SQLite",
+        "Granular concierge request tracker and amenity reservation"
+      ],
+      deliverables: ["Full Mobile Architecture", "Database Schema", "UI/UX System Design"]
+    },
+    {
+      id: "futuredesk-platform",
+      title: "FutureDesk Coworking Ecosystem",
+      category: "Full-Stack Web",
+      subtitle: "Smart Workspace Reservation & Desk Allocation Engine",
+      description: "A next-generation enterprise hot-desking and coworking facility platform. Offers dynamic spatial floor mapping, instant seat reservations, meeting room scheduling, and role-based staff administration with MongoDB indexation.",
+      techStack: ["React.js", "Node.js", "Express.js", "MongoDB", "Tailwind CSS", "JWT Auth"],
+      featured: true,
+      image: "/hero/project-futuredesk.jpg",
+      gradient: "from-blue-600/30 to-amber-900/30",
+      liveUrl: "https://github.com",
+      githubUrl: "https://github.com",
+      highlights: [
+        "Interactive graphical workspace layout and instant reservation sync",
+        "Microservice-ready RESTful architecture with secure JWT authorization",
+        "Comprehensive administrative booking dashboard and usage analytics"
+      ],
+      deliverables: ["Full-Stack React & Node App", "MongoDB Cluster Config", "REST API Specs"]
+    },
+    {
+      id: "fitzone-fitness",
+      title: "FitZone Fitness Management",
+      category: "Web Application",
+      subtitle: "Comprehensive Gym Operations & Trainer Booking Portal",
+      description: "An integrated web management portal for elite fitness centers. Facilitates member profile management, trainer workout schedules, biometric progress tracking, subscription renewals, and administrative financial auditing.",
+      techStack: ["PHP", "JavaScript", "MySQL", "CSS3 / Vanilla", "Apache", "WAMP"],
+      featured: true,
+      image: "/hero/project-fitzone.jpg",
+      gradient: "from-amber-500/30 to-slate-900/30",
+      liveUrl: "https://github.com",
+      githubUrl: "https://github.com",
+      highlights: [
+        "Member subscription lifecycle and recurring renewal alerts",
+        "Trainer booking calendar and dynamic session scheduling",
+        "Highly optimized relational MySQL schema with relational constraints"
+      ],
+      deliverables: ["Full Web Application", "Relational Database Schema", "Admin Panel"]
+    },
+    {
+      id: "paws-shop-erp",
+      title: "The Paws Shop ERP",
+      category: "Enterprise Software",
+      subtitle: "Veterinary & Pet Supply Inventory Management System",
+      description: "An enterprise desktop inventory management solution handling hundreds of SKU product lines, supplier purchasing cycles, barcode checkout, point-of-sale receipting, and low-inventory threshold triggers.",
+      techStack: ["Java", "SQL Database", "JDBC", "OOP Architecture", "NetBeans"],
+      featured: false,
+      image: "/hero/project-paws.jpg",
+      gradient: "from-blue-500/30 to-slate-950/30",
+      liveUrl: "https://github.com",
+      githubUrl: "https://github.com",
+      highlights: [
+        "Automated low-stock safety alerts and supplier reorder triggers",
+        "Audited transaction histories with zero ledger discrepancies",
+        "Robust Java Swing desktop interface with accelerated shortcut keys"
+      ],
+      deliverables: ["Java Desktop Application", "SQL Scripts", "Documentation"]
+    },
+    {
+      id: "upcountry-warriors",
+      title: "Upcountry Warriors Engine",
+      category: "Systems & Analytics",
+      subtitle: "Competitive Sports Roster & Tournament Analytics Engine",
+      description: "A high-performance C++ sports telemetry and club roster management engine. Processes player biometric statistics, match performance indexes, game strategies, and tournament rankings with low-latency execution.",
+      techStack: ["C++", "SQL Connectivity", "Object-Oriented Design", "Data Structures"],
+      featured: false,
+      image: "/hero/project-warriors.jpg",
+      gradient: "from-amber-700/30 to-indigo-950/30",
+      liveUrl: "https://github.com",
+      githubUrl: "https://github.com",
+      highlights: [
+        "Sub-millisecond analytical sorting for complex player metrics",
+        "Deep relational integrity between tournament rounds and rosters",
+        "Memory-safe modern C++ design principles"
+      ],
+      deliverables: ["C++ Core Engine", "Database Integration Layer"]
+    }
+  ],
+  skills: [
+    {
+      category: "Frontend & Creative Engineering",
+      icon: "Code",
+      items: [
+        { name: "React.js / Next.js", level: 94 },
+        { name: "Three.js / WebGL 3D", level: 88 },
+        { name: "JavaScript (ES6+) / TypeScript", level: 92 },
+        { name: "HTML5 & Modern CSS3", level: 96 },
+        { name: "Responsive & Editorial UI", level: 95 }
+      ]
+    },
+    {
+      category: "Backend & Systems Architecture",
+      icon: "Server",
+      items: [
+        { name: "Node.js & Express.js", level: 91 },
+        { name: "Java & Enterprise OOP", level: 89 },
+        { name: "C++ & Low-Level Architecture", level: 85 },
+        { name: "C# / ASP.NET", level: 82 },
+        { name: "RESTful API Engineering", level: 94 }
+      ]
+    },
+    {
+      category: "Databases & Data Management",
+      icon: "Database",
+      items: [
+        { name: "MySQL & Relational Design", level: 93 },
+        { name: "MongoDB & NoSQL Aggregations", level: 90 },
+        { name: "SQLite Embedded Storage", level: 92 },
+        { name: "Database Normalization & Indexing", level: 89 }
+      ]
+    },
+    {
+      category: "Engineering Tools & DevOps",
+      icon: "Terminal",
+      items: [
+        { name: "Git & GitHub Version Control", level: 95 },
+        { name: "VS Code & Android Studio", level: 94 },
+        { name: "NetBeans & Visual Studio", level: 88 },
+        { name: "WAMP & Server Deployments", level: 90 }
+      ]
+    }
+  ],
+  education: [
+    {
+      degree: "Higher National Diploma in Computing & Software Engineering",
+      institution: "ICBT Campus (affiliated with Cardiff Metropolitan University)",
+      period: "2021 – Present",
+      description: "Focused on Enterprise Software Architecture, Web Application Development, Database Systems, Object-Oriented Engineering, and Mobile Computing.",
+      badge: "Higher Diploma Honors"
+    },
+    {
+      degree: "G.C.E Advanced Level — Physical Science Stream",
+      institution: "Sri Lanka",
+      period: "2018 – 2020",
+      description: "Rigorous scientific foundation in Combined Mathematics, Physics, and Chemistry.",
+      badge: "Physical Science"
+    },
+    {
+      degree: "G.C.E Ordinary Level Examination",
+      institution: "Sri Lanka",
+      period: "Completed with Distinction",
+      description: "Academic excellence across Mathematics, Science, and Information Technology.",
+      badge: "Distinction"
+    }
+  ],
+  messages: [
+    {
+      id: "msg-1",
+      name: "Arthur Sterling",
+      email: "arthur@sterlingventures.co",
+      subject: "Architectural Lead & Web Platform Inquiry",
+      message: "Hello Vanojan, we reviewed your work and were extremely impressed by your architectural craftsmanship and aesthetic standard. We'd love to schedule an introductory consultation regarding a fintech web platform.",
+      date: "2026-10-07T14:30:00.000Z",
+      read: true,
+      starred: true
+    },
+    {
+      id: "msg-2",
+      name: "Elena Rostova",
+      email: "elena@vanguardlabs.io",
+      subject: "Interactive 3D Enterprise Application",
+      message: "Your portfolio design is breathtaking. The cinematic lighting and Three.js execution perfectly reflect the quality we need for our upcoming product suite. Are you open for a contract engagement this quarter?",
+      date: "2026-10-08T09:15:00.000Z",
+      read: false,
+      starred: true
+    }
+  ],
+  analytics: {
+    totalVisits: 1845,
+    uniqueVisitors: 1220,
+    pageViews: 4580,
+    directInquiries: 32,
+    projectViews: 2190,
+    avgSessionSeconds: 245,
+    history: [
+      { date: "Oct 2", views: 240, inquiries: 3 },
+      { date: "Oct 3", views: 310, inquiries: 4 },
+      { date: "Oct 4", views: 290, inquiries: 2 },
+      { date: "Oct 5", views: 420, inquiries: 6 },
+      { date: "Oct 6", views: 510, inquiries: 7 },
+      { date: "Oct 7", views: 630, inquiries: 8 },
+      { date: "Oct 8", views: 720, inquiries: 10 }
+    ]
+  },
+  admin: {
+    username: "admin",
+    passwordHash: "vanojan2026", // default password
+    securityPin: "2026"
+  }
+};
+
+export function getDb() {
+  try {
+    if (!fs.existsSync(DB_FILE)) {
+      fs.writeFileSync(DB_FILE, JSON.stringify(defaultData, null, 2), 'utf-8');
+      return defaultData;
+    }
+    const content = fs.readFileSync(DB_FILE, 'utf-8');
+    return JSON.parse(content);
+  } catch (err) {
+    console.error('Error reading DB, using defaults:', err);
+    return defaultData;
+  }
+}
+
+export function saveDb(data) {
+  try {
+    const tempFile = `${DB_FILE}.tmp`;
+    fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
+    fs.renameSync(tempFile, DB_FILE);
+    return true;
+  } catch (err) {
+    console.error('Error saving DB:', err);
+    return false;
+  }
+}
