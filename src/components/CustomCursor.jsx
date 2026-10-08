@@ -7,8 +7,9 @@ export default function CustomCursor() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Only enable on desktop with fine pointer
+    // Disable on touch devices or if user prefers reduced motion
     if (window.matchMedia('(pointer: coarse)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     let targetX = -100;
     let targetY = -100;
@@ -24,8 +25,8 @@ export default function CustomCursor() {
     };
 
     const updateTrail = () => {
-      trailX += (targetX - trailX) * 0.15;
-      trailY += (targetY - trailY) * 0.15;
+      trailX += (targetX - trailX) * 0.18;
+      trailY += (targetY - trailY) * 0.18;
       setTrail({ x: trailX, y: trailY });
       animId = requestAnimationFrame(updateTrail);
     };
@@ -35,7 +36,7 @@ export default function CustomCursor() {
     const onMouseEnter = () => setVisible(true);
     const onMouseLeave = () => setVisible(false);
 
-    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
     document.addEventListener('mouseenter', onMouseEnter);
     document.addEventListener('mouseleave', onMouseLeave);
 
@@ -48,6 +49,7 @@ export default function CustomCursor() {
         target.closest('a') ||
         target.closest('button') ||
         target.getAttribute('role') === 'button' ||
+        target.getAttribute('role') === 'tab' ||
         target.classList.contains('interactive-hover')
       ) {
         setHovered(true);
@@ -71,7 +73,7 @@ export default function CustomCursor() {
 
   return (
     <>
-      {/* Central precise dot */}
+      {/* Central precise gold dot */}
       <div
         style={{
           position: 'fixed',
@@ -80,13 +82,14 @@ export default function CustomCursor() {
           transform: `translate3d(${pos.x - 3}px, ${pos.y - 3}px, 0)`,
           width: '6px',
           height: '6px',
-          backgroundColor: '#f6d87e',
+          backgroundColor: '#F2CA8E',
           borderRadius: '50%',
           pointerEvents: 'none',
           zIndex: 9999,
-          transition: 'transform 0.05s ease-out, opacity 0.2s',
-          boxShadow: '0 0 10px #d4af37'
+          transition: 'opacity 0.2s ease',
+          boxShadow: '0 0 10px #D9A968'
         }}
+        aria-hidden="true"
       />
       {/* Outer subtle luxury aura ring */}
       <div
@@ -97,14 +100,15 @@ export default function CustomCursor() {
           transform: `translate3d(${trail.x - (hovered ? 24 : 16)}px, ${trail.y - (hovered ? 24 : 16)}px, 0)`,
           width: hovered ? '48px' : '32px',
           height: hovered ? '48px' : '32px',
-          border: '1px solid rgba(212, 175, 55, 0.45)',
-          backgroundColor: hovered ? 'rgba(212, 175, 55, 0.08)' : 'transparent',
+          border: '1px solid rgba(217, 169, 104, 0.45)',
+          backgroundColor: hovered ? 'rgba(217, 169, 104, 0.1)' : 'transparent',
           borderRadius: '50%',
           pointerEvents: 'none',
           zIndex: 9998,
-          transition: 'width 0.25s ease-out, height 0.25s ease-out, background-color 0.25s ease-out, border-color 0.25s ease-out',
-          boxShadow: hovered ? '0 0 20px rgba(212, 175, 55, 0.25)' : 'none'
+          transition: 'width 0.25s cubic-bezier(0.16, 1, 0.3, 1), height 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease, border-color 0.25s ease',
+          boxShadow: hovered ? '0 0 20px rgba(217, 169, 104, 0.25)' : 'none'
         }}
+        aria-hidden="true"
       />
     </>
   );

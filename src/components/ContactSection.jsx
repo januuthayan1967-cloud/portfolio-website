@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send, Check, Copy, ArrowUpRight, Sparkles } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Check, Copy, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function ContactSection({ profile }) {
@@ -42,13 +42,16 @@ export default function ContactSection({ profile }) {
       setStatus({ loading: false, success: true, error: null });
       setFormData({ name: '', email: '', subject: '', message: '' });
 
-      // Trigger golden celebratory confetti burst
-      confetti({
-        particleCount: 70,
-        spread: 60,
-        origin: { y: 0.7 },
-        colors: ['#d4af37', '#f59e0b', '#fcd34d', '#38bdf8']
-      });
+      // Trigger subtle celebratory confetti respecting reduced motion
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!prefersReducedMotion) {
+        confetti({
+          particleCount: 55,
+          spread: 55,
+          origin: { y: 0.72 },
+          colors: ['#D9A968', '#F2CA8E', '#14283B', '#E5A84B']
+        });
+      }
 
       setTimeout(() => {
         setStatus((s) => ({ ...s, success: false }));
@@ -77,17 +80,17 @@ export default function ContactSection({ profile }) {
             06 // INITIATE DIALOGUE
           </div>
           <h2
-            className="font-editorial"
+            className="font-heading"
             style={{
-              fontSize: 'clamp(2rem, 3.8vw, 3.2rem)',
+              fontSize: 'clamp(2rem, 3.6vw, 3.1rem)',
               fontWeight: 700,
-              color: '#ffffff',
+              color: 'var(--text-main)',
               lineHeight: 1.2
             }}
           >
             Let's Engineer <span className="gold-gradient-text">Exceptional</span> Systems.
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '1rem', marginTop: '8px', maxWidth: '600px' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '8px', maxWidth: '600px' }}>
             Whether commissioning architectural consultations, high-scale application builds, or full-time strategic engineering, send an inquiry below.
           </p>
         </div>
@@ -109,8 +112,8 @@ export default function ContactSection({ profile }) {
               style={{
                 padding: '24px',
                 borderRadius: '16px',
-                border: '1px solid rgba(212, 175, 55, 0.2)',
-                background: 'rgba(14, 22, 38, 0.55)',
+                border: '1px solid var(--border-gold)',
+                background: 'var(--surface-card)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center'
@@ -122,19 +125,19 @@ export default function ContactSection({ profile }) {
                     width: '44px',
                     height: '44px',
                     borderRadius: '12px',
-                    background: 'rgba(212, 175, 55, 0.12)',
+                    background: 'rgba(217, 169, 104, 0.12)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
                 >
-                  <Mail size={20} color="#d4af37" />
+                  <Mail size={20} color="var(--gold-primary)" />
                 </div>
                 <div>
-                  <div className="font-mono" style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>
+                  <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                     Direct Email
                   </div>
-                  <div style={{ fontSize: '0.98rem', fontWeight: 600, color: '#f8fafc', marginTop: '2px' }}>
+                  <div style={{ fontSize: '0.98rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '2px' }}>
                     {email}
                   </div>
                 </div>
@@ -143,11 +146,11 @@ export default function ContactSection({ profile }) {
                 onClick={() => handleCopy(email, 'email')}
                 title="Copy email to clipboard"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  background: 'var(--surface-elevated)',
+                  border: '1px solid var(--border-subtle)',
                   borderRadius: '8px',
                   padding: '8px 12px',
-                  color: copiedField === 'email' ? '#10b981' : '#d4af37',
+                  color: copiedField === 'email' ? '#10B981' : 'var(--gold-primary)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -167,8 +170,8 @@ export default function ContactSection({ profile }) {
               style={{
                 padding: '24px',
                 borderRadius: '16px',
-                border: '1px solid rgba(212, 175, 55, 0.2)',
-                background: 'rgba(14, 22, 38, 0.55)',
+                border: '1px solid var(--border-gold)',
+                background: 'var(--surface-card)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center'
@@ -180,19 +183,19 @@ export default function ContactSection({ profile }) {
                     width: '44px',
                     height: '44px',
                     borderRadius: '12px',
-                    background: 'rgba(212, 175, 55, 0.12)',
+                    background: 'rgba(217, 169, 104, 0.12)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
                 >
-                  <Phone size={20} color="#d4af37" />
+                  <Phone size={20} color="var(--gold-primary)" />
                 </div>
                 <div>
-                  <div className="font-mono" style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>
+                  <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                     Phone / WhatsApp
                   </div>
-                  <div style={{ fontSize: '0.98rem', fontWeight: 600, color: '#f8fafc', marginTop: '2px' }}>
+                  <div style={{ fontSize: '0.98rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '2px' }}>
                     {phone}
                   </div>
                 </div>
@@ -201,11 +204,11 @@ export default function ContactSection({ profile }) {
                 onClick={() => handleCopy(phone, 'phone')}
                 title="Copy phone to clipboard"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  background: 'var(--surface-elevated)',
+                  border: '1px solid var(--border-subtle)',
                   borderRadius: '8px',
                   padding: '8px 12px',
-                  color: copiedField === 'phone' ? '#10b981' : '#d4af37',
+                  color: copiedField === 'phone' ? '#10B981' : 'var(--gold-primary)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -225,8 +228,8 @@ export default function ContactSection({ profile }) {
               style={{
                 padding: '24px',
                 borderRadius: '16px',
-                border: '1px solid rgba(212, 175, 55, 0.2)',
-                background: 'rgba(14, 22, 38, 0.55)',
+                border: '1px solid var(--border-gold)',
+                background: 'var(--surface-card)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '16px'
@@ -237,19 +240,19 @@ export default function ContactSection({ profile }) {
                   width: '44px',
                   height: '44px',
                   borderRadius: '12px',
-                  background: 'rgba(212, 175, 55, 0.12)',
+                  background: 'rgba(217, 169, 104, 0.12)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}
               >
-                <MapPin size={20} color="#d4af37" />
+                <MapPin size={20} color="var(--gold-primary)" />
               </div>
               <div>
-                <div className="font-mono" style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>
+                <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                   Base of Operations
                 </div>
-                <div style={{ fontSize: '0.98rem', fontWeight: 600, color: '#f8fafc', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.98rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '2px' }}>
                   {location}
                 </div>
               </div>
@@ -260,16 +263,16 @@ export default function ContactSection({ profile }) {
               style={{
                 padding: '20px',
                 borderRadius: '14px',
-                background: 'rgba(212, 175, 55, 0.06)',
-                border: '1px solid rgba(212, 175, 55, 0.25)',
+                background: 'rgba(217, 169, 104, 0.08)',
+                border: '1px solid var(--border-gold)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px'
               }}
             >
-              <Sparkles size={18} color="#d4af37" style={{ flexShrink: 0 }} />
-              <div style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>
-                Inquiries are routed directly to the real-time encrypted dashboard inbox. Expected response turnaround is typically within 12 hours.
+              <Sparkles size={18} color="var(--gold-primary)" style={{ flexShrink: 0 }} />
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                Inquiries are encrypted and routed directly to the real-time admin console. Expected response turnaround is typically within 12 hours.
               </div>
             </div>
           </div>
@@ -280,8 +283,8 @@ export default function ContactSection({ profile }) {
             style={{
               padding: '36px',
               borderRadius: '20px',
-              border: '1px solid rgba(212, 175, 55, 0.25)',
-              background: 'linear-gradient(145deg, rgba(14, 22, 38, 0.7) 0%, rgba(8, 12, 22, 0.9) 100%)'
+              border: '1px solid var(--border-gold)',
+              background: 'var(--surface-card)'
             }}
           >
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -289,7 +292,7 @@ export default function ContactSection({ profile }) {
                 <div>
                   <label
                     className="font-mono"
-                    style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', marginBottom: '8px', textTransform: 'uppercase' }}
+                    style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase' }}
                   >
                     Your Full Name *
                   </label>
@@ -303,22 +306,22 @@ export default function ContactSection({ profile }) {
                       width: '100%',
                       padding: '12px 16px',
                       borderRadius: '10px',
-                      background: 'rgba(6, 8, 13, 0.7)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      color: '#ffffff',
+                      background: 'var(--surface-elevated)',
+                      border: '1px solid var(--border-subtle)',
+                      color: 'var(--text-main)',
                       fontSize: '0.92rem',
                       outline: 'none',
                       transition: 'border-color 0.25s ease'
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = '#d4af37')}
-                    onBlur={(e) => (e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
+                    onFocus={(e) => (e.target.style.borderColor = 'var(--gold-primary)')}
+                    onBlur={(e) => (e.target.style.borderColor = 'var(--border-subtle)')}
                   />
                 </div>
 
                 <div>
                   <label
                     className="font-mono"
-                    style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', marginBottom: '8px', textTransform: 'uppercase' }}
+                    style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase' }}
                   >
                     Your Email Address *
                   </label>
@@ -332,15 +335,15 @@ export default function ContactSection({ profile }) {
                       width: '100%',
                       padding: '12px 16px',
                       borderRadius: '10px',
-                      background: 'rgba(6, 8, 13, 0.7)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      color: '#ffffff',
+                      background: 'var(--surface-elevated)',
+                      border: '1px solid var(--border-subtle)',
+                      color: 'var(--text-main)',
                       fontSize: '0.92rem',
                       outline: 'none',
                       transition: 'border-color 0.25s ease'
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = '#d4af37')}
-                    onBlur={(e) => (e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
+                    onFocus={(e) => (e.target.style.borderColor = 'var(--gold-primary)')}
+                    onBlur={(e) => (e.target.style.borderColor = 'var(--border-subtle)')}
                   />
                 </div>
               </div>
@@ -348,7 +351,7 @@ export default function ContactSection({ profile }) {
               <div>
                 <label
                   className="font-mono"
-                  style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', marginBottom: '8px', textTransform: 'uppercase' }}
+                  style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase' }}
                 >
                   Inquiry Topic / Scope
                 </label>
@@ -361,24 +364,24 @@ export default function ContactSection({ profile }) {
                     width: '100%',
                     padding: '12px 16px',
                     borderRadius: '10px',
-                    background: 'rgba(6, 8, 13, 0.7)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
+                    background: 'var(--surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-main)',
                     fontSize: '0.92rem',
                     outline: 'none',
                     transition: 'border-color 0.25s ease'
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = '#d4af37')}
-                  onBlur={(e) => (e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
+                  onFocus={(e) => (e.target.style.borderColor = 'var(--gold-primary)')}
+                  onBlur={(e) => (e.target.style.borderColor = 'var(--border-subtle)')}
                 />
               </div>
 
               <div>
                 <label
                   className="font-mono"
-                  style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', marginBottom: '8px', textTransform: 'uppercase' }}
+                  style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase' }}
                 >
-                  Project Details & Specifications *
+                  Project Details &amp; Specifications *
                 </label>
                 <textarea
                   rows={5}
@@ -390,9 +393,9 @@ export default function ContactSection({ profile }) {
                     width: '100%',
                     padding: '14px 16px',
                     borderRadius: '10px',
-                    background: 'rgba(6, 8, 13, 0.7)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
+                    background: 'var(--surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-main)',
                     fontSize: '0.92rem',
                     outline: 'none',
                     resize: 'vertical',
@@ -400,19 +403,19 @@ export default function ContactSection({ profile }) {
                     lineHeight: 1.6,
                     transition: 'border-color 0.25s ease'
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = '#d4af37')}
-                  onBlur={(e) => (e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
+                  onFocus={(e) => (e.target.style.borderColor = 'var(--gold-primary)')}
+                  onBlur={(e) => (e.target.style.borderColor = 'var(--border-subtle)')}
                 />
               </div>
 
               {status.error && (
-                <div style={{ color: '#ef4444', fontSize: '0.85rem', padding: '10px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)' }}>
+                <div style={{ color: '#EF4444', fontSize: '0.85rem', padding: '10px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)' }}>
                   {status.error}
                 </div>
               )}
 
               {status.success && (
-                <div style={{ color: '#10b981', fontSize: '0.85rem', padding: '12px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ color: '#10B981', fontSize: '0.85rem', padding: '12px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Check size={16} />
                   <span>Your message was delivered successfully and logged to the admin dashboard.</span>
                 </div>

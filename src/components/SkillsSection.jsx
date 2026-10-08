@@ -6,11 +6,11 @@ export default function SkillsSection({ skills = [] }) {
 
   const getIcon = (iconName) => {
     switch (iconName) {
-      case 'Code': return <Code size={20} color="#d4af37" />;
-      case 'Server': return <Server size={20} color="#d4af37" />;
-      case 'Database': return <Database size={20} color="#d4af37" />;
-      case 'Terminal': return <Terminal size={20} color="#d4af37" />;
-      default: return <Cpu size={20} color="#d4af37" />;
+      case 'Code': return <Code size={20} color="var(--gold-primary)" />;
+      case 'Server': return <Server size={20} color="var(--gold-primary)" />;
+      case 'Database': return <Database size={20} color="var(--gold-primary)" />;
+      case 'Terminal': return <Terminal size={20} color="var(--gold-primary)" />;
+      default: return <Cpu size={20} color="var(--gold-primary)" />;
     }
   };
 
@@ -29,20 +29,20 @@ export default function SkillsSection({ skills = [] }) {
         {/* Header */}
         <div style={{ marginBottom: '56px' }}>
           <div className="badge-gold" style={{ marginBottom: '14px' }}>
-            04 // TECHNICAL MASTERY
+            04 // CAPABILITIES &amp; SYSTEMS
           </div>
           <h2
-            className="font-editorial"
+            className="font-heading"
             style={{
-              fontSize: 'clamp(2rem, 3.8vw, 3.2rem)',
+              fontSize: 'clamp(2rem, 3.6vw, 3.1rem)',
               fontWeight: 700,
-              color: '#ffffff',
+              color: 'var(--text-main)',
               lineHeight: 1.2
             }}
           >
             Engineering <span className="gold-gradient-text">Competencies</span> &amp; Systems.
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '1rem', marginTop: '8px', maxWidth: '620px' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '8px', maxWidth: '620px' }}>
             A comprehensive matrix of languages, runtime frameworks, low-level architectures, and database paradigms cultivated across production environments.
           </p>
         </div>
@@ -66,15 +66,15 @@ export default function SkillsSection({ skills = [] }) {
                 style={{
                   padding: '20px 24px',
                   borderRadius: '16px',
-                  border: activeCategoryIndex === idx ? '1px solid #d4af37' : '1px solid rgba(255, 255, 255, 0.07)',
-                  background: activeCategoryIndex === idx ? 'rgba(212, 175, 55, 0.12)' : 'rgba(11, 18, 33, 0.5)',
+                  border: activeCategoryIndex === idx ? '1px solid var(--gold-primary)' : '1px solid var(--border-subtle)',
+                  background: activeCategoryIndex === idx ? 'rgba(217, 169, 104, 0.12)' : 'var(--surface-card)',
                   cursor: 'pointer',
                   textAlign: 'left',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  transition: 'all 0.3s ease',
-                  boxShadow: activeCategoryIndex === idx ? '0 10px 30px rgba(212, 175, 55, 0.15)' : 'none'
+                  transition: 'all 0.25s ease',
+                  boxShadow: activeCategoryIndex === idx ? '0 10px 30px var(--gold-glow)' : 'none'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -83,7 +83,7 @@ export default function SkillsSection({ skills = [] }) {
                       width: '42px',
                       height: '42px',
                       borderRadius: '10px',
-                      background: 'rgba(212, 175, 55, 0.12)',
+                      background: 'rgba(217, 169, 104, 0.12)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -93,18 +93,18 @@ export default function SkillsSection({ skills = [] }) {
                   </div>
                   <div>
                     <div
-                      className="font-editorial"
+                      className="font-heading"
                       style={{
-                        fontSize: '1.05rem',
+                        fontSize: '1rem',
                         fontWeight: 600,
-                        color: activeCategoryIndex === idx ? '#ffffff' : '#cbd5e1'
+                        color: activeCategoryIndex === idx ? 'var(--text-main)' : 'var(--text-secondary)'
                       }}
                     >
                       {cat.category}
                     </div>
                     <div
                       className="font-mono"
-                      style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '2px' }}
+                      style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}
                     >
                       {cat.items?.length || 0} Specializations
                     </div>
@@ -112,9 +112,9 @@ export default function SkillsSection({ skills = [] }) {
                 </div>
                 <span
                   style={{
-                    color: activeCategoryIndex === idx ? '#d4af37' : 'rgba(255, 255, 255, 0.3)',
+                    color: activeCategoryIndex === idx ? 'var(--gold-primary)' : 'var(--text-muted)',
                     fontSize: '1.2rem',
-                    transition: 'transform 0.3s ease',
+                    transition: 'transform 0.25s ease',
                     transform: activeCategoryIndex === idx ? 'translateX(4px)' : 'none'
                   }}
                 >
@@ -130,24 +130,24 @@ export default function SkillsSection({ skills = [] }) {
             style={{
               padding: '36px',
               borderRadius: '20px',
-              border: '1px solid rgba(212, 175, 55, 0.25)',
-              background: 'linear-gradient(145deg, rgba(14, 22, 38, 0.75) 0%, rgba(8, 12, 22, 0.9) 100%)',
+              border: '1px solid var(--border-gold)',
+              background: 'var(--surface-card)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
               gap: '24px'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '16px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '16px', borderBottom: '1px solid var(--border-subtle)' }}>
               <div>
-                <h3 className="font-editorial" style={{ fontSize: '1.35rem', color: '#ffffff', fontWeight: 700 }}>
+                <h3 className="font-heading" style={{ fontSize: '1.3rem', color: 'var(--text-main)', fontWeight: 700 }}>
                   {activeCategory.category}
                 </h3>
-                <span className="font-mono" style={{ fontSize: '0.75rem', color: '#d4af37' }}>
-                  PROFICIENCY & ARCHITECTURAL MASTERY
+                <span className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--gold-primary)' }}>
+                  PROFICIENCY &amp; ARCHITECTURAL MASTERY
                 </span>
               </div>
-              <ShieldCheck size={24} color="#d4af37" />
+              <ShieldCheck size={24} color="var(--gold-primary)" />
             </div>
 
             {/* Bars */}
@@ -155,10 +155,10 @@ export default function SkillsSection({ skills = [] }) {
               {activeCategory.items?.map((item) => (
                 <div key={item.name}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '0.92rem', color: '#f1f5f9', fontWeight: 500 }}>
+                    <span style={{ fontSize: '0.92rem', color: 'var(--text-main)', fontWeight: 500 }}>
                       {item.name}
                     </span>
-                    <span className="font-mono" style={{ fontSize: '0.8rem', color: '#f3d078' }}>
+                    <span className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--gold-primary)' }}>
                       {item.level}%
                     </span>
                   </div>
@@ -176,8 +176,8 @@ export default function SkillsSection({ skills = [] }) {
                         height: '100%',
                         width: `${item.level}%`,
                         borderRadius: '9999px',
-                        background: 'linear-gradient(90deg, #d4af37 0%, #f59e0b 50%, #fcd34d 100%)',
-                        boxShadow: '0 0 10px rgba(212, 175, 55, 0.5)',
+                        background: 'linear-gradient(90deg, #D9A968 0%, #E5A84B 50%, #F2CA8E 100%)',
+                        boxShadow: '0 0 10px var(--gold-glow)',
                         transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)'
                       }}
                     />
@@ -192,15 +192,15 @@ export default function SkillsSection({ skills = [] }) {
                 marginTop: '12px',
                 padding: '12px 16px',
                 borderRadius: '10px',
-                background: 'rgba(212, 175, 55, 0.06)',
-                border: '1px solid rgba(212, 175, 55, 0.18)',
+                background: 'rgba(217, 169, 104, 0.06)',
+                border: '1px solid var(--border-gold)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px'
               }}
             >
-              <span style={{ color: '#d4af37' }}>✦</span>
-              <span style={{ fontSize: '0.82rem', color: '#cbd5e1' }}>
+              <span style={{ color: 'var(--gold-primary)' }}>✦</span>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
                 Continually benchmarking and adopting modern distributed engineering patterns and low-latency rendering pipelines.
               </span>
             </div>

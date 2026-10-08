@@ -1,16 +1,30 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 export default function ThreeCanvas() {
   const mountRef = useRef(null);
+  const [hasWebGL, setHasWebGL] = useState(true);
 
   useEffect(() => {
+    // Check WebGL support
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (!gl) {
+        setHasWebGL(false);
+        return;
+      }
+    } catch (e) {
+      setHasWebGL(false);
+      return;
+    }
+
     const mount = mountRef.current;
     if (!mount) return;
 
     // SCENE SETUP
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x06080d, 0.0018);
+    scene.fog = new THREE.FogExp2(0x0B1018, 0.0016);
 
     const camera = new THREE.PerspectiveCamera(
       60,
@@ -20,30 +34,39 @@ export default function ThreeCanvas() {
     );
     camera.position.z = 85;
 
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    mount.appendChild(renderer.domElement);
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true,
+        powerPreference: 'high-performance'
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      mount.appendChild(renderer.domElement);
+    } catch (err) {
+      setHasWebGL(false);
+      return;
+    }
 
-    // 1. FLOATING AMBER & SAPPHIRE PARTICLES
-    const particleCount = 180;
+    // 1. CELESTIAL AMBER & SAPPHIRE PARTICLES
+    const particleCount = 140; // Balanced density to prevent clutter
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
 
-    const goldColor = new THREE.Color(0xd4af37);
-    const navyColor = new THREE.Color(0x38bdf8);
-    const warmAmber = new THREE.Color(0xf59e0b);
+    const goldColor = new THREE.Color(0xD9A968);
+    const amberColor = new THREE.Color(0xE5A84B);
+    const navyColor = new THREE.Color(0x38BDF8);
 
     for (let i = 0; i < particleCount; i++) {
-      // Spread in a wide cinematic ellipse
       positions[i * 3] = (Math.random() - 0.5) * 160;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 140;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 90;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 130;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 80;
 
-      // Color distribution: 70% warm gold/amber, 30% subtle navy
-      const isGold = Math.random() > 0.3;
-      const c = isGold ? (Math.random() > 0.5 ? goldColor : warmAmber) : navyColor;
+      // 75% champagne/amber gold, 25% subtle sapphire
+      const isGold = Math.random() > 0.25;
+      const c = isGold ? (Math.random() > 0.5 ? goldColor : amberColor) : navyColor;
       colors[i * 3] = c.r;
       colors[i * 3 + 1] = c.g;
       colors[i * 3 + 2] = c.b;
@@ -52,23 +75,23 @@ export default function ThreeCanvas() {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-    // Create a smooth round circular particle texture
+    // Circular particle texture
     const canvas = document.createElement('canvas');
     canvas.width = 32;
     canvas.height = 32;
     const ctx = canvas.getContext('2d');
     const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-    grad.addColorStop(0, 'rgba(255,255,255,1)');
-    grad.addColorStop(0.3, 'rgba(255,255,255,0.7)');
-    grad.addColorStop(0.8, 'rgba(255,255,255,0.1)');
-    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    grad.addColorStop(0.3, 'rgba(255, 255, 255, 0.7)');
+    grad.addColorStop(0.8, 'rgba(255, 255, 255, 0.12)');
+    grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 32, 32);
 
     const particleTexture = new THREE.CanvasTexture(canvas);
 
     const particleMaterial = new THREE.PointsMaterial({
-      size: 1.8,
+      size: 1.6,
       vertexColors: true,
       map: particleTexture,
       transparent: true,
@@ -80,30 +103,30 @@ export default function ThreeCanvas() {
     const particles = new THREE.Points(geometry, particleMaterial);
     scene.add(particles);
 
-    // 2. LUXURY WIREFRAME ARCHITECTURAL GEOMETRY (Subtle orbital cage)
-    const ringGeo1 = new THREE.TorusGeometry(32, 0.08, 16, 100);
+    // 2. REFINED ARCHITECTURAL ORBITAL RINGS
+    const ringGeo1 = new THREE.TorusGeometry(32, 0.07, 16, 120);
     const ringMat1 = new THREE.MeshBasicMaterial({
-      color: 0xd4af37,
+      color: 0xD9A968,
       transparent: true,
-      opacity: 0.16,
+      opacity: 0.15,
       wireframe: true
     });
     const ring1 = new THREE.Mesh(ringGeo1, ringMat1);
     ring1.rotation.x = Math.PI / 3;
     scene.add(ring1);
 
-    const ringGeo2 = new THREE.TorusGeometry(36, 0.06, 16, 120);
+    const ringGeo2 = new THREE.TorusGeometry(36, 0.05, 16, 140);
     const ringMat2 = new THREE.MeshBasicMaterial({
-      color: 0x60a5fa,
+      color: 0x60A5FA,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.1,
       wireframe: true
     });
     const ring2 = new THREE.Mesh(ringGeo2, ringMat2);
     ring2.rotation.y = Math.PI / 4;
     scene.add(ring2);
 
-    // 3. MOUSE INTERACTION & SMOOTH LERP
+    // 3. SMOOTH CAMERA LERP WITH PASSIVE LISTENER
     let mouseX = 0;
     let mouseY = 0;
     let targetX = 0;
@@ -116,7 +139,6 @@ export default function ThreeCanvas() {
 
     window.addEventListener('mousemove', onMouseMove, { passive: true });
 
-    // Handle Resize
     const onResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -135,23 +157,23 @@ export default function ThreeCanvas() {
 
       const elapsedTime = clock.getElapsedTime();
 
-      // Smooth camera follow mouse
-      targetX += (mouseX * 12 - targetX) * 0.04;
-      targetY += (mouseY * 8 - targetY) * 0.04;
+      // Smooth inertia
+      targetX += (mouseX * 10 - targetX) * 0.035;
+      targetY += (mouseY * 6 - targetY) * 0.035;
 
       camera.position.x = targetX;
       camera.position.y = targetY;
       camera.lookAt(0, 0, 0);
 
-      // Subtle rotations
-      particles.rotation.y = elapsedTime * 0.02;
-      particles.rotation.x = Math.sin(elapsedTime * 0.015) * 0.08;
+      // Controlled subtle rotations
+      particles.rotation.y = elapsedTime * 0.018;
+      particles.rotation.x = Math.sin(elapsedTime * 0.012) * 0.06;
 
-      ring1.rotation.z = elapsedTime * 0.035;
-      ring1.rotation.x = Math.PI / 3 + Math.cos(elapsedTime * 0.02) * 0.1;
+      ring1.rotation.z = elapsedTime * 0.028;
+      ring1.rotation.x = Math.PI / 3 + Math.cos(elapsedTime * 0.018) * 0.08;
 
-      ring2.rotation.y = -elapsedTime * 0.025;
-      ring2.rotation.z = Math.sin(elapsedTime * 0.03) * 0.08;
+      ring2.rotation.y = -elapsedTime * 0.02;
+      ring2.rotation.z = Math.sin(elapsedTime * 0.025) * 0.06;
 
       renderer.render(scene, camera);
     };
@@ -162,7 +184,7 @@ export default function ThreeCanvas() {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('resize', onResize);
-      if (mount.contains(renderer.domElement)) {
+      if (renderer && renderer.domElement && mount.contains(renderer.domElement)) {
         mount.removeChild(renderer.domElement);
       }
       geometry.dispose();
@@ -171,9 +193,27 @@ export default function ThreeCanvas() {
       ringMat1.dispose();
       ringGeo2.dispose();
       ringMat2.dispose();
-      renderer.dispose();
+      if (renderer) renderer.dispose();
     };
   }, []);
+
+  if (!hasWebGL) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: 0,
+          backgroundImage: 'radial-gradient(circle at 50% 30%, rgba(217, 169, 104, 0.06), transparent 70%)'
+        }}
+        aria-hidden="true"
+      />
+    );
+  }
 
   return (
     <div
@@ -186,7 +226,7 @@ export default function ThreeCanvas() {
         height: '100%',
         pointerEvents: 'none',
         zIndex: 0,
-        opacity: 0.85
+        opacity: 0.82
       }}
       aria-hidden="true"
     />

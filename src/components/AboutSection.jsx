@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, Compass, Cpu, FileText, CheckCircle2, MapPin, Mail, Phone } from 'lucide-react';
+import { Award, Compass, Cpu, CheckCircle2, MapPin, Mail, Phone } from 'lucide-react';
 
 export default function AboutSection({ profile }) {
   const {
@@ -18,7 +18,7 @@ export default function AboutSection({ profile }) {
       desc: "Constructing modular, scalable distributed systems with clean separation of concerns and rigorous database normalization."
     },
     {
-      title: "Cinematic Visuals & 3D",
+      title: "Cinematic Visuals & 3D Depth",
       desc: "Bridging the gap between engineering logic and artistic aesthetics through WebGL, micro-interactions, and harmonic palettes."
     },
     {
@@ -38,16 +38,16 @@ export default function AboutSection({ profile }) {
     >
       <div className="container-luxury" style={{ position: 'relative', zIndex: 10 }}>
         {/* Section Header */}
-        <div style={{ marginBottom: '64px' }}>
+        <div style={{ marginBottom: '60px' }}>
           <div className="badge-gold" style={{ marginBottom: '14px' }}>
-            02 // BIOGRAPHY & ETHOS
+            02 // BIOGRAPHY &amp; ETHOS
           </div>
           <h2
-            className="font-editorial"
+            className="font-heading"
             style={{
-              fontSize: 'clamp(2rem, 3.8vw, 3.2rem)',
+              fontSize: 'clamp(2rem, 3.6vw, 3.1rem)',
               fontWeight: 700,
-              color: '#ffffff',
+              color: 'var(--text-main)',
               lineHeight: 1.2
             }}
           >
@@ -73,13 +73,13 @@ export default function AboutSection({ profile }) {
                 position: 'relative',
                 borderRadius: '20px',
                 overflow: 'hidden',
-                border: '1px solid rgba(212, 175, 55, 0.25)',
-                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7)'
+                border: '1px solid var(--border-gold)',
+                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.65)'
               }}
             >
               <img
                 src={aboutImage}
-                alt="Uthayagunasingam Vanojan Portrait"
+                alt="Uthayagunasingam Vanojan — Profile"
                 style={{
                   width: '100%',
                   height: 'auto',
@@ -94,7 +94,7 @@ export default function AboutSection({ profile }) {
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background: 'linear-gradient(to top, rgba(6, 8, 13, 0.9) 0%, transparent 50%)',
+                  background: 'linear-gradient(to top, rgba(11, 16, 24, 0.9) 0%, transparent 50%)',
                   pointerEvents: 'none'
                 }}
               />
@@ -108,17 +108,16 @@ export default function AboutSection({ profile }) {
                   right: '24px',
                   padding: '16px 20px',
                   borderRadius: '14px',
-                  background: 'rgba(10, 16, 28, 0.85)',
+                  background: 'var(--surface-glass)',
                   backdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(212, 175, 55, 0.3)'
+                  border: '1px solid var(--border-gold)'
                 }}
               >
                 <div
-                  className="font-editorial"
                   style={{
                     fontSize: '0.92rem',
                     fontStyle: 'italic',
-                    color: '#f8fafc',
+                    color: 'var(--text-main)',
                     lineHeight: 1.5
                   }}
                 >
@@ -128,7 +127,7 @@ export default function AboutSection({ profile }) {
                   className="font-mono"
                   style={{
                     fontSize: '0.68rem',
-                    color: '#d4af37',
+                    color: 'var(--gold-primary)',
                     marginTop: '8px',
                     letterSpacing: '0.08em'
                   }}
@@ -143,42 +142,42 @@ export default function AboutSection({ profile }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
             <div>
               <h3
-                className="font-editorial"
-                style={{ fontSize: '1.65rem', fontWeight: 600, color: '#f8fafc', marginBottom: '16px' }}
+                className="font-heading"
+                style={{ fontSize: '1.6rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '16px' }}
               >
                 Crafting Software that Leaves a Lasting Impression
               </h3>
-              <p style={{ color: '#cbd5e1', fontSize: '1.02rem', lineHeight: 1.8, marginBottom: '16px' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '1.02rem', lineHeight: 1.8, marginBottom: '16px' }}>
                 {bio}
               </p>
-              <p style={{ color: '#94a3b8', fontSize: '0.96rem', lineHeight: 1.75 }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.75 }}>
                 Having engineered systems ranging from offline-first mobile applications in Java and SQLite to scalable cloud platforms in React, Node, and MongoDB, I approach software engineering as an architectural craft. Every line of code, every API schema, and every pixel is intentional.
               </p>
             </div>
 
             {/* Core Architectural Pillars */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {principles.map((p, idx) => (
+              {principles.map((p) => (
                 <div
                   key={p.title}
                   className="glass-panel"
                   style={{
                     padding: '16px 20px',
                     borderRadius: '12px',
-                    border: '1px solid rgba(255, 255, 255, 0.07)',
-                    background: 'rgba(14, 22, 38, 0.45)',
+                    border: '1px solid var(--border-subtle)',
+                    background: 'var(--surface-card)',
                     transition: 'border-color 0.3s ease'
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.4)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.07)')}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--border-gold-strong)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                    <CheckCircle2 size={16} color="#d4af37" />
-                    <span className="font-editorial" style={{ fontSize: '1.05rem', fontWeight: 600, color: '#ffffff' }}>
+                    <CheckCircle2 size={16} color="var(--gold-primary)" />
+                    <span className="font-heading" style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)' }}>
                       {p.title}
                     </span>
                   </div>
-                  <p style={{ fontSize: '0.88rem', color: '#94a3b8', paddingLeft: '26px', lineHeight: 1.6 }}>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', paddingLeft: '26px', lineHeight: 1.6 }}>
                     {p.desc}
                   </p>
                 </div>
@@ -192,16 +191,16 @@ export default function AboutSection({ profile }) {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
                 gap: '14px',
                 paddingTop: '16px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+                borderTop: '1px solid var(--border-subtle)'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <MapPin size={16} color="#d4af37" />
-                <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>{location}</span>
+                <MapPin size={16} color="var(--gold-primary)" />
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{location}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Mail size={16} color="#d4af37" />
-                <a href={`mailto:${email}`} style={{ fontSize: '0.85rem', color: '#cbd5e1', textDecoration: 'none' }}>
+                <Mail size={16} color="var(--gold-primary)" />
+                <a href={`mailto:${email}`} style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'none' }}>
                   {email}
                 </a>
               </div>

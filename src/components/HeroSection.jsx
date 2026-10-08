@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowDown, ArrowUpRight, Sparkles, Terminal, Download, ShieldCheck, Layers, GitCommit } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowDown, ArrowUpRight, Terminal, Github, Linkedin, Twitter, Mail, Sparkles } from 'lucide-react';
 
 export default function HeroSection({ profile }) {
   const {
@@ -9,8 +9,28 @@ export default function HeroSection({ profile }) {
     tagline = "Bridging architectural rigour and cinematic aesthetic depth to engineer unforgettable software experiences.",
     heroImage = "/hero/image2.jpeg",
     statusText = "Open for high-impact engineering & architecture engagements",
+    email = "uthayanvanojan5@gmail.com",
+    github = "https://github.com",
+    linkedin = "https://linkedin.com",
+    twitter = "https://twitter.com",
     metrics = []
   } = profile || {};
+
+  // Micro-parallax on mouse movement for portrait
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const portraitRef = useRef(null);
+
+  const handleMouseMove = (e) => {
+    if (!portraitRef.current || window.matchMedia('(pointer: coarse)').matches) return;
+    const rect = portraitRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setTilt({ x: x * 8, y: -y * 8 });
+  };
+
+  const handleMouseLeave = () => {
+    setTilt({ x: 0, y: 0 });
+  };
 
   return (
     <section
@@ -18,12 +38,14 @@ export default function HeroSection({ profile }) {
       style={{
         position: 'relative',
         minHeight: '100vh',
-        paddingTop: '130px',
+        paddingTop: '135px',
         paddingBottom: '80px',
         display: 'flex',
         alignItems: 'center',
         overflow: 'hidden'
       }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Cinematic Ambient Glow matching photograph lighting */}
       <div
@@ -40,14 +62,14 @@ export default function HeroSection({ profile }) {
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '48px',
+            gap: '52px',
             alignItems: 'center'
           }}
           className="hero-grid"
         >
-          {/* LEFT: Editorial Narrative */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* Status Indicator */}
+          {/* LEFT: Asymmetrical Editorial Narrative */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+            {/* Introductory Eyebrow */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span
                 className="badge-gold"
@@ -55,7 +77,7 @@ export default function HeroSection({ profile }) {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
-                  boxShadow: '0 0 15px rgba(212, 175, 55, 0.2)'
+                  boxShadow: '0 0 15px var(--gold-glow)'
                 }}
               >
                 <span
@@ -63,8 +85,8 @@ export default function HeroSection({ profile }) {
                     width: '7px',
                     height: '7px',
                     borderRadius: '50%',
-                    backgroundColor: '#10b981',
-                    boxShadow: '0 0 8px #10b981',
+                    backgroundColor: '#10B981',
+                    boxShadow: '0 0 8px #10B981',
                     display: 'inline-block'
                   }}
                 />
@@ -72,29 +94,31 @@ export default function HeroSection({ profile }) {
               </span>
             </div>
 
-            {/* Main Editorial Headline */}
+            {/* Name & Title Typography */}
             <div>
               <div
                 className="font-mono"
                 style={{
-                  fontSize: '0.85rem',
-                  letterSpacing: '0.22em',
-                  color: '#d4af37',
+                  fontSize: '0.84rem',
+                  letterSpacing: '0.2em',
+                  color: 'var(--gold-primary)',
                   textTransform: 'uppercase',
-                  marginBottom: '10px',
+                  marginBottom: '8px',
                   fontWeight: 600
                 }}
               >
-                Full-Stack Systems Architect & Engineer
+                {name} &bull; {title}
               </div>
+
+              {/* Main Headline */}
               <h1
-                className="font-editorial"
+                className="font-heading"
                 style={{
-                  fontSize: 'clamp(2.5rem, 5.2vw, 4.4rem)',
-                  lineHeight: 1.1,
+                  fontSize: 'clamp(2.5rem, 5vw, 4.3rem)',
+                  lineHeight: 1.12,
                   fontWeight: 800,
-                  letterSpacing: '-0.02em',
-                  color: '#ffffff',
+                  letterSpacing: '-0.025em',
+                  color: 'var(--text-main)',
                   marginBottom: '16px'
                 }}
               >
@@ -102,10 +126,11 @@ export default function HeroSection({ profile }) {
                 <span className="gold-gradient-text">Precision.</span> <br />
                 Cinematic <span className="silver-gradient-text">Depth.</span>
               </h1>
+
               <p
                 style={{
-                  fontSize: '1.08rem',
-                  color: '#cbd5e1',
+                  fontSize: '1.05rem',
+                  color: 'var(--text-secondary)',
                   maxWidth: '560px',
                   lineHeight: 1.75,
                   fontWeight: 300
@@ -115,8 +140,8 @@ export default function HeroSection({ profile }) {
               </p>
             </div>
 
-            {/* CTAs */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', paddingTop: '8px' }}>
+            {/* Primary & Secondary CTAs */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', paddingTop: '4px' }}>
               <a href="#projects" className="btn-gold">
                 <span>Explore Selected Works</span>
                 <ArrowUpRight size={16} />
@@ -125,8 +150,99 @@ export default function HeroSection({ profile }) {
                 href="#about"
                 className="btn-ghost-luxury"
               >
-                <Terminal size={16} color="#d4af37" />
-                <span>Biography & Stack</span>
+                <Terminal size={16} color="var(--gold-primary)" />
+                <span>Biography &amp; Stack</span>
+              </a>
+            </div>
+
+            {/* Social Links Row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', paddingTop: '6px' }}>
+              <span className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                Connect //
+              </span>
+              <a
+                href={github}
+                target="_blank"
+                rel="noreferrer"
+                title="GitHub"
+                style={{
+                  color: 'var(--text-secondary)',
+                  background: 'var(--surface-card)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '50%',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.25s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--gold-primary)';
+                  e.currentTarget.style.borderColor = 'var(--border-gold)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                }}
+              >
+                <Github size={16} />
+              </a>
+
+              <a
+                href={linkedin}
+                target="_blank"
+                rel="noreferrer"
+                title="LinkedIn"
+                style={{
+                  color: 'var(--text-secondary)',
+                  background: 'var(--surface-card)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '50%',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.25s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--gold-primary)';
+                  e.currentTarget.style.borderColor = 'var(--border-gold)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                }}
+              >
+                <Linkedin size={16} />
+              </a>
+
+              <a
+                href={`mailto:${email}`}
+                title="Send Direct Email"
+                style={{
+                  color: 'var(--text-secondary)',
+                  background: 'var(--surface-card)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '50%',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.25s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--gold-primary)';
+                  e.currentTarget.style.borderColor = 'var(--border-gold)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                }}
+              >
+                <Mail size={16} />
               </a>
             </div>
 
@@ -135,10 +251,10 @@ export default function HeroSection({ profile }) {
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-                gap: '16px',
-                marginTop: '16px',
-                paddingTop: '24px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+                gap: '14px',
+                marginTop: '12px',
+                paddingTop: '20px',
+                borderTop: '1px solid var(--border-subtle)'
               }}
             >
               {metrics.map((m) => (
@@ -148,12 +264,12 @@ export default function HeroSection({ profile }) {
                   style={{
                     padding: '14px 16px',
                     borderRadius: '12px',
-                    border: '1px solid rgba(212, 175, 55, 0.15)',
-                    background: 'rgba(11, 18, 33, 0.5)'
+                    border: '1px solid var(--border-gold)',
+                    background: 'var(--surface-card)'
                   }}
                 >
                   <div
-                    className="font-editorial gold-gradient-text"
+                    className="font-heading gold-gradient-text"
                     style={{ fontSize: '1.65rem', fontWeight: 700, lineHeight: 1.1 }}
                   >
                     {m.value}
@@ -162,7 +278,7 @@ export default function HeroSection({ profile }) {
                     className="font-mono"
                     style={{
                       fontSize: '0.68rem',
-                      color: '#94a3b8',
+                      color: 'var(--text-muted)',
                       letterSpacing: '0.04em',
                       textTransform: 'uppercase',
                       marginTop: '4px'
@@ -175,7 +291,7 @@ export default function HeroSection({ profile }) {
             </div>
           </div>
 
-          {/* RIGHT: The Visual Centerpiece — Authentic Portrait (image2.jpeg) */}
+          {/* RIGHT: Visual Centerpiece — Authentic Portrait (image2.jpeg) with Micro-Tilt */}
           <div
             style={{
               display: 'flex',
@@ -191,7 +307,7 @@ export default function HeroSection({ profile }) {
                 left: '-10%',
                 width: '320px',
                 height: '320px',
-                background: 'radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(217, 169, 104, 0.3) 0%, transparent 70%)',
                 filter: 'blur(50px)',
                 zIndex: 0,
                 pointerEvents: 'none'
@@ -204,23 +320,26 @@ export default function HeroSection({ profile }) {
                 right: '-10%',
                 width: '350px',
                 height: '350px',
-                background: 'radial-gradient(circle, rgba(37, 99, 235, 0.25) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(20, 40, 59, 0.35) 0%, transparent 70%)',
                 filter: 'blur(50px)',
                 zIndex: 0,
                 pointerEvents: 'none'
               }}
             />
 
-            {/* Frame Chassis */}
+            {/* Frame Chassis with Subtle Micro-tilt */}
             <div
+              ref={portraitRef}
               className="hero-portrait-frame"
               style={{
                 position: 'relative',
                 zIndex: 1,
                 width: '100%',
                 maxWidth: '430px',
-                background: 'linear-gradient(145deg, rgba(20, 30, 50, 0.6) 0%, rgba(6, 8, 13, 0.95) 100%)',
-                backdropFilter: 'blur(10px)'
+                background: 'linear-gradient(145deg, rgba(20, 31, 50, 0.6) 0%, var(--bg-primary) 100%)',
+                backdropFilter: 'blur(10px)',
+                transform: `perspective(1000px) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)`,
+                transition: 'transform 0.25s ease-out, box-shadow 0.4s ease'
               }}
             >
               {/* Corner decorative architectural ticks */}
@@ -231,8 +350,8 @@ export default function HeroSection({ profile }) {
                   left: '12px',
                   width: '16px',
                   height: '16px',
-                  borderTop: '2px solid #d4af37',
-                  borderLeft: '2px solid #d4af37',
+                  borderTop: '2px solid var(--gold-primary)',
+                  borderLeft: '2px solid var(--gold-primary)',
                   zIndex: 10,
                   pointerEvents: 'none'
                 }}
@@ -244,8 +363,8 @@ export default function HeroSection({ profile }) {
                   right: '12px',
                   width: '16px',
                   height: '16px',
-                  borderTop: '2px solid #d4af37',
-                  borderRight: '2px solid #d4af37',
+                  borderTop: '2px solid var(--gold-primary)',
+                  borderRight: '2px solid var(--gold-primary)',
                   zIndex: 10,
                   pointerEvents: 'none'
                 }}
@@ -257,8 +376,8 @@ export default function HeroSection({ profile }) {
                   left: '12px',
                   width: '16px',
                   height: '16px',
-                  borderBottom: '2px solid #d4af37',
-                  borderLeft: '2px solid #d4af37',
+                  borderBottom: '2px solid var(--gold-primary)',
+                  borderLeft: '2px solid var(--gold-primary)',
                   zIndex: 10,
                   pointerEvents: 'none'
                 }}
@@ -270,8 +389,8 @@ export default function HeroSection({ profile }) {
                   right: '12px',
                   width: '16px',
                   height: '16px',
-                  borderBottom: '2px solid #d4af37',
-                  borderRight: '2px solid #d4af37',
+                  borderBottom: '2px solid var(--gold-primary)',
+                  borderRight: '2px solid var(--gold-primary)',
                   zIndex: 10,
                   pointerEvents: 'none'
                 }}
@@ -288,19 +407,19 @@ export default function HeroSection({ profile }) {
                     height: 'auto',
                     aspectRatio: '9 / 16',
                     objectFit: 'cover',
-                    filter: 'contrast(1.02) saturate(1.03)',
+                    filter: 'contrast(1.02) saturate(1.02)',
                     transition: 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)'
                   }}
                   loading="eager"
                   fetchPriority="high"
                 />
 
-                {/* Subtle Cinematic Vignette & Bottom Gradient to blend naturally */}
+                {/* Subtle Cinematic Vignette */}
                 <div
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'linear-gradient(to top, rgba(6, 8, 13, 0.85) 0%, rgba(6, 8, 13, 0.15) 30%, transparent 60%)',
+                    background: 'linear-gradient(to top, rgba(11, 16, 24, 0.85) 0%, rgba(11, 16, 24, 0.15) 30%, transparent 60%)',
                     pointerEvents: 'none'
                   }}
                 />
@@ -315,22 +434,22 @@ export default function HeroSection({ profile }) {
                   right: '20px',
                   padding: '14px 18px',
                   borderRadius: '12px',
-                  background: 'rgba(8, 13, 24, 0.88)',
+                  background: 'var(--surface-glass)',
                   backdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(212, 175, 55, 0.3)',
-                  boxShadow: '0 10px 25px rgba(0, 0, 0, 0.7)',
+                  border: '1px solid var(--border-gold)',
+                  boxShadow: '0 10px 25px rgba(0, 0, 0, 0.6)',
                   zIndex: 15
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
                     <div
-                      className="font-editorial"
+                      className="font-heading"
                       style={{
                         fontSize: '0.98rem',
                         fontWeight: 700,
-                        color: '#ffffff',
-                        letterSpacing: '0.06em'
+                        color: 'var(--text-main)',
+                        letterSpacing: '0.04em'
                       }}
                     >
                       {name}
@@ -339,12 +458,12 @@ export default function HeroSection({ profile }) {
                       className="font-mono"
                       style={{
                         fontSize: '0.68rem',
-                        color: '#d4af37',
+                        color: 'var(--gold-primary)',
                         letterSpacing: '0.1em',
                         marginTop: '2px'
                       }}
                     >
-                      SYSTEMS ARCHITECT & ENGINEER
+                      SOLUTIONS ARCHITECT &bull; LEAD ENGINEER
                     </div>
                   </div>
                   <div
@@ -352,12 +471,12 @@ export default function HeroSection({ profile }) {
                       width: '32px',
                       height: '32px',
                       borderRadius: '50%',
-                      background: 'rgba(212, 175, 55, 0.15)',
-                      border: '1px solid rgba(212, 175, 55, 0.4)',
+                      background: 'rgba(217, 169, 104, 0.15)',
+                      border: '1px solid var(--border-gold)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#d4af37'
+                      color: 'var(--gold-primary)'
                     }}
                   >
                     <Sparkles size={16} />
@@ -384,17 +503,17 @@ export default function HeroSection({ profile }) {
               alignItems: 'center',
               gap: '6px',
               textDecoration: 'none',
-              color: '#8b9bb4',
+              color: 'var(--text-muted)',
               fontSize: '0.75rem',
               fontFamily: 'var(--font-mono)',
               letterSpacing: '0.15em',
               transition: 'color 0.25s ease'
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#d4af37')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#8b9bb4')}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold-primary)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
           >
-            <span>SCROLL TO DISCOVER</span>
-            <ArrowDown size={14} className="animate-float" color="#d4af37" />
+            <span>DISCOVER BIOGRAPHY</span>
+            <ArrowDown size={14} className="animate-float" color="var(--gold-primary)" />
           </a>
         </div>
       </div>

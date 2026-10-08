@@ -22,6 +22,20 @@ export default function App() {
   });
   const [loading, setLoading] = useState(true);
 
+  // Theme Management (Dark / Light)
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('vanojan_theme') || 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('vanojan_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
+
   // Admin Modal & Auth State
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminToken, setAdminToken] = useState(() => localStorage.getItem('vanojan_admin_token'));
@@ -77,8 +91,8 @@ export default function App() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#06080d',
-          color: '#d4af37'
+          background: 'var(--bg-primary)',
+          color: 'var(--gold-primary)'
         }}
       >
         <div
@@ -86,16 +100,16 @@ export default function App() {
             width: '48px',
             height: '48px',
             borderRadius: '50%',
-            border: '2px solid rgba(212, 175, 55, 0.2)',
-            borderTopColor: '#d4af37',
+            border: '2px solid rgba(217, 169, 104, 0.2)',
+            borderTopColor: 'var(--gold-primary)',
             animation: 'spin 1s linear infinite',
             marginBottom: '16px'
           }}
         />
-        <div className="font-editorial" style={{ letterSpacing: '0.15em', fontSize: '1rem', color: '#f8fafc' }}>
+        <div className="font-heading" style={{ letterSpacing: '0.12em', fontSize: '1rem', color: 'var(--text-main)', fontWeight: 600 }}>
           UTHAYAGUNASINGAM VANOJAN
         </div>
-        <div className="font-mono" style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '4px' }}>
+        <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
           INITIALIZING ARCHITECTURAL ENVIRONMENT...
         </div>
         <style>{`
@@ -122,6 +136,8 @@ export default function App() {
       <Navbar
         onOpenAdmin={() => setAdminOpen(true)}
         profile={data.profile}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       {/* Main Page Flow */}

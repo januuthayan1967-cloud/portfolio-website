@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCap, Award, Calendar, BookOpen } from 'lucide-react';
+import { GraduationCap, Calendar } from 'lucide-react';
 
 export default function ExperienceSection({ education = [] }) {
   return (
@@ -15,20 +15,20 @@ export default function ExperienceSection({ education = [] }) {
         {/* Header */}
         <div style={{ marginBottom: '64px' }}>
           <div className="badge-gold" style={{ marginBottom: '14px' }}>
-            05 // ACADEMIC & PROFESSIONAL TRAJECTORY
+            05 // ACADEMIC &amp; PROFESSIONAL TRAJECTORY
           </div>
           <h2
-            className="font-editorial"
+            className="font-heading"
             style={{
-              fontSize: 'clamp(2rem, 3.8vw, 3.2rem)',
+              fontSize: 'clamp(2rem, 3.6vw, 3.1rem)',
               fontWeight: 700,
-              color: '#ffffff',
+              color: 'var(--text-main)',
               lineHeight: 1.2
             }}
           >
             Education &amp; <span className="gold-gradient-text">Milestones.</span>
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '1rem', marginTop: '8px', maxWidth: '620px' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '8px', maxWidth: '620px' }}>
             A rigorous technical and scientific pedigree underpinning every system architecture and code solution.
           </p>
         </div>
@@ -43,12 +43,12 @@ export default function ExperienceSection({ education = [] }) {
               bottom: '20px',
               left: '20px',
               width: '2px',
-              background: 'linear-gradient(to bottom, #d4af37 0%, rgba(212, 175, 55, 0.2) 80%, transparent 100%)'
+              background: 'linear-gradient(to bottom, var(--gold-primary) 0%, rgba(217, 169, 104, 0.2) 80%, transparent 100%)'
             }}
           />
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '36px' }}>
-            {education.map((item, idx) => (
+            {education.map((item) => (
               <div
                 key={item.degree}
                 style={{
@@ -65,15 +65,15 @@ export default function ExperienceSection({ education = [] }) {
                     width: '20px',
                     height: '20px',
                     borderRadius: '50%',
-                    background: '#0d1526',
-                    border: '2px solid #d4af37',
-                    boxShadow: '0 0 15px rgba(212, 175, 55, 0.6)',
+                    background: 'var(--surface-elevated)',
+                    border: '2px solid var(--gold-primary)',
+                    boxShadow: '0 0 15px var(--gold-glow)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
                 >
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f3d078' }} />
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--gold-light)' }} />
                 </div>
 
                 {/* Content Card */}
@@ -82,16 +82,16 @@ export default function ExperienceSection({ education = [] }) {
                   style={{
                     padding: '28px 32px',
                     borderRadius: '16px',
-                    border: '1px solid rgba(212, 175, 55, 0.18)',
-                    background: 'linear-gradient(145deg, rgba(14, 22, 38, 0.6) 0%, rgba(8, 12, 22, 0.8) 100%)',
+                    border: '1px solid var(--border-gold)',
+                    background: 'var(--surface-card)',
                     transition: 'all 0.3s ease'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.4)';
+                    e.currentTarget.style.borderColor = 'var(--border-gold-strong)';
                     e.currentTarget.style.transform = 'translateX(4px)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.18)';
+                    e.currentTarget.style.borderColor = 'var(--border-gold)';
                     e.currentTarget.style.transform = 'none';
                   }}
                 >
@@ -100,15 +100,15 @@ export default function ExperienceSection({ education = [] }) {
                       <GraduationCap size={13} />
                       {item.badge}
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#cbd5e1', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
-                      <Calendar size={13} color="#d4af37" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
+                      <Calendar size={13} color="var(--gold-primary)" />
                       <span>{item.period}</span>
                     </div>
                   </div>
 
                   <h3
-                    className="font-editorial"
-                    style={{ fontSize: '1.35rem', fontWeight: 700, color: '#ffffff', marginBottom: '6px' }}
+                    className="font-heading"
+                    style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '6px' }}
                   >
                     {item.degree}
                   </h3>
@@ -116,7 +116,7 @@ export default function ExperienceSection({ education = [] }) {
                   <div
                     style={{
                       fontSize: '0.9rem',
-                      color: '#d4af37',
+                      color: 'var(--gold-primary)',
                       fontFamily: 'var(--font-mono)',
                       marginBottom: '12px'
                     }}
@@ -124,7 +124,7 @@ export default function ExperienceSection({ education = [] }) {
                     {item.institution}
                   </div>
 
-                  <p style={{ color: '#94a3b8', fontSize: '0.92rem', lineHeight: 1.7 }}>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.7 }}>
                     {item.description}
                   </p>
                 </div>
