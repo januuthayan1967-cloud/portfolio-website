@@ -4,12 +4,14 @@ import CustomCursor from './components/CustomCursor';
 import AudioPlayer from './components/AudioPlayer';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
+import TechStackRibbon from './components/TechStackRibbon';
 import AboutSection from './components/AboutSection';
 import ProjectsSection from './components/ProjectsSection';
 import SkillsSection from './components/SkillsSection';
 import ExperienceSection from './components/ExperienceSection';
 import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
+import SearchModal from './components/SearchModal';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminDashboard from './components/admin/AdminDashboard';
 
@@ -35,6 +37,9 @@ export default function App() {
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
+
+  // Search Modal
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Admin Modal & Auth State
   const [adminOpen, setAdminOpen] = useState(false);
@@ -106,10 +111,10 @@ export default function App() {
             marginBottom: '16px'
           }}
         />
-        <div className="font-heading" style={{ letterSpacing: '0.12em', fontSize: '1rem', color: 'var(--text-main)', fontWeight: 600 }}>
+        <div className="font-heading" style={{ letterSpacing: '0.12em', fontSize: '1.05rem', color: 'var(--text-main)', fontWeight: 700 }}>
           UTHAYAGUNASINGAM VANOJAN
         </div>
-        <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+        <div className="font-mono" style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '6px', letterSpacing: '0.15em' }}>
           INITIALIZING ARCHITECTURAL ENVIRONMENT...
         </div>
         <style>{`
@@ -135,14 +140,16 @@ export default function App() {
       {/* Main Navigation */}
       <Navbar
         onOpenAdmin={() => setAdminOpen(true)}
+        onOpenSearch={() => setSearchOpen(true)}
         profile={data.profile}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
 
-      {/* Main Page Flow */}
+      {/* Main Page Flow Matching Reference Design */}
       <main style={{ position: 'relative', zIndex: 1 }}>
         <HeroSection profile={data.profile} />
+        <TechStackRibbon />
         <AboutSection profile={data.profile} />
         <ProjectsSection projects={data.projects} />
         <SkillsSection skills={data.skills} />
@@ -154,6 +161,14 @@ export default function App() {
       <Footer
         onOpenAdmin={() => setAdminOpen(true)}
         profile={data.profile}
+      />
+
+      {/* SEARCH MODAL */}
+      <SearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        projects={data.projects}
+        skills={data.skills}
       />
 
       {/* ADMIN CONSOLE MODAL */}

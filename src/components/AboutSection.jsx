@@ -1,29 +1,34 @@
-import React from 'react';
-import { Award, Compass, Cpu, CheckCircle2, MapPin, Mail, Phone } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowUpRight, MessageSquare, Sparkles, CheckCircle2, FileText, X } from 'lucide-react';
 
 export default function AboutSection({ profile }) {
   const {
     name = "Uthayagunasingam Vanojan",
     aboutImage = "/hero/image1.jpeg",
-    bio = "",
-    philosophy = "Great engineering is not merely functional—it possesses clarity, performance, and an undeniable artistic presence.",
-    location = "Jaffna, Sri Lanka",
-    email = "uthayanvanojan5@gmail.com",
-    phone = "+94 75 029 2685"
+    bio = "I am Uthayagunasingam Vanojan, a Full-Stack Software Engineer and Solutions Architect passionate about building scalable systems, elegant user experiences and impactful digital solutions."
   } = profile || {};
 
-  const principles = [
+  const [showJourneyModal, setShowJourneyModal] = useState(false);
+
+  const metrics = [
+    { label: "Years Experience", value: "3+" },
+    { label: "Projects Delivered", value: "15+" },
+    { label: "Core Technologies", value: "8+" },
+    { label: "Commitment", value: "100%" }
+  ];
+
+  const journeyPillars = [
     {
-      title: "Architectural Integrity",
-      desc: "Constructing modular, scalable distributed systems with clean separation of concerns and rigorous database normalization."
+      title: "Problem Solving",
+      desc: "Deconstructing complex enterprise challenges into clean, modular, and maintainable logic."
     },
     {
-      title: "Cinematic Visuals & 3D Depth",
-      desc: "Bridging the gap between engineering logic and artistic aesthetics through WebGL, micro-interactions, and harmonic palettes."
+      title: "Clean Architecture",
+      desc: "Building resilient microservices, normalized databases, and scalable distributed patterns."
     },
     {
-      title: "Zero-Compromise Performance",
-      desc: "Optimizing execution speed, low memory footprints, and sub-millisecond query responses across web, mobile, and desktop."
+      title: "User Focused",
+      desc: "Crafting intuitive, accessible, and high-performance digital experiences with cinematic aesthetics."
     }
   ];
 
@@ -37,182 +42,353 @@ export default function AboutSection({ profile }) {
       }}
     >
       <div className="container-luxury" style={{ position: 'relative', zIndex: 10 }}>
-        {/* Section Header */}
-        <div style={{ marginBottom: '60px' }}>
-          <div className="badge-gold" style={{ marginBottom: '14px' }}>
-            02 // BIOGRAPHY &amp; ETHOS
+        
+        {/* SECTION HEADER EYEBROW */}
+        <div style={{ marginBottom: '32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <span className="badge-gold">02 // ABOUT</span>
+            <span
+              className="font-mono"
+              style={{
+                fontSize: '0.78rem',
+                color: 'var(--text-muted)',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase'
+              }}
+            >
+              PASSION &bull; PRECISION &bull; PROGRESS
+            </span>
           </div>
+
           <h2
             className="font-heading"
             style={{
-              fontSize: 'clamp(2rem, 3.6vw, 3.1rem)',
-              fontWeight: 700,
+              fontSize: 'clamp(2.2rem, 4vw, 3.4rem)',
+              fontWeight: 800,
               color: 'var(--text-main)',
-              lineHeight: 1.2
+              lineHeight: 1.15,
+              maxWidth: '850px'
             }}
           >
-            The Intersection of <span className="gold-gradient-text">Engineering</span> &amp; <span className="silver-gradient-text">Artistry.</span>
+            Turning Complex Ideas into <span className="gold-gradient-text">Scalable Real Solutions.</span>
           </h2>
         </div>
 
-        {/* Two-Column Editorial Layout */}
+        {/* TWO-COLUMN EDITORIAL COMPOSITION */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gridTemplateColumns: '1.2fr 0.8fr',
             gap: '50px',
             alignItems: 'center'
           }}
-          className="about-grid"
+          className="about-main-grid"
         >
-          {/* LEFT: Standing Portrait Card (image1.jpeg) */}
-          <div style={{ position: 'relative' }}>
-            <div
-              className="glass-panel"
+          {/* LEFT: BIOGRAPHY, METRICS, JOURNEY */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+            
+            {/* Professional Biography */}
+            <p
               style={{
-                position: 'relative',
-                borderRadius: '20px',
-                overflow: 'hidden',
-                border: '1px solid var(--border-gold)',
-                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.65)'
+                fontSize: '1.08rem',
+                color: 'var(--text-secondary)',
+                lineHeight: 1.8,
+                fontWeight: 300
               }}
             >
-              <img
-                src={aboutImage}
-                alt="Uthayagunasingam Vanojan — Profile"
-                style={{
-                  width: '100%',
-                  height: 'auto',
-                  aspectRatio: '9 / 16',
-                  objectFit: 'cover',
-                  display: 'block',
-                  filter: 'contrast(1.02) saturate(1.02)'
-                }}
-                loading="lazy"
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to top, rgba(11, 16, 24, 0.9) 0%, transparent 50%)',
-                  pointerEvents: 'none'
-                }}
-              />
+              {bio}
+            </p>
 
-              {/* Bottom Quote Overlay */}
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: '24px',
-                  left: '24px',
-                  right: '24px',
-                  padding: '16px 20px',
-                  borderRadius: '14px',
-                  background: 'var(--surface-glass)',
-                  backdropFilter: 'blur(16px)',
-                  border: '1px solid var(--border-gold)'
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: '0.92rem',
-                    fontStyle: 'italic',
-                    color: 'var(--text-main)',
-                    lineHeight: 1.5
-                  }}
-                >
-                  "{philosophy}"
-                </div>
-                <div
-                  className="font-mono"
-                  style={{
-                    fontSize: '0.68rem',
-                    color: 'var(--gold-primary)',
-                    marginTop: '8px',
-                    letterSpacing: '0.08em'
-                  }}
-                >
-                  — U. VANOJAN, PRINCIPAL ENGINEER
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT: Detailed Narrative & Credentials */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-            <div>
-              <h3
-                className="font-heading"
-                style={{ fontSize: '1.6rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '16px' }}
-              >
-                Crafting Software that Leaves a Lasting Impression
-              </h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '1.02rem', lineHeight: 1.8, marginBottom: '16px' }}>
-                {bio}
-              </p>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.75 }}>
-                Having engineered systems ranging from offline-first mobile applications in Java and SQLite to scalable cloud platforms in React, Node, and MongoDB, I approach software engineering as an architectural craft. Every line of code, every API schema, and every pixel is intentional.
-              </p>
-            </div>
-
-            {/* Core Architectural Pillars */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {principles.map((p) => (
-                <div
-                  key={p.title}
-                  className="glass-panel"
-                  style={{
-                    padding: '16px 20px',
-                    borderRadius: '12px',
-                    border: '1px solid var(--border-subtle)',
-                    background: 'var(--surface-card)',
-                    transition: 'border-color 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--border-gold-strong)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                    <CheckCircle2 size={16} color="var(--gold-primary)" />
-                    <span className="font-heading" style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)' }}>
-                      {p.title}
-                    </span>
-                  </div>
-                  <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', paddingLeft: '26px', lineHeight: 1.6 }}>
-                    {p.desc}
-                  </p>
+            {/* 4 Stat Metrics */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: '12px',
+                padding: '20px 0',
+                borderTop: '1px solid rgba(245, 240, 232, 0.08)',
+                borderBottom: '1px solid rgba(245, 240, 232, 0.08)'
+              }}
+              className="about-metrics-row"
+            >
+              {metrics.map((m) => (
+                <div key={m.label} style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span
+                    className="font-heading gold-gradient-text"
+                    style={{ fontSize: '1.85rem', fontWeight: 800, lineHeight: 1.1 }}
+                  >
+                    {m.value}
+                  </span>
+                  <span
+                    className="font-mono"
+                    style={{
+                      fontSize: '0.65rem',
+                      color: 'var(--text-muted)',
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      marginTop: '4px'
+                    }}
+                  >
+                    {m.label}
+                  </span>
                 </div>
               ))}
             </div>
 
-            {/* Quick Contact & Info Meta */}
+            {/* Action Buttons: Download CV & Let's Connect */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
+              <a
+                href="#contact"
+                className="btn-gold"
+                style={{ padding: '0.85rem 2rem', fontSize: '0.88rem' }}
+              >
+                <span>Download CV</span>
+                <ArrowUpRight size={16} />
+              </a>
+
+              <a
+                href="#contact"
+                className="btn-ghost-luxury"
+                style={{ padding: '0.85rem 1.8rem', fontSize: '0.88rem' }}
+              >
+                <MessageSquare size={16} color="var(--gold-primary)" />
+                <span>Let's Connect</span>
+              </a>
+            </div>
+
+            {/* MY JOURNEY SUBSECTION */}
             <div
+              className="glass-panel"
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                gap: '14px',
-                paddingTop: '16px',
-                borderTop: '1px solid var(--border-subtle)'
+                marginTop: '10px',
+                padding: '24px 28px',
+                borderRadius: '20px',
+                border: '1px solid rgba(217, 169, 104, 0.25)',
+                background: 'rgba(14, 22, 36, 0.65)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <MapPin size={16} color="var(--gold-primary)" />
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{location}</span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span className="font-heading" style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                    MY JOURNEY
+                  </span>
+                  <span className="badge-gold" style={{ fontSize: '0.68rem', padding: '2px 8px' }}>
+                    Passion Driven Developer
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => setShowJourneyModal(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--gold-light)',
+                    fontSize: '0.8rem',
+                    fontFamily: 'var(--font-mono)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <span>Read More</span>
+                  <span>&rarr;</span>
+                </button>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Mail size={16} color="var(--gold-primary)" />
-                <a href={`mailto:${email}`} style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'none' }}>
-                  {email}
-                </a>
+
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: '20px' }}>
+                A quick look at my journey, values and what drives me to build scalable, high-impact digital solutions.
+              </p>
+
+              {/* 3 Journey Pillar Cards */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '12px'
+                }}
+                className="about-pillars-grid"
+              >
+                {journeyPillars.map((p) => (
+                  <div
+                    key={p.title}
+                    style={{
+                      padding: '14px 16px',
+                      borderRadius: '12px',
+                      background: 'rgba(20, 31, 50, 0.45)',
+                      border: '1px solid rgba(245, 240, 232, 0.08)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--gold-primary)' }}>
+                      <CheckCircle2 size={13} />
+                      <span className="font-heading" style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                        {p.title}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                      {p.desc}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: PORTRAIT PHOTOGRAPH (image1.jpeg) IN ARCHITECTURAL FRAME */}
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div className="arch-photo-container">
+              <div className="arch-frame">
+                {/* 4 Architectural Golden Corner Notches */}
+                <div className="arch-corner arch-corner-tl" />
+                <div className="arch-corner arch-corner-tr" />
+                <div className="arch-corner arch-corner-bl" />
+                <div className="arch-corner arch-corner-br" />
+
+                {/* Inner Image */}
+                <div className="arch-inner-box">
+                  <img
+                    src={aboutImage}
+                    alt={name}
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      aspectRatio: '9 / 13',
+                      objectFit: 'cover',
+                      display: 'block',
+                      filter: 'contrast(1.02) saturate(1.02)'
+                    }}
+                    loading="lazy"
+                  />
+
+                  {/* Vignette */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'linear-gradient(to top, rgba(11, 16, 24, 0.85) 0%, transparent 60%)',
+                      pointerEvents: 'none'
+                    }}
+                  />
+                </div>
+
+                {/* Overlay Badge at Bottom of Frame */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '18px',
+                    left: '18px',
+                    right: '18px',
+                    padding: '12px 16px',
+                    borderRadius: '14px',
+                    background: 'rgba(14, 22, 36, 0.9)',
+                    backdropFilter: 'blur(16px)',
+                    border: '1px solid rgba(217, 169, 104, 0.35)',
+                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    zIndex: 20
+                  }}
+                >
+                  <div>
+                    <div className="font-heading" style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                      FULL-STACK ENGINEER
+                    </div>
+                    <div className="font-mono" style={{ fontSize: '0.64rem', color: 'var(--gold-primary)', letterSpacing: '0.1em' }}>
+                      SOLUTIONS ARCHITECT
+                    </div>
+                  </div>
+                  <Sparkles size={16} color="var(--gold-primary)" />
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* JOURNEY DEEP DIVE MODAL */}
+      {showJourneyModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(11, 16, 24, 0.92)',
+            backdropFilter: 'blur(20px)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setShowJourneyModal(false)}
+        >
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: '680px',
+              background: 'var(--surface-card)',
+              border: '1px solid var(--border-gold)',
+              borderRadius: '24px',
+              padding: '36px',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowJourneyModal(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(217, 169, 104, 0.1)',
+                border: '1px solid var(--border-gold)',
+                borderRadius: '50%',
+                width: '36px',
+                height: '36px',
+                color: 'var(--text-main)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            <div className="badge-gold" style={{ marginBottom: '12px' }}>
+              PROFESSIONAL TRAJECTORY
+            </div>
+            <h3 className="font-heading" style={{ fontSize: '1.6rem', color: 'var(--text-main)', marginBottom: '14px' }}>
+              Engineering Rigour &amp; Visual Mastery
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.94rem', lineHeight: 1.7, marginBottom: '16px' }}>
+              Graduated with a Higher National Diploma in Computing &amp; Software Engineering from ICBT Campus, affiliated with Cardiff Metropolitan University. My work focuses on end-to-end distributed system engineering, high-throughput microservices, and bespoke 3D interactive web experiences.
+            </p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.7 }}>
+              Every solution adheres to strict principles of separation of concerns, defensive programming, automated transactional consistency, and modern design standards.
+            </p>
+          </div>
+        </div>
+      )}
+
       <style>{`
-        @media (min-width: 1024px) {
-          .about-grid {
-            grid-template-columns: 0.85fr 1.15fr !important;
+        @media (max-width: 1024px) {
+          .about-main-grid {
+            grid-template-columns: 1fr !important;
+            gap: 50px !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .about-metrics-row {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 20px !important;
+          }
+          .about-pillars-grid {
+            grid-template-columns: 1fr !important;
           }
         }
       `}</style>

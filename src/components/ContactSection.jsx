@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send, Check, Copy, Sparkles } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Check, Copy, ArrowUpRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function ContactSection({ profile }) {
   const {
     email = "uthayanvanojan5@gmail.com",
     phone = "+94 75 029 2685",
-    location = "Jaffna, Sri Lanka"
+    location = "Sri Lanka"
   } = profile || {};
 
   const [formData, setFormData] = useState({
@@ -42,20 +42,20 @@ export default function ContactSection({ profile }) {
       setStatus({ loading: false, success: true, error: null });
       setFormData({ name: '', email: '', subject: '', message: '' });
 
-      // Trigger subtle celebratory confetti respecting reduced motion
+      // Trigger celebration confetti
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (!prefersReducedMotion) {
         confetti({
-          particleCount: 55,
+          particleCount: 50,
           spread: 55,
-          origin: { y: 0.72 },
+          origin: { y: 0.75 },
           colors: ['#D9A968', '#F2CA8E', '#14283B', '#E5A84B']
         });
       }
 
       setTimeout(() => {
         setStatus((s) => ({ ...s, success: false }));
-      }, 6000);
+      }, 5000);
     } catch (err) {
       setStatus({ loading: false, success: false, error: err.message });
     }
@@ -70,376 +70,408 @@ export default function ContactSection({ profile }) {
         overflow: 'hidden'
       }}
     >
-      {/* Background glow */}
-      <div className="ambient-glow-gold" style={{ bottom: '10%', right: '15%', opacity: 0.6 }} />
+      <div className="ambient-glow-gold" style={{ bottom: '10%', right: '10%', opacity: 0.5 }} />
 
       <div className="container-luxury" style={{ position: 'relative', zIndex: 10 }}>
-        {/* Header */}
-        <div style={{ marginBottom: '60px' }}>
-          <div className="badge-gold" style={{ marginBottom: '14px' }}>
-            06 // INITIATE DIALOGUE
+        
+        {/* SECTION HEADER */}
+        <div style={{ marginBottom: '48px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+            <span className="badge-gold">06 // CONTACT</span>
+            <span
+              className="font-mono"
+              style={{
+                fontSize: '0.78rem',
+                color: 'var(--text-muted)',
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase'
+              }}
+            >
+              COMMISSION &bull; COLLABORATION
+            </span>
           </div>
+
           <h2
             className="font-heading"
             style={{
-              fontSize: 'clamp(2rem, 3.6vw, 3.1rem)',
-              fontWeight: 700,
+              fontSize: 'clamp(2.2rem, 4vw, 3.2rem)',
+              fontWeight: 800,
               color: 'var(--text-main)',
-              lineHeight: 1.2
+              lineHeight: 1.15
             }}
           >
-            Let's Engineer <span className="gold-gradient-text">Exceptional</span> Systems.
+            LET'S BUILD <span className="gold-gradient-text">SOMETHING GREAT</span>
           </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '8px', maxWidth: '600px' }}>
-            Whether commissioning architectural consultations, high-scale application builds, or full-time strategic engineering, send an inquiry below.
-          </p>
         </div>
 
-        {/* Two-Column Grid */}
+        {/* TWO-COLUMN CONTACT COMPOSITION (Exact match to reference) */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '48px'
+            gridTemplateColumns: '0.8fr 1.2fr',
+            gap: '40px',
+            alignItems: 'start'
           }}
-          className="contact-grid"
+          className="contact-main-grid"
         >
-          {/* LEFT: Contact Cards & Direct Info */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* Email Card */}
+          {/* LEFT: DIRECT CONTACT INFO */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            
+            {/* Email item */}
             <div
               className="glass-panel"
               style={{
-                padding: '24px',
+                padding: '20px',
                 borderRadius: '16px',
-                border: '1px solid var(--border-gold)',
-                background: 'var(--surface-card)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div
-                  style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '12px',
-                    background: 'rgba(217, 169, 104, 0.12)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <Mail size={20} color="var(--gold-primary)" />
-                </div>
-                <div>
-                  <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                    Direct Email
-                  </div>
-                  <div style={{ fontSize: '0.98rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '2px' }}>
-                    {email}
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => handleCopy(email, 'email')}
-                title="Copy email to clipboard"
-                style={{
-                  background: 'var(--surface-elevated)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: '8px',
-                  padding: '8px 12px',
-                  color: copiedField === 'email' ? '#10B981' : 'var(--gold-primary)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '0.75rem',
-                  fontFamily: 'var(--font-mono)'
-                }}
-              >
-                {copiedField === 'email' ? <Check size={14} /> : <Copy size={14} />}
-                <span>{copiedField === 'email' ? 'Copied' : 'Copy'}</span>
-              </button>
-            </div>
-
-            {/* Phone Card */}
-            <div
-              className="glass-panel"
-              style={{
-                padding: '24px',
-                borderRadius: '16px',
-                border: '1px solid var(--border-gold)',
-                background: 'var(--surface-card)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div
-                  style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '12px',
-                    background: 'rgba(217, 169, 104, 0.12)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <Phone size={20} color="var(--gold-primary)" />
-                </div>
-                <div>
-                  <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                    Phone / WhatsApp
-                  </div>
-                  <div style={{ fontSize: '0.98rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '2px' }}>
-                    {phone}
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => handleCopy(phone, 'phone')}
-                title="Copy phone to clipboard"
-                style={{
-                  background: 'var(--surface-elevated)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: '8px',
-                  padding: '8px 12px',
-                  color: copiedField === 'phone' ? '#10B981' : 'var(--gold-primary)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '0.75rem',
-                  fontFamily: 'var(--font-mono)'
-                }}
-              >
-                {copiedField === 'phone' ? <Check size={14} /> : <Copy size={14} />}
-                <span>{copiedField === 'phone' ? 'Copied' : 'Copy'}</span>
-              </button>
-            </div>
-
-            {/* Location Card */}
-            <div
-              className="glass-panel"
-              style={{
-                padding: '24px',
-                borderRadius: '16px',
-                border: '1px solid var(--border-gold)',
-                background: 'var(--surface-card)',
+                border: '1px solid rgba(217, 169, 104, 0.22)',
+                background: 'rgba(14, 22, 36, 0.72)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '16px'
+                justifyContent: 'space-between',
+                gap: '14px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '50%',
+                    background: 'rgba(217, 169, 104, 0.15)',
+                    border: '1px solid var(--border-gold)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--gold-primary)',
+                    flexShrink: 0
+                  }}
+                >
+                  <Mail size={18} />
+                </div>
+                <div>
+                  <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Email
+                  </div>
+                  <a
+                    href={`mailto:${email}`}
+                    style={{
+                      fontSize: '0.94rem',
+                      fontWeight: 600,
+                      color: 'var(--text-main)',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    {email}
+                  </a>
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleCopy(email, 'email')}
+                title="Copy Email"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: copiedField === 'email' ? 'var(--gold-primary)' : 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '6px'
+                }}
+              >
+                {copiedField === 'email' ? <Check size={16} /> : <Copy size={16} />}
+              </button>
+            </div>
+
+            {/* Phone item */}
+            <div
+              className="glass-panel"
+              style={{
+                padding: '20px',
+                borderRadius: '16px',
+                border: '1px solid rgba(217, 169, 104, 0.22)',
+                background: 'rgba(14, 22, 36, 0.72)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '14px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '50%',
+                    background: 'rgba(217, 169, 104, 0.15)',
+                    border: '1px solid var(--border-gold)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--gold-primary)',
+                    flexShrink: 0
+                  }}
+                >
+                  <Phone size={18} />
+                </div>
+                <div>
+                  <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Phone
+                  </div>
+                  <a
+                    href={`tel:${phone}`}
+                    style={{
+                      fontSize: '0.94rem',
+                      fontWeight: 600,
+                      color: 'var(--text-main)',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    {phone}
+                  </a>
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleCopy(phone, 'phone')}
+                title="Copy Phone"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: copiedField === 'phone' ? 'var(--gold-primary)' : 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '6px'
+                }}
+              >
+                {copiedField === 'phone' ? <Check size={16} /> : <Copy size={16} />}
+              </button>
+            </div>
+
+            {/* Location item */}
+            <div
+              className="glass-panel"
+              style={{
+                padding: '20px',
+                borderRadius: '16px',
+                border: '1px solid rgba(217, 169, 104, 0.22)',
+                background: 'rgba(14, 22, 36, 0.72)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px'
               }}
             >
               <div
                 style={{
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: '12px',
-                  background: 'rgba(217, 169, 104, 0.12)',
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  background: 'rgba(217, 169, 104, 0.15)',
+                  border: '1px solid var(--border-gold)',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  color: 'var(--gold-primary)',
+                  flexShrink: 0
                 }}
               >
-                <MapPin size={20} color="var(--gold-primary)" />
+                <MapPin size={18} />
               </div>
               <div>
                 <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                  Base of Operations
+                  Location
                 </div>
-                <div style={{ fontSize: '0.98rem', fontWeight: 600, color: 'var(--text-main)', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.94rem', fontWeight: 600, color: 'var(--text-main)' }}>
                   {location}
                 </div>
               </div>
             </div>
 
-            {/* Response Time Guarantee */}
-            <div
-              style={{
-                padding: '20px',
-                borderRadius: '14px',
-                background: 'rgba(217, 169, 104, 0.08)',
-                border: '1px solid var(--border-gold)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}
-            >
-              <Sparkles size={18} color="var(--gold-primary)" style={{ flexShrink: 0 }} />
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Inquiries are encrypted and routed directly to the real-time admin console. Expected response turnaround is typically within 12 hours.
-              </div>
-            </div>
           </div>
 
-          {/* RIGHT: High-End Message Formulation Form */}
+          {/* RIGHT: ELEGANT CONTACT FORM */}
           <div
             className="glass-panel"
             style={{
-              padding: '36px',
-              borderRadius: '20px',
-              border: '1px solid var(--border-gold)',
-              background: 'var(--surface-card)'
+              padding: '32px',
+              borderRadius: '24px',
+              border: '1px solid rgba(217, 169, 104, 0.3)',
+              background: 'rgba(14, 22, 36, 0.8)'
             }}
           >
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              
+              {/* Row 1: Name and Email */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '16px'
+                }}
+                className="contact-form-row"
+              >
                 <div>
-                  <label
-                    className="font-mono"
-                    style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase' }}
-                  >
-                    Your Full Name *
-                  </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Elena Vance"
+                    placeholder="Your Name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     style={{
                       width: '100%',
-                      padding: '12px 16px',
-                      borderRadius: '10px',
-                      background: 'var(--surface-elevated)',
-                      border: '1px solid var(--border-subtle)',
+                      padding: '14px 18px',
+                      borderRadius: '12px',
+                      background: 'rgba(20, 31, 50, 0.65)',
+                      border: '1px solid rgba(245, 240, 232, 0.1)',
                       color: 'var(--text-main)',
                       fontSize: '0.92rem',
+                      fontFamily: 'var(--font-sans)',
                       outline: 'none',
-                      transition: 'border-color 0.25s ease'
+                      transition: 'border-color 0.25s'
                     }}
                     onFocus={(e) => (e.target.style.borderColor = 'var(--gold-primary)')}
-                    onBlur={(e) => (e.target.style.borderColor = 'var(--border-subtle)')}
+                    onBlur={(e) => (e.target.style.borderColor = 'rgba(245, 240, 232, 0.1)')}
                   />
                 </div>
 
                 <div>
-                  <label
-                    className="font-mono"
-                    style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase' }}
-                  >
-                    Your Email Address *
-                  </label>
                   <input
                     type="email"
                     required
-                    placeholder="e.g. elena@domain.com"
+                    placeholder="Your Email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     style={{
                       width: '100%',
-                      padding: '12px 16px',
-                      borderRadius: '10px',
-                      background: 'var(--surface-elevated)',
-                      border: '1px solid var(--border-subtle)',
+                      padding: '14px 18px',
+                      borderRadius: '12px',
+                      background: 'rgba(20, 31, 50, 0.65)',
+                      border: '1px solid rgba(245, 240, 232, 0.1)',
                       color: 'var(--text-main)',
                       fontSize: '0.92rem',
+                      fontFamily: 'var(--font-sans)',
                       outline: 'none',
-                      transition: 'border-color 0.25s ease'
+                      transition: 'border-color 0.25s'
                     }}
                     onFocus={(e) => (e.target.style.borderColor = 'var(--gold-primary)')}
-                    onBlur={(e) => (e.target.style.borderColor = 'var(--border-subtle)')}
+                    onBlur={(e) => (e.target.style.borderColor = 'rgba(245, 240, 232, 0.1)')}
                   />
                 </div>
               </div>
 
+              {/* Row 2: Subject */}
               <div>
-                <label
-                  className="font-mono"
-                  style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase' }}
-                >
-                  Inquiry Topic / Scope
-                </label>
                 <input
                   type="text"
-                  placeholder="e.g. Full-Stack Web Platform Architecture / Contract Engagement"
+                  placeholder="Subject"
                   value={formData.subject}
                   onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                   style={{
                     width: '100%',
-                    padding: '12px 16px',
-                    borderRadius: '10px',
-                    background: 'var(--surface-elevated)',
-                    border: '1px solid var(--border-subtle)',
+                    padding: '14px 18px',
+                    borderRadius: '12px',
+                    background: 'rgba(20, 31, 50, 0.65)',
+                    border: '1px solid rgba(245, 240, 232, 0.1)',
                     color: 'var(--text-main)',
                     fontSize: '0.92rem',
+                    fontFamily: 'var(--font-sans)',
                     outline: 'none',
-                    transition: 'border-color 0.25s ease'
+                    transition: 'border-color 0.25s'
                   }}
                   onFocus={(e) => (e.target.style.borderColor = 'var(--gold-primary)')}
-                  onBlur={(e) => (e.target.style.borderColor = 'var(--border-subtle)')}
+                  onBlur={(e) => (e.target.style.borderColor = 'rgba(245, 240, 232, 0.1)')}
                 />
               </div>
 
+              {/* Row 3: Message */}
               <div>
-                <label
-                  className="font-mono"
-                  style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase' }}
-                >
-                  Project Details &amp; Specifications *
-                </label>
                 <textarea
-                  rows={5}
                   required
-                  placeholder="Share details regarding your technical requirements, architecture, timeline, and goals..."
+                  rows={4}
+                  placeholder="Your Message"
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   style={{
                     width: '100%',
-                    padding: '14px 16px',
-                    borderRadius: '10px',
-                    background: 'var(--surface-elevated)',
-                    border: '1px solid var(--border-subtle)',
+                    padding: '14px 18px',
+                    borderRadius: '12px',
+                    background: 'rgba(20, 31, 50, 0.65)',
+                    border: '1px solid rgba(245, 240, 232, 0.1)',
                     color: 'var(--text-main)',
                     fontSize: '0.92rem',
+                    fontFamily: 'var(--font-sans)',
                     outline: 'none',
                     resize: 'vertical',
-                    fontFamily: 'inherit',
-                    lineHeight: 1.6,
-                    transition: 'border-color 0.25s ease'
+                    transition: 'border-color 0.25s'
                   }}
                   onFocus={(e) => (e.target.style.borderColor = 'var(--gold-primary)')}
-                  onBlur={(e) => (e.target.style.borderColor = 'var(--border-subtle)')}
+                  onBlur={(e) => (e.target.style.borderColor = 'rgba(245, 240, 232, 0.1)')}
                 />
               </div>
 
-              {status.error && (
-                <div style={{ color: '#EF4444', fontSize: '0.85rem', padding: '10px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)' }}>
-                  {status.error}
-                </div>
-              )}
-
+              {/* Status alerts */}
               {status.success && (
-                <div style={{ color: '#10B981', fontSize: '0.85rem', padding: '12px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Check size={16} />
-                  <span>Your message was delivered successfully and logged to the admin dashboard.</span>
+                <div
+                  style={{
+                    padding: '12px',
+                    borderRadius: '8px',
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid #10B981',
+                    color: '#6EE7B7',
+                    fontSize: '0.85rem',
+                    textAlign: 'center'
+                  }}
+                >
+                  ✓ Inquiry transmitted successfully. I will connect with you shortly!
                 </div>
               )}
 
+              {status.error && (
+                <div
+                  style={{
+                    padding: '12px',
+                    borderRadius: '8px',
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    border: '1px solid #EF4444',
+                    color: '#FCA5A5',
+                    fontSize: '0.85rem',
+                    textAlign: 'center'
+                  }}
+                >
+                  ✕ {status.error}
+                </div>
+              )}
+
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={status.loading}
                 className="btn-gold"
-                style={{ width: '100%', padding: '1rem', marginTop: '6px' }}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  fontSize: '0.95rem',
+                  cursor: status.loading ? 'not-allowed' : 'pointer'
+                }}
               >
-                {status.loading ? (
-                  <span>Transmitting Encrypted Dispatch...</span>
-                ) : (
-                  <>
-                    <span>Transmit Project Inquiry</span>
-                    <Send size={16} />
-                  </>
-                )}
+                <span>{status.loading ? 'Transmitting...' : 'Send Message'}</span>
+                <ArrowUpRight size={17} />
               </button>
             </form>
           </div>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 900px) {
+          .contact-main-grid {
+            grid-template-columns: 1fr !important;
+            gap: 40px !important;
+          }
+        }
+        @media (max-width: 600px) {
+          .contact-form-row {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </section>
   );
 }

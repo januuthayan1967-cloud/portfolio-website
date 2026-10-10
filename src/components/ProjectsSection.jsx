@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Github, Sparkles, ArrowUpRight, CheckCircle, X } from 'lucide-react';
+import { ExternalLink, Github, Sparkles, ArrowUpRight, CheckCircle2, X } from 'lucide-react';
 
 export default function ProjectsSection({ projects = [] }) {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState(null);
 
-  const categories = ['All', 'Featured', 'Full-Stack Web', 'Mobile & Hospitality', 'Enterprise Software', 'Systems & Analytics'];
+  const categories = ['All', 'Web Apps', 'Mobile', 'Enterprise', 'Systems', 'UI/UX'];
 
+  // Map category filters gracefully
   const filteredProjects = projects.filter((p) => {
     if (activeFilter === 'All') return true;
-    if (activeFilter === 'Featured') return p.featured;
-    return p.category === activeFilter;
+    if (activeFilter === 'Web Apps') return p.category?.toLowerCase().includes('web');
+    if (activeFilter === 'Mobile') return p.category?.toLowerCase().includes('mobile');
+    if (activeFilter === 'Enterprise') return p.category?.toLowerCase().includes('enterprise');
+    if (activeFilter === 'Systems') return p.category?.toLowerCase().includes('system') || p.category?.toLowerCase().includes('analytics');
+    if (activeFilter === 'UI/UX') return true;
+    return true;
   });
 
   // Close modal on Escape key
@@ -34,60 +39,91 @@ export default function ProjectsSection({ projects = [] }) {
       }}
     >
       <div className="container-luxury" style={{ position: 'relative', zIndex: 10 }}>
-        {/* Header */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '48px' }}>
-          <div className="badge-gold">03 // SELECTED WORKS</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: '20px' }}>
-            <div>
-              <h2
-                className="font-heading"
-                style={{
-                  fontSize: 'clamp(2rem, 3.6vw, 3.1rem)',
-                  fontWeight: 700,
-                  color: 'var(--text-main)',
-                  lineHeight: 1.2
-                }}
-              >
-                Architectural <span className="gold-gradient-text">Systems</span> &amp; Case Studies.
-              </h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '8px', maxWidth: '600px' }}>
-                End-to-end engineered software solutions constructed with modular stability, performance indexing, and modern UX design.
-              </p>
-            </div>
+        
+        {/* SECTION HEADER WITH FILTERS */}
+        <div style={{ marginBottom: '48px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+            <span className="badge-gold">03 // PROJECTS</span>
+            <span
+              className="font-mono"
+              style={{
+                fontSize: '0.78rem',
+                color: 'var(--text-muted)',
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase'
+              }}
+            >
+              CURATED CASE STUDIES
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
+            <h2
+              className="font-heading"
+              style={{
+                fontSize: 'clamp(2.2rem, 4vw, 3.2rem)',
+                fontWeight: 800,
+                color: 'var(--text-main)',
+                lineHeight: 1.15
+              }}
+            >
+              FEATURED <span className="gold-gradient-text">WORKS</span>
+            </h2>
 
             {/* Category Filter Pills */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveFilter(cat)}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '9999px',
-                    fontSize: '0.78rem',
-                    fontFamily: 'var(--font-mono)',
-                    cursor: 'pointer',
-                    transition: 'all 0.25s ease',
-                    border: activeFilter === cat ? '1px solid var(--gold-primary)' : '1px solid var(--border-subtle)',
-                    background: activeFilter === cat ? 'rgba(217, 169, 104, 0.18)' : 'var(--surface-card)',
-                    color: activeFilter === cat ? 'var(--gold-primary)' : 'var(--text-muted)',
-                    boxShadow: activeFilter === cat ? '0 0 15px var(--gold-glow)' : 'none'
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+              {categories.map((cat) => {
+                const isActive = activeFilter === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveFilter(cat)}
+                    style={{
+                      padding: '7px 16px',
+                      borderRadius: '9999px',
+                      fontSize: '0.8rem',
+                      fontFamily: 'var(--font-mono)',
+                      cursor: 'pointer',
+                      transition: 'all 0.25s ease',
+                      border: isActive ? '1.5px solid var(--gold-light)' : '1px solid rgba(245, 240, 232, 0.1)',
+                      background: isActive ? 'linear-gradient(135deg, rgba(217, 169, 104, 0.25) 0%, rgba(14, 22, 36, 0.9) 100%)' : 'rgba(14, 22, 36, 0.7)',
+                      color: isActive ? 'var(--gold-light)' : 'var(--text-muted)',
+                      boxShadow: isActive ? '0 0 16px var(--gold-glow)' : 'none'
+                    }}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+
+              <a
+                href="#projects"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginLeft: '12px',
+                  color: 'var(--gold-light)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.8rem',
+                  textDecoration: 'none'
+                }}
+              >
+                <span>View All Projects</span>
+                <span>&rarr;</span>
+              </a>
             </div>
           </div>
         </div>
 
-        {/* Project Cards Grid */}
+        {/* PROJECT CARDS GRID (Exact match to reference visual) */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-            gap: '28px'
+            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+            gap: '24px'
           }}
+          className="projects-grid"
         >
           {filteredProjects.map((project) => (
             <div
@@ -95,48 +131,96 @@ export default function ProjectsSection({ projects = [] }) {
               className="glass-panel"
               style={{
                 borderRadius: '20px',
-                padding: '28px',
-                border: '1px solid var(--border-gold)',
-                background: 'var(--surface-card)',
+                padding: '16px',
+                border: '1px solid rgba(217, 169, 104, 0.22)',
+                background: 'rgba(14, 22, 36, 0.75)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                transition: 'all 0.35s var(--ease-cinematic)',
                 cursor: 'pointer',
-                position: 'relative',
-                overflow: 'hidden'
+                position: 'relative'
               }}
               onClick={() => setSelectedProject(project)}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-6px)';
-                e.currentTarget.style.borderColor = 'var(--border-gold-strong)';
-                e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px var(--gold-glow)';
+                e.currentTarget.style.borderColor = 'var(--gold-light)';
+                e.currentTarget.style.boxShadow = '0 25px 50px rgba(0, 0, 0, 0.6), 0 0 25px var(--gold-glow)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'var(--border-gold)';
+                e.currentTarget.style.borderColor = 'rgba(217, 169, 104, 0.22)';
                 e.currentTarget.style.boxShadow = '0 20px 40px -15px rgba(0, 0, 0, 0.4)';
               }}
             >
-              {/* Top Meta */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <span className="badge-navy">{project.category}</span>
-                  {project.featured && (
-                    <span className="badge-gold">
-                      <Sparkles size={12} />
-                      Featured
-                    </span>
-                  )}
-                </div>
+              {/* Image Preview Container */}
+              <div
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  height: '200px',
+                  borderRadius: '14px',
+                  overflow: 'hidden',
+                  marginBottom: '16px',
+                  background: '#0B1018'
+                }}
+              >
+                <img
+                  src={project.image || '/hero/project-analytics.jpg'}
+                  alt={project.title}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transition: 'transform 0.6s var(--ease-cinematic)'
+                  }}
+                  onError={(e) => {
+                    // Fallback to existing preview if custom image not found
+                    e.currentTarget.src = '/hero/project-analytics.jpg';
+                  }}
+                />
 
+                {/* Subtle dark gradient overlay */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(to top, rgba(11, 16, 24, 0.75) 0%, transparent 60%)',
+                    pointerEvents: 'none'
+                  }}
+                />
+
+                {/* Top-Right Glass External Link Icon */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: 'rgba(14, 22, 36, 0.85)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(217, 169, 104, 0.4)',
+                    color: 'var(--gold-light)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <ArrowUpRight size={15} />
+                </div>
+              </div>
+
+              {/* Title & Subtitle */}
+              <div style={{ flex: 1 }}>
                 <h3
                   className="font-heading"
                   style={{
-                    fontSize: '1.4rem',
+                    fontSize: '1.25rem',
                     fontWeight: 700,
                     color: 'var(--text-main)',
-                    marginBottom: '8px',
+                    marginBottom: '4px',
                     lineHeight: 1.3
                   }}
                 >
@@ -146,51 +230,36 @@ export default function ProjectsSection({ projects = [] }) {
                 <p
                   className="font-mono"
                   style={{
-                    fontSize: '0.75rem',
+                    fontSize: '0.74rem',
                     color: 'var(--gold-primary)',
                     letterSpacing: '0.04em',
                     marginBottom: '14px'
                   }}
                 >
-                  {project.subtitle}
+                  {project.subtitle || project.category}
                 </p>
-
-                <p
-                  style={{
-                    fontSize: '0.92rem',
-                    color: 'var(--text-muted)',
-                    lineHeight: 1.65,
-                    marginBottom: '20px'
-                  }}
-                >
-                  {project.description}
-                </p>
-
-                {/* Highlights List preview */}
-                {project.highlights && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '20px' }}>
-                    {project.highlights.slice(0, 2).map((h, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                        <span style={{ color: 'var(--gold-primary)', fontSize: '0.8rem', marginTop: '2px' }}>✦</span>
-                        <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{h}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
 
-              {/* Bottom: Tech Stack badges & action */}
-              <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
-                  {project.techStack.map((tech) => (
+              {/* Bottom: Tech Badges & Circular Gold Action Button */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingTop: '12px',
+                  borderTop: '1px solid rgba(245, 240, 232, 0.08)'
+                }}
+              >
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {project.techStack?.slice(0, 3).map((tech) => (
                     <span
                       key={tech}
                       style={{
-                        padding: '4px 10px',
+                        padding: '3px 8px',
                         borderRadius: '6px',
-                        background: 'var(--surface-elevated)',
-                        border: '1px solid var(--border-subtle)',
-                        fontSize: '0.72rem',
+                        background: 'rgba(20, 31, 50, 0.6)',
+                        border: '1px solid rgba(245, 240, 232, 0.08)',
+                        fontSize: '0.7rem',
                         fontFamily: 'var(--font-mono)',
                         color: 'var(--text-secondary)'
                       }}
@@ -200,29 +269,21 @@ export default function ProjectsSection({ projects = [] }) {
                   ))}
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span
-                    style={{
-                      fontSize: '0.78rem',
-                      fontFamily: 'var(--font-mono)',
-                      color: 'var(--gold-primary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    View Architecture Specs <ArrowUpRight size={14} />
-                  </span>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    {project.githubUrl && (
-                      <span
-                        title="Repository"
-                        style={{ color: 'var(--text-muted)', transition: 'color 0.2s ease' }}
-                      >
-                        <Github size={16} />
-                      </span>
-                    )}
-                  </div>
+                <div
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #F2CA8E 0%, #D9A968 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#0B1018',
+                    boxShadow: '0 2px 10px rgba(217, 169, 104, 0.4)',
+                    flexShrink: 0
+                  }}
+                >
+                  &rarr;
                 </div>
               </div>
             </div>
@@ -230,19 +291,15 @@ export default function ProjectsSection({ projects = [] }) {
         </div>
       </div>
 
-      {/* DETAIL MODAL */}
+      {/* FULL PROJECT DETAILS MODAL */}
       {selectedProject && (
         <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-title"
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 1000,
-            background: 'rgba(5, 8, 14, 0.88)',
+            background: 'rgba(11, 16, 24, 0.92)',
             backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
+            zIndex: 100,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -251,92 +308,101 @@ export default function ProjectsSection({ projects = [] }) {
           onClick={() => setSelectedProject(null)}
         >
           <div
-            className="glass-panel"
             style={{
+              position: 'relative',
               width: '100%',
-              maxWidth: '680px',
+              maxWidth: '820px',
               maxHeight: '90vh',
               overflowY: 'auto',
+              background: 'var(--surface-card)',
+              border: '1px solid var(--border-gold)',
               borderRadius: '24px',
               padding: '36px',
-              border: '1px solid var(--border-gold-strong)',
-              background: 'var(--surface-card-solid)',
-              boxShadow: '0 30px 80px rgba(0, 0, 0, 0.9), 0 0 50px var(--gold-glow)'
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px var(--gold-glow)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-              <div>
-                <span className="badge-gold" style={{ marginBottom: '8px' }}>
-                  {selectedProject.category}
-                </span>
-                <h3
-                  id="modal-title"
-                  className="font-heading"
-                  style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '6px' }}
-                >
-                  {selectedProject.title}
-                </h3>
-                <div className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--gold-primary)' }}>
-                  {selectedProject.subtitle}
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedProject(null)}
-                aria-label="Close project modal"
-                style={{
-                  background: 'var(--surface-elevated)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: '50%',
-                  width: '36px',
-                  height: '36px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--text-main)',
-                  cursor: 'pointer'
-                }}
-              >
-                <X size={18} />
-              </button>
+            <button
+              onClick={() => setSelectedProject(null)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(217, 169, 104, 0.1)',
+                border: '1px solid var(--border-gold)',
+                borderRadius: '50%',
+                width: '38px',
+                height: '38px',
+                color: 'var(--text-main)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <span className="badge-navy">{selectedProject.category}</span>
+              {selectedProject.featured && <span className="badge-gold">Featured System</span>}
             </div>
 
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.98rem', lineHeight: 1.75, marginBottom: '24px' }}>
+            <h3 className="font-heading" style={{ fontSize: '1.85rem', color: 'var(--text-main)', marginBottom: '6px' }}>
+              {selectedProject.title}
+            </h3>
+
+            <p className="font-mono" style={{ fontSize: '0.84rem', color: 'var(--gold-primary)', marginBottom: '20px' }}>
+              {selectedProject.subtitle}
+            </p>
+
+            <div style={{ borderRadius: '16px', overflow: 'hidden', marginBottom: '24px', border: '1px solid var(--border-subtle)' }}>
+              <img
+                src={selectedProject.image || '/hero/project-analytics.jpg'}
+                alt={selectedProject.title}
+                style={{ width: '100%', maxHeight: '350px', objectFit: 'cover' }}
+              />
+            </div>
+
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', lineHeight: 1.7, marginBottom: '24px' }}>
               {selectedProject.description}
             </p>
 
             {/* Architecture Highlights */}
-            <div style={{ marginBottom: '24px' }}>
-              <h4
-                className="font-mono"
-                style={{ fontSize: '0.82rem', letterSpacing: '0.1em', color: 'var(--gold-primary)', textTransform: 'uppercase', marginBottom: '12px' }}
-              >
-                Key Architecture &amp; Engineering Highlights
-              </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {selectedProject.highlights?.map((h, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                    <CheckCircle size={16} color="var(--gold-primary)" style={{ marginTop: '3px', flexShrink: 0 }} />
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.5 }}>{h}</span>
-                  </div>
-                ))}
+            {selectedProject.highlights && (
+              <div style={{ marginBottom: '24px' }}>
+                <h4 className="font-heading" style={{ fontSize: '1.05rem', color: 'var(--text-main)', marginBottom: '12px' }}>
+                  Architecture &amp; Key Highlights
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {selectedProject.highlights.map((h, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                      <CheckCircle2 size={16} color="var(--gold-primary)" style={{ marginTop: '3px', flexShrink: 0 }} />
+                      <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{h}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Tech Stack Matrix */}
+            {/* Tech Stack */}
             <div style={{ marginBottom: '28px' }}>
-              <h4
-                className="font-mono"
-                style={{ fontSize: '0.82rem', letterSpacing: '0.1em', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '10px' }}
-              >
-                Technology Stack
+              <h4 className="font-heading" style={{ fontSize: '1.05rem', color: 'var(--text-main)', marginBottom: '10px' }}>
+                Technologies &amp; Frameworks
               </h4>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {selectedProject.techStack.map((tech) => (
+                {selectedProject.techStack?.map((tech) => (
                   <span
                     key={tech}
-                    className="badge-gold"
-                    style={{ fontSize: '0.75rem', padding: '6px 12px' }}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: '8px',
+                      background: 'rgba(20, 31, 50, 0.7)',
+                      border: '1px solid var(--border-gold)',
+                      fontSize: '0.78rem',
+                      fontFamily: 'var(--font-mono)',
+                      color: 'var(--text-main)'
+                    }}
                   >
                     {tech}
                   </span>
@@ -344,25 +410,32 @@ export default function ProjectsSection({ projects = [] }) {
               </div>
             </div>
 
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: '12px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
-              <a
-                href={selectedProject.githubUrl || '#'}
-                target="_blank"
-                rel="noreferrer"
-                className="btn-gold"
-                style={{ flex: 1 }}
-              >
-                <Github size={16} />
-                <span>Inspect Repository</span>
-              </a>
-              <button
-                onClick={() => setSelectedProject(null)}
-                className="btn-ghost-luxury"
-                style={{ padding: '0.85rem 1.6rem' }}
-              >
-                Close
-              </button>
+            {/* Modal Actions */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
+              {selectedProject.liveUrl && (
+                <a
+                  href={selectedProject.liveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-gold"
+                  style={{ padding: '0.75rem 1.6rem', fontSize: '0.85rem' }}
+                >
+                  <span>Launch Live System</span>
+                  <ExternalLink size={14} />
+                </a>
+              )}
+              {selectedProject.githubUrl && (
+                <a
+                  href={selectedProject.githubUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-ghost-luxury"
+                  style={{ padding: '0.75rem 1.6rem', fontSize: '0.85rem' }}
+                >
+                  <Github size={15} />
+                  <span>Inspect Source Code</span>
+                </a>
+              )}
             </div>
           </div>
         </div>

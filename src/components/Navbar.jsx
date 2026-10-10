@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Menu, X, ArrowUpRight, Sun, Moon } from 'lucide-react';
+import { Menu, X, ArrowUpRight, Sun, Moon, Search, LayoutGrid } from 'lucide-react';
 
-export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme }) {
+export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onOpenSearch }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 40);
+      setScrolled(window.scrollY > 30);
 
       const sections = ['hero', 'about', 'projects', 'skills', 'experience', 'contact'];
-      const scrollPos = window.scrollY + 200;
+      const scrollPos = window.scrollY + 220;
 
       for (const section of sections) {
         const el = document.getElementById(section);
@@ -42,24 +42,13 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme }) {
     };
   }, [mobileMenuOpen]);
 
-  // Handle escape key to close mobile menu
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && mobileMenuOpen) {
-        setMobileMenuOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mobileMenuOpen]);
-
   const navLinks = [
-    { name: 'Identity', href: '#hero', id: 'hero' },
-    { name: 'Biography', href: '#about', id: 'about' },
-    { name: 'Selected Works', href: '#projects', id: 'projects' },
-    { name: 'Capabilities', href: '#skills', id: 'skills' },
-    { name: 'Trajectory', href: '#experience', id: 'experience' },
-    { name: 'Inquiries', href: '#contact', id: 'contact' }
+    { num: '01', name: 'Home', href: '#hero', id: 'hero' },
+    { num: '02', name: 'About', href: '#about', id: 'about' },
+    { num: '03', name: 'Projects', href: '#projects', id: 'projects' },
+    { num: '04', name: 'Skills', href: '#skills', id: 'skills' },
+    { num: '05', name: 'Experience', href: '#experience', id: 'experience' },
+    { num: '06', name: 'Contact', href: '#contact', id: 'contact' }
   ];
 
   return (
@@ -71,15 +60,16 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme }) {
         right: 0,
         zIndex: 90,
         transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-        padding: scrolled ? '12px 0' : '22px 0',
-        background: scrolled ? 'var(--surface-glass)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(20px)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(20px)' : 'none',
-        borderBottom: scrolled ? '1px solid var(--border-subtle)' : '1px solid transparent'
+        padding: scrolled ? '10px 0' : '18px 0',
+        background: scrolled ? 'rgba(11, 16, 24, 0.88)' : 'rgba(11, 16, 24, 0.4)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: scrolled ? '1px solid rgba(217, 169, 104, 0.2)' : '1px solid rgba(245, 240, 232, 0.05)'
       }}
     >
-      <div className="container-luxury" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* Brand Crest */}
+      <div className="container-luxury" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+        
+        {/* BRAND LOGO: Monogram + Editorial Name */}
         <a
           href="#hero"
           style={{
@@ -87,37 +77,47 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme }) {
             alignItems: 'center',
             gap: '12px',
             textDecoration: 'none',
-            color: 'inherit'
+            color: 'inherit',
+            flexShrink: 0
           }}
         >
+          {/* Gold UV Monogram Crest */}
           <div
             style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              border: '1px solid var(--border-gold)',
-              background: 'linear-gradient(135deg, rgba(217, 169, 104, 0.2), var(--surface-card))',
+              width: '42px',
+              height: '42px',
+              borderRadius: '12px',
+              border: '1.5px solid var(--gold-primary)',
+              background: 'linear-gradient(135deg, rgba(217, 169, 104, 0.25) 0%, rgba(14, 22, 36, 0.9) 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontFamily: 'var(--font-editorial)',
-              fontWeight: 700,
-              fontSize: '1.05rem',
-              color: 'var(--text-main)',
-              boxShadow: '0 0 15px var(--gold-glow)'
+              boxShadow: '0 0 20px var(--gold-glow)'
             }}
           >
-            UV
+            <span
+              style={{
+                fontFamily: 'Cinzel, Georgia, serif',
+                fontSize: '1.15rem',
+                fontWeight: 700,
+                color: 'var(--gold-light)',
+                letterSpacing: '-0.02em',
+                lineHeight: 1
+              }}
+            >
+              UV
+            </span>
           </div>
+
           <div>
             <div
               className="font-heading"
               style={{
-                fontSize: '1.02rem',
+                fontSize: '1.05rem',
+                fontWeight: 800,
                 letterSpacing: '0.08em',
-                fontWeight: 700,
                 color: 'var(--text-main)',
-                lineHeight: 1.2
+                lineHeight: 1.15
               }}
             >
               VANOJAN
@@ -125,194 +125,263 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme }) {
             <div
               className="font-mono"
               style={{
-                fontSize: '0.64rem',
-                letterSpacing: '0.14em',
+                fontSize: '0.62rem',
                 color: 'var(--gold-primary)',
-                textTransform: 'uppercase'
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                fontWeight: 500
               }}
             >
-              Solutions Architect
+              SOLUTIONS ARCHITECT
             </div>
           </div>
         </a>
 
-        {/* Desktop Nav Links */}
+        {/* CENTER NAVIGATION PILL (DESKTOP) */}
         <nav
+          className="desktop-nav-pill"
           style={{
-            display: 'none',
+            display: 'flex',
             alignItems: 'center',
-            gap: '20px'
+            background: 'rgba(14, 21, 34, 0.75)',
+            border: '1px solid rgba(217, 169, 104, 0.25)',
+            borderRadius: '9999px',
+            padding: '4px 8px',
+            boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
           }}
-          className="desktop-nav"
         >
-          {navLinks.map((link, idx) => {
+          {navLinks.map((link) => {
             const isActive = activeSection === link.id;
             return (
               <a
-                key={link.name}
+                key={link.id}
                 href={link.href}
                 style={{
-                  fontSize: '0.85rem',
-                  fontFamily: 'var(--font-heading)',
-                  letterSpacing: '0.02em',
-                  fontWeight: isActive ? 600 : 400,
-                  color: isActive ? 'var(--gold-primary)' : 'var(--text-secondary)',
-                  textDecoration: 'none',
-                  transition: 'all 0.25s ease',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  position: 'relative',
-                  padding: '4px 0',
-                  whiteSpace: 'nowrap'
+                  padding: '8px 16px',
+                  borderRadius: '9999px',
+                  fontSize: '0.84rem',
+                  fontWeight: isActive ? 600 : 500,
+                  color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
+                  textDecoration: 'none',
+                  background: isActive ? 'rgba(217, 169, 104, 0.16)' : 'transparent',
+                  border: isActive ? '1px solid rgba(217, 169, 104, 0.4)' : '1px solid transparent',
+                  boxShadow: isActive ? '0 0 16px rgba(217, 169, 104, 0.25)' : 'none',
+                  transition: 'all 0.25s ease'
                 }}
               >
-                <span style={{ fontSize: '0.65rem', color: 'var(--gold-primary)', fontFamily: 'var(--font-mono)' }}>
-                  0{idx + 1}
+                <span
+                  className="font-mono"
+                  style={{
+                    fontSize: '0.68rem',
+                    color: isActive ? 'var(--gold-primary)' : 'rgba(217, 169, 104, 0.55)',
+                    fontWeight: 600
+                  }}
+                >
+                  {link.num}
                 </span>
-                <span>{link.name}</span>
-                {isActive && (
-                  <span
-                    style={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: '2px',
-                      background: 'var(--gold-primary)',
-                      borderRadius: '2px'
-                    }}
-                  />
-                )}
+                <span className="font-sans">{link.name}</span>
               </a>
             );
           })}
         </nav>
 
-        {/* Action Controls */}
+        {/* RIGHT ACTION BUTTONS */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Theme Toggle (Dark / Light) */}
+          
+          {/* Quick Search Button */}
+          {onOpenSearch && (
+            <button
+              onClick={onOpenSearch}
+              title="Search Portfolio"
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                background: 'rgba(14, 22, 36, 0.8)',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--text-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-gold)';
+                e.currentTarget.style.color = 'var(--gold-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }}
+            >
+              <Search size={16} />
+            </button>
+          )}
+
+          {/* Luxury Theme Toggle Slider */}
           <button
             onClick={onToggleTheme}
-            title={theme === 'light' ? 'Switch to Dark Cinematic Mode' : 'Switch to Warm Ivory Light Mode'}
+            aria-label="Toggle Theme"
+            title={theme === 'dark' ? 'Switch to Ivory Light Mode' : 'Switch to Midnight Dark Mode'}
             style={{
-              background: 'var(--surface-card)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '8px',
-              padding: '8px 10px',
+              position: 'relative',
+              width: '54px',
+              height: '30px',
+              borderRadius: '9999px',
+              background: 'rgba(14, 22, 36, 0.85)',
+              border: '1px solid var(--border-gold)',
               cursor: 'pointer',
+              padding: '2px',
+              display: 'flex',
+              alignItems: 'center',
+              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)'
+            }}
+          >
+            <div
+              style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #F2CA8E 0%, #D9A968 100%)',
+                boxShadow: '0 2px 8px rgba(217, 169, 104, 0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#0B1018',
+                transform: theme === 'dark' ? 'translateX(22px)' : 'translateX(0px)',
+                transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+              }}
+            >
+              {theme === 'dark' ? <Moon size={13} strokeWidth={2.5} /> : <Sun size={13} strokeWidth={2.5} />}
+            </div>
+          </button>
+
+          {/* Consultation Button */}
+          <a
+            href="#contact"
+            className="btn-gold consultation-btn"
+            style={{
+              padding: '0.65rem 1.35rem',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              gap: '6px'
+            }}
+          >
+            <span>Consultation</span>
+            <ArrowUpRight size={15} />
+          </a>
+
+          {/* Admin / Menu Grid Button */}
+          <button
+            onClick={onOpenAdmin}
+            title="Management Console (Ctrl+Shift+A)"
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              background: 'rgba(14, 22, 36, 0.8)',
+              border: '1px solid var(--border-gold)',
               color: 'var(--gold-primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'all 0.25s ease'
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
             }}
-            aria-label="Toggle visual theme"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(217, 169, 104, 0.15)';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(14, 22, 36, 0.8)';
+              e.currentTarget.style.transform = 'none';
+            }}
           >
-            {theme === 'light' ? <Moon size={15} /> : <Sun size={15} />}
+            <LayoutGrid size={16} />
           </button>
 
-          {/* Discrete Admin Portal Lock */}
+          {/* Mobile Hamburger Toggle */}
           <button
-            onClick={onOpenAdmin}
-            title="Executive Admin Dashboard"
-            style={{
-              background: 'var(--surface-card)',
-              border: '1px solid var(--border-gold)',
-              borderRadius: '8px',
-              padding: '8px 12px',
-              cursor: 'pointer',
-              color: 'var(--gold-primary)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '0.75rem',
-              fontFamily: 'var(--font-mono)',
-              transition: 'all 0.25s ease'
-            }}
-          >
-            <Shield size={14} />
-            <span className="hidden-mobile">ADMIN</span>
-          </button>
-
-          {/* Contact CTA */}
-          <a
-            href="#contact"
-            className="btn-gold hidden-mobile"
-            style={{
-              padding: '0.6rem 1.3rem',
-              fontSize: '0.82rem'
-            }}
-          >
-            <span>Consultation</span>
-            <ArrowUpRight size={14} />
-          </a>
-
-          {/* Mobile menu trigger */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-main)',
-              cursor: 'pointer',
-              display: 'flex',
-              padding: '6px'
-            }}
-            className="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-label="Toggle Navigation"
-            aria-expanded={mobileMenuOpen}
+            className="mobile-nav-toggle"
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              border: '1px solid var(--border-gold)',
+              background: 'var(--surface-card)',
+              color: 'var(--text-main)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
           >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* MOBILE DRAWER OVERLAY */}
       {mobileMenuOpen && (
         <div
-          className="glass-panel"
           style={{
-            margin: '12px 16px 0',
-            padding: '24px',
-            borderRadius: '16px',
-            border: '1px solid var(--border-gold)',
+            position: 'fixed',
+            top: '70px',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(11, 16, 24, 0.98)',
+            backdropFilter: 'blur(24px)',
+            zIndex: 85,
+            padding: '30px 20px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
-            maxHeight: 'calc(100vh - 100px)',
-            overflowY: 'auto'
+            justifyContent: 'space-between',
+            borderTop: '1px solid var(--border-gold)'
           }}
         >
-          {navLinks.map((link, idx) => (
-            <a
-              key={link.name}
-              href={link.href}
-              onClick={() => setMobileMenuOpen(false)}
-              style={{
-                color: 'var(--text-main)',
-                textDecoration: 'none',
-                fontSize: '1.02rem',
-                fontFamily: 'var(--font-heading)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}
-            >
-              <span style={{ color: 'var(--gold-primary)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
-                0{idx + 1} //
-              </span>
-              <span>{link.name}</span>
-            </a>
-          ))}
-          <div style={{ paddingTop: '14px', borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {navLinks.map((link) => (
+              <a
+                key={link.id}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px',
+                  padding: '14px 18px',
+                  borderRadius: '12px',
+                  textDecoration: 'none',
+                  color: activeSection === link.id ? 'var(--gold-light)' : 'var(--text-main)',
+                  background: activeSection === link.id ? 'rgba(217, 169, 104, 0.12)' : 'rgba(20, 31, 50, 0.4)',
+                  border: '1px solid var(--border-gold)',
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: '1.05rem',
+                  fontWeight: 600
+                }}
+              >
+                <span className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--gold-primary)' }}>
+                  {link.num}
+                </span>
+                <span>{link.name}</span>
+              </a>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
             <a
               href="#contact"
               onClick={() => setMobileMenuOpen(false)}
               className="btn-gold"
-              style={{ flex: 1, padding: '0.75rem' }}
+              style={{ width: '100%', padding: '0.9rem', fontSize: '0.95rem' }}
             >
-              Initiate Contact
+              <span>Consultation ↗</span>
             </a>
             <button
               onClick={() => {
@@ -320,25 +389,29 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme }) {
                 onOpenAdmin();
               }}
               className="btn-ghost-luxury"
-              style={{ padding: '0.75rem 1.2rem' }}
+              style={{ width: '100%', padding: '0.8rem', fontSize: '0.85rem' }}
             >
-              Admin
+              <span>Admin Console</span>
             </button>
           </div>
         </div>
       )}
 
       <style>{`
-        @media (min-width: 920px) {
-          .desktop-nav {
-            display: flex !important;
-          }
-          .mobile-menu-btn {
+        .desktop-nav-pill {
+          display: flex;
+        }
+        .mobile-nav-toggle {
+          display: none;
+        }
+        @media (max-width: 960px) {
+          .desktop-nav-pill {
             display: none !important;
           }
-        }
-        @media (max-width: 640px) {
-          .hidden-mobile {
+          .mobile-nav-toggle {
+            display: flex !important;
+          }
+          .consultation-btn {
             display: none !important;
           }
         }

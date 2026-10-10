@@ -395,7 +395,7 @@ body {
 /* Responsive Containers */
 .container-luxury {
   width: 100%;
-  max-width: 1240px;
+  max-width: 1280px;
   margin-left: auto;
   margin-right: auto;
   padding-left: 1.5rem;
@@ -407,4 +407,240 @@ body {
     padding-left: 1.15rem;
     padding-right: 1.15rem;
   }
+}
+
+/* ==========================================================
+   ARCHITECTURAL GLOWING PHOTO FRAME (REFERENCE SPECIFICATION)
+   ========================================================== */
+.arch-photo-container {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.arch-frame {
+  position: relative;
+  border-radius: 28px;
+  padding: 10px;
+  background: linear-gradient(145deg, rgba(217, 169, 104, 0.35) 0%, rgba(20, 40, 59, 0.4) 40%, rgba(11, 16, 24, 0.9) 100%);
+  border: 1.5px solid rgba(217, 169, 104, 0.45);
+  box-shadow: 
+    0 30px 70px -15px rgba(0, 0, 0, 0.9),
+    0 0 45px -8px rgba(217, 169, 104, 0.35),
+    inset 0 0 30px rgba(217, 169, 104, 0.12);
+  transition: all 0.5s var(--ease-cinematic);
+}
+
+.arch-frame:hover {
+  transform: translateY(-4px) scale(1.01);
+  border-color: rgba(217, 169, 104, 0.75);
+  box-shadow: 
+    0 40px 90px -15px rgba(0, 0, 0, 0.95),
+    0 0 60px -5px rgba(217, 169, 104, 0.5),
+    inset 0 0 40px rgba(217, 169, 104, 0.2);
+}
+
+.arch-inner-box {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #0B1018;
+}
+
+/* Architectural Corner Notches */
+.arch-corner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  z-index: 20;
+  pointer-events: none;
+}
+.arch-corner-tl {
+  top: 4px;
+  left: 4px;
+  border-top: 2.5px solid var(--gold-light);
+  border-left: 2.5px solid var(--gold-light);
+  border-top-left-radius: 12px;
+}
+.arch-corner-tr {
+  top: 4px;
+  right: 4px;
+  border-top: 2.5px solid var(--gold-light);
+  border-right: 2.5px solid var(--gold-light);
+  border-top-right-radius: 12px;
+}
+.arch-corner-bl {
+  bottom: 4px;
+  left: 4px;
+  border-bottom: 2.5px solid var(--gold-light);
+  border-left: 2.5px solid var(--gold-light);
+  border-bottom-left-radius: 12px;
+}
+.arch-corner-br {
+  bottom: 4px;
+  right: 4px;
+  border-bottom: 2.5px solid var(--gold-light);
+  border-right: 2.5px solid var(--gold-light);
+  border-bottom-right-radius: 12px;
+}
+
+/* Vertical Architectural Markings */
+.arch-side-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
+  color: var(--gold-primary);
+  opacity: 0.75;
+  pointer-events: none;
+  z-index: 12;
+  white-space: nowrap;
+}
+
+/* ==========================================================
+   ORBITAL 3D RINGS & CELESTIAL EFFECTS
+   ========================================================== */
+.orbital-container {
+  position: absolute;
+  inset: -15%;
+  pointer-events: none;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orbital-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed rgba(217, 169, 104, 0.22);
+  transform-style: preserve-3d;
+  animation: rotateOrbital 24s linear infinite;
+}
+
+.orbital-ring-1 {
+  width: 480px;
+  height: 480px;
+  border-color: rgba(217, 169, 104, 0.28);
+  transform: rotateX(68deg) rotateY(15deg);
+}
+
+.orbital-ring-2 {
+  width: 580px;
+  height: 580px;
+  border-color: rgba(56, 189, 248, 0.2);
+  transform: rotateX(72deg) rotateY(-22deg);
+  animation-duration: 34s;
+  animation-direction: reverse;
+}
+
+@keyframes rotateOrbital {
+  0% { transform: rotateX(68deg) rotateZ(0deg); }
+  100% { transform: rotateX(68deg) rotateZ(360deg); }
+}
+
+/* ==========================================================
+   TECHNOLOGY RIBBON SHOWCASE
+   ========================================================== */
+.tech-ribbon-bar {
+  background: var(--surface-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-gold);
+  border-bottom: 1px solid var(--border-gold);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(217, 169, 104, 0.15);
+  padding: 18px 0;
+  position: relative;
+  z-index: 20;
+}
+
+.tech-ribbon-scroll {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.tech-ribbon-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.tech-ribbon-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  background: rgba(14, 22, 36, 0.7);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.tech-ribbon-item:hover {
+  background: rgba(217, 169, 104, 0.14);
+  border-color: var(--gold-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px var(--gold-glow);
+}
+
+/* ==========================================================
+   HORIZONTAL & VERTICAL TIMELINE STYLES
+   ========================================================== */
+.timeline-track-h {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  padding-top: 60px;
+}
+
+.timeline-line-h {
+  position: absolute;
+  top: 24px;
+  left: 5%;
+  right: 5%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--gold-primary) 15%, var(--gold-light) 50%, var(--gold-primary) 85%, transparent 100%);
+  box-shadow: 0 0 12px var(--gold-glow);
+  z-index: 1;
+}
+
+.timeline-node-h {
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #0B1018;
+  border: 2px solid var(--gold-primary);
+  box-shadow: 0 0 15px var(--gold-glow);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeline-node-h::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold-light);
+}
+
+/* Hand-drawn Script Annotation */
+.script-annotation {
+  font-family: 'Cinzel', cursive, serif;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--gold-light);
+  opacity: 0.9;
+  letter-spacing: 0.04em;
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, ArrowUp } from 'lucide-react';
+import { ArrowUp, Shield } from 'lucide-react';
 
 export default function Footer({ onOpenAdmin, profile }) {
   const scrollToTop = () => {
@@ -10,135 +10,130 @@ export default function Footer({ onOpenAdmin, profile }) {
     <footer
       style={{
         position: 'relative',
-        padding: '80px 0 40px',
-        borderTop: '1px solid var(--border-subtle)',
-        background: 'var(--surface-card)',
+        padding: '60px 0 35px',
+        borderTop: '1px solid rgba(217, 169, 104, 0.2)',
+        background: 'rgba(11, 16, 24, 0.95)',
         zIndex: 10
       }}
     >
       <div className="container-luxury">
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: '40px',
-            marginBottom: '60px'
-          }}
-        >
-          {/* Brand Col */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-gold)',
-                  background: 'linear-gradient(135deg, rgba(217, 169, 104, 0.2), var(--surface-card))',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: 'var(--font-editorial)',
-                  fontWeight: 700,
-                  fontSize: '0.95rem',
-                  color: 'var(--text-main)'
-                }}
-              >
-                UV
-              </div>
-              <span className="font-heading" style={{ fontSize: '1.05rem', fontWeight: 700, letterSpacing: '0.04em', color: 'var(--text-main)' }}>
-                UTHAYAGUNASINGAM VANOJAN
-              </span>
-            </div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.7, maxWidth: '340px' }}>
-              Full-Stack Software Engineer &amp; Solutions Architect. Art-directed around authentic personal portrait photography with dark cinematic luxury aesthetics.
-            </p>
-          </div>
-
-          {/* Sitemaps */}
-          <div>
-            <div className="font-mono" style={{ fontSize: '0.78rem', color: 'var(--gold-primary)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '16px' }}>
-              Navigation Architecture
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <a href="#hero" style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', textDecoration: 'none', transition: 'color 0.2s' }}>Identity &amp; Vision</a>
-              <a href="#about" style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', textDecoration: 'none', transition: 'color 0.2s' }}>Biography &amp; Ethos</a>
-              <a href="#projects" style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', textDecoration: 'none', transition: 'color 0.2s' }}>Selected Systems</a>
-              <a href="#skills" style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', textDecoration: 'none', transition: 'color 0.2s' }}>Technical Mastery</a>
-              <a href="#experience" style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', textDecoration: 'none', transition: 'color 0.2s' }}>Education Trajectory</a>
-              <a href="#contact" style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', textDecoration: 'none', transition: 'color 0.2s' }}>Initiate Dialogue</a>
-            </div>
-          </div>
-
-          {/* Admin & Security */}
-          <div>
-            <div className="font-mono" style={{ fontSize: '0.78rem', color: 'var(--gold-primary)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '16px' }}>
-              Management Portal
-            </div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: '14px' }}>
-              Secure administrative access for real-time portfolio data mutation, message review, analytics, and project editing.
-            </p>
-            <button
-              onClick={onOpenAdmin}
-              className="btn-ghost-luxury"
-              style={{
-                padding: '0.65rem 1.2rem',
-                fontSize: '0.78rem',
-                fontFamily: 'var(--font-mono)'
-              }}
-            >
-              <Shield size={14} color="var(--gold-primary)" />
-              <span>ACCESS ADMIN DASHBOARD</span>
-            </button>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', fontFamily: 'var(--font-mono)', marginTop: '8px' }}>
-              Shortcut: press <kbd style={{ background: 'var(--surface-elevated)', padding: '2px 6px', borderRadius: '4px', color: 'var(--gold-primary)' }}>Ctrl+Shift+A</kbd>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Credits & Back to Top */}
-        <div
-          style={{
-            paddingTop: '32px',
-            borderTop: '1px solid var(--border-subtle)',
             display: 'flex',
             flexWrap: 'wrap',
             justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '16px'
+            gap: '24px',
+            marginBottom: '40px'
           }}
         >
-          <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
-            &copy; {new Date().getFullYear()} Uthayagunasingam Vanojan. All rights reserved. Built with React &amp; Three.js.
+          {/* Brand Logo & Tagline */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                border: '1.5px solid var(--gold-primary)',
+                background: 'linear-gradient(135deg, rgba(217, 169, 104, 0.25) 0%, rgba(14, 22, 36, 0.9) 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'Cinzel, Georgia, serif',
+                fontWeight: 700,
+                fontSize: '1.05rem',
+                color: 'var(--gold-light)'
+              }}
+            >
+              UV
+            </div>
+            <div>
+              <span className="font-heading" style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '0.06em', color: 'var(--text-main)' }}>
+                VANOJAN
+              </span>
+              <div className="font-mono" style={{ fontSize: '0.62rem', color: 'var(--gold-primary)', letterSpacing: '0.15em' }}>
+                SOLUTIONS ARCHITECT &bull; LEAD ENGINEER
+              </div>
+            </div>
           </div>
 
+          {/* Quick Nav Links */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center' }}>
+            <a href="#hero" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', textDecoration: 'none', transition: 'color 0.2s' }}>Home</a>
+            <a href="#about" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', textDecoration: 'none', transition: 'color 0.2s' }}>About</a>
+            <a href="#projects" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', textDecoration: 'none', transition: 'color 0.2s' }}>Projects</a>
+            <a href="#skills" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', textDecoration: 'none', transition: 'color 0.2s' }}>Skills</a>
+            <a href="#experience" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', textDecoration: 'none', transition: 'color 0.2s' }}>Experience</a>
+            <a href="#contact" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', textDecoration: 'none', transition: 'color 0.2s' }}>Contact</a>
+          </div>
+
+          {/* Back to top */}
           <button
             onClick={scrollToTop}
-            title="Back to Top"
+            title="Return to Top"
             style={{
-              background: 'var(--surface-elevated)',
-              border: '1px solid var(--border-gold)',
-              borderRadius: '50%',
               width: '40px',
               height: '40px',
+              borderRadius: '50%',
+              background: 'rgba(14, 22, 36, 0.8)',
+              border: '1px solid var(--border-gold)',
+              color: 'var(--gold-primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--gold-primary)',
               cursor: 'pointer',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.25s ease'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--gold-primary)';
-              e.currentTarget.style.color = '#0B1018';
+              e.currentTarget.style.background = 'rgba(217, 169, 104, 0.2)';
+              e.currentTarget.style.transform = 'translateY(-3px)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'var(--surface-elevated)';
-              e.currentTarget.style.color = 'var(--gold-primary)';
+              e.currentTarget.style.background = 'rgba(14, 22, 36, 0.8)';
+              e.currentTarget.style.transform = 'none';
             }}
           >
             <ArrowUp size={16} />
           </button>
+        </div>
+
+        {/* Bottom Bar: Copyright & Admin Portal Shortcut */}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingTop: '24px',
+            borderTop: '1px solid rgba(245, 240, 232, 0.06)',
+            gap: '16px'
+          }}
+        >
+          <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
+            &copy; {new Date().getFullYear()} Uthayagunasingam Vanojan. All rights reserved.
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button
+              onClick={onOpenAdmin}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                fontSize: '0.74rem',
+                fontFamily: 'var(--font-mono)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold-primary)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+            >
+              <Shield size={12} />
+              <span>Admin Console</span>
+            </button>
+          </div>
         </div>
       </div>
     </footer>
