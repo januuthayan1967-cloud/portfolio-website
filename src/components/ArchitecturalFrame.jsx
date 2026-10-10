@@ -248,7 +248,7 @@ export default function ArchitecturalFrame({
       )}
 
       {/* Children Elements (Overlays like bottom nameplate) */}
-      <div style={{ position: 'relative', zIndex: 20 }}>
+      <div style={{ position: 'absolute', inset: 0, zIndex: 25, pointerEvents: 'none' }}>
         {children}
       </div>
     </div>

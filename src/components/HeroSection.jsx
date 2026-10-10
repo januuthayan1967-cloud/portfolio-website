@@ -188,7 +188,7 @@ export default function HeroSection({ profile }) {
                   gap: '4px'
                 }}
               >
-                <span>📍</span> {location}
+                <span>📍</span> SRI LANKA, EARTH
               </span>
             </div>
 
@@ -196,11 +196,11 @@ export default function HeroSection({ profile }) {
             <div>
               <h1
                 style={{
-                  fontFamily: "'Cinzel', 'Sora', sans-serif",
-                  fontSize: 'clamp(2.7rem, 5.2vw, 4.6rem)',
-                  lineHeight: 1.05,
+                  fontFamily: "'Sora', 'Plus Jakarta Sans', sans-serif",
+                  fontSize: 'clamp(2.9rem, 5.4vw, 4.8rem)',
+                  lineHeight: 1.06,
                   fontWeight: 800,
-                  letterSpacing: '-0.025em',
+                  letterSpacing: '-0.03em',
                   color: '#FFFFFF',
                   marginBottom: '16px'
                 }}
@@ -208,15 +208,15 @@ export default function HeroSection({ profile }) {
                 Architectural<br />
                 <span
                   style={{
-                    background: 'linear-gradient(135deg, #FFF1D6 0%, #D9A968 45%, #B58238 100%)',
+                    background: 'linear-gradient(135deg, #FFF5DE 0%, #E5BA7D 40%, #D9A968 70%, #B88544 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    filter: 'drop-shadow(0 0 25px rgba(217, 169, 104, 0.4))'
+                    filter: 'drop-shadow(0 0 28px rgba(217, 169, 104, 0.45))'
                   }}
                 >
                   Precision.
                 </span><br />
-                <span>Cinematic Depth.</span>
+                <span style={{ color: 'var(--text-main)' }}>Cinematic Depth.</span>
               </h1>
 
               <p
@@ -646,7 +646,8 @@ export default function HeroSection({ profile }) {
                   backdropFilter: 'blur(16px)',
                   border: '1px solid rgba(217, 169, 104, 0.45)',
                   boxShadow: '0 15px 35px rgba(0, 0, 0, 0.8), 0 0 20px var(--gold-glow)',
-                  zIndex: 25
+                  zIndex: 25,
+                  pointerEvents: 'auto'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>

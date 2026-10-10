@@ -263,7 +263,8 @@ export default function AboutSection({ profile }) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  zIndex: 25
+                  zIndex: 25,
+                  pointerEvents: 'auto'
                 }}
               >
                 <div>
