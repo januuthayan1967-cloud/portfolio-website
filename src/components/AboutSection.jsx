@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowUpRight, MessageSquare, Sparkles, CheckCircle2, FileText, X } from 'lucide-react';
+import ArchitecturalFrame from './ArchitecturalFrame';
 
 export default function AboutSection({ profile }) {
   const {
@@ -239,72 +240,43 @@ export default function AboutSection({ profile }) {
 
           {/* RIGHT: PORTRAIT PHOTOGRAPH (image1.jpeg) IN ARCHITECTURAL FRAME */}
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <div className="arch-photo-container">
-              <div className="arch-frame">
-                {/* 4 Architectural Golden Corner Notches */}
-                <div className="arch-corner arch-corner-tl" />
-                <div className="arch-corner arch-corner-tr" />
-                <div className="arch-corner arch-corner-bl" />
-                <div className="arch-corner arch-corner-br" />
-
-                {/* Inner Image */}
-                <div className="arch-inner-box">
-                  <img
-                    src={aboutImage}
-                    alt={name}
-                    style={{
-                      width: '100%',
-                      height: 'auto',
-                      aspectRatio: '9 / 13',
-                      objectFit: 'cover',
-                      display: 'block',
-                      filter: 'contrast(1.02) saturate(1.02)'
-                    }}
-                    loading="lazy"
-                  />
-
-                  {/* Vignette */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'linear-gradient(to top, rgba(11, 16, 24, 0.85) 0%, transparent 60%)',
-                      pointerEvents: 'none'
-                    }}
-                  />
-                </div>
-
-                {/* Overlay Badge at Bottom of Frame */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: '18px',
-                    left: '18px',
-                    right: '18px',
-                    padding: '12px 16px',
-                    borderRadius: '14px',
-                    background: 'rgba(14, 22, 36, 0.9)',
-                    backdropFilter: 'blur(16px)',
-                    border: '1px solid rgba(217, 169, 104, 0.35)',
-                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.6)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    zIndex: 20
-                  }}
-                >
-                  <div>
-                    <div className="font-heading" style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                      FULL-STACK ENGINEER
-                    </div>
-                    <div className="font-mono" style={{ fontSize: '0.64rem', color: 'var(--gold-primary)', letterSpacing: '0.1em' }}>
-                      SOLUTIONS ARCHITECT
-                    </div>
+            <ArchitecturalFrame
+              imageSrc={aboutImage}
+              altText={name}
+              imagePosition="center 20%"
+              imageScale={1.08}
+              sideText="FULL-STACK ENGINEER • SOLUTIONS ARCHITECT"
+            >
+              {/* Overlay Badge at Bottom of Frame */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '18px',
+                  left: '18px',
+                  right: '18px',
+                  padding: '12px 18px',
+                  borderRadius: '16px',
+                  background: 'rgba(14, 22, 36, 0.92)',
+                  backdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(217, 169, 104, 0.45)',
+                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.7), 0 0 15px var(--gold-glow)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  zIndex: 25
+                }}
+              >
+                <div>
+                  <div className="font-heading" style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '0.04em' }}>
+                    FULL-STACK ENGINEER
                   </div>
-                  <Sparkles size={16} color="var(--gold-primary)" />
+                  <div className="font-mono" style={{ fontSize: '0.62rem', color: 'var(--gold-primary)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                    SOLUTIONS ARCHITECT
+                  </div>
                 </div>
+                <Sparkles size={16} color="var(--gold-primary)" />
               </div>
-            </div>
+            </ArchitecturalFrame>
           </div>
         </div>
       </div>

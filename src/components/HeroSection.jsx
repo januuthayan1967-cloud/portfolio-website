@@ -6,18 +6,16 @@ import {
   Twitter, 
   Mail, 
   Play, 
-  Briefcase, 
-  Layers, 
-  Code2, 
-  Star, 
-  Compass, 
-  Cpu, 
   Sparkles, 
-  ChevronLeft, 
-  ChevronRight,
-  Globe2,
-  X
+  Code2, 
+  Layers, 
+  Cpu, 
+  X,
+  Briefcase,
+  Star
 } from 'lucide-react';
+import ArchitecturalFrame from './ArchitecturalFrame';
+import HeroOrbitalRings from './HeroOrbitalRings';
 
 export default function HeroSection({ profile }) {
   const {
@@ -34,32 +32,24 @@ export default function HeroSection({ profile }) {
     twitter = "https://twitter.com"
   } = profile || {};
 
-  // Active discipline mode toggle on the right
   const [activeMode, setActiveMode] = useState('Develop');
-  const [activeThumb, setActiveThumb] = useState(0);
   const [showVideoModal, setShowVideoModal] = useState(false);
 
-  // Micro-parallax on mouse movement for portrait
+  // Micro-parallax on mouse movement
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const portraitRef = useRef(null);
+  const containerRef = useRef(null);
 
   const handleMouseMove = (e) => {
-    if (!portraitRef.current || window.matchMedia('(pointer: coarse)').matches) return;
-    const rect = portraitRef.current.getBoundingClientRect();
+    if (!containerRef.current || window.matchMedia('(pointer: coarse)').matches) return;
+    const rect = containerRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setTilt({ x: x * 6, y: -y * 6 });
+    setTilt({ x: x * 5, y: -y * 5 });
   };
 
   const handleMouseLeave = () => {
     setTilt({ x: 0, y: 0 });
   };
-
-  const thumbnails = [
-    { src: heroImage, title: 'Portrait View' },
-    { src: '/hero/project-analytics.jpg', title: 'Workstation Setup' },
-    { src: '/hero/image1.jpeg', title: 'Architectural View' }
-  ];
 
   const modes = [
     { id: 'Design', icon: <Sparkles size={14} />, label: 'Design' },
@@ -71,11 +61,12 @@ export default function HeroSection({ profile }) {
   return (
     <section
       id="hero"
+      ref={containerRef}
       style={{
         position: 'relative',
         minHeight: '100vh',
-        paddingTop: '130px',
-        paddingBottom: '70px',
+        paddingTop: '120px',
+        paddingBottom: '60px',
         display: 'flex',
         alignItems: 'center',
         overflow: 'hidden'
@@ -83,34 +74,58 @@ export default function HeroSection({ profile }) {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Cinematic Ambient Glow matching photograph lighting */}
-      <div className="ambient-glow-gold" style={{ top: '10%', left: '30%', opacity: 0.65 }} />
-      <div className="ambient-glow-navy" style={{ top: '20%', right: '-5%', opacity: 0.75 }} />
+      {/* Cinematic Ambient Atmosphere matching reference */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: '12%',
+          left: '32%',
+          width: '580px',
+          height: '580px',
+          background: 'radial-gradient(circle, rgba(217, 169, 104, 0.16) 0%, rgba(20, 40, 59, 0.22) 55%, transparent 75%)',
+          filter: 'blur(80px)',
+          pointerEvents: 'none',
+          zIndex: 0
+        }} 
+      />
+      <div 
+        style={{
+          position: 'absolute',
+          bottom: '5%',
+          right: '5%',
+          width: '520px',
+          height: '520px',
+          background: 'radial-gradient(circle, rgba(20, 40, 59, 0.4) 0%, rgba(11, 16, 24, 0) 70%)',
+          filter: 'blur(90px)',
+          pointerEvents: 'none',
+          zIndex: 0
+        }} 
+      />
 
       <div className="container-luxury" style={{ position: 'relative', zIndex: 10, width: '100%' }}>
         
         {/* TOP STATUS BADGE */}
-        <div style={{ marginBottom: '28px', display: 'flex' }}>
+        <div style={{ marginBottom: '24px', display: 'flex' }}>
           <a
             href="#contact"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '10px',
-              padding: '8px 18px',
+              padding: '7px 18px',
               borderRadius: '9999px',
-              background: 'rgba(14, 22, 36, 0.75)',
+              background: 'rgba(14, 22, 36, 0.8)',
               border: '1px solid rgba(217, 169, 104, 0.35)',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4), 0 0 15px var(--gold-glow)',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4), 0 0 16px var(--gold-glow)',
               textDecoration: 'none',
-              backdropFilter: 'blur(10px)',
+              backdropFilter: 'blur(12px)',
               transition: 'all 0.3s ease'
             }}
           >
             <span
               style={{
-                width: '8px',
-                height: '8px',
+                width: '7px',
+                height: '7px',
                 borderRadius: '50%',
                 backgroundColor: 'var(--gold-primary)',
                 boxShadow: '0 0 10px var(--gold-primary)',
@@ -120,7 +135,7 @@ export default function HeroSection({ profile }) {
             <span
               className="font-mono"
               style={{
-                fontSize: '0.74rem',
+                fontSize: '0.72rem',
                 color: 'var(--text-main)',
                 letterSpacing: '0.08em',
                 fontWeight: 600
@@ -128,30 +143,32 @@ export default function HeroSection({ profile }) {
             >
               {statusText}
             </span>
-            <span style={{ color: 'var(--gold-primary)', fontSize: '0.9rem', marginLeft: '6px' }}>&rarr;</span>
+            <span style={{ color: 'var(--gold-primary)', fontSize: '0.9rem', marginLeft: '4px' }}>&rarr;</span>
           </a>
         </div>
 
-        {/* MAIN HERO SPLIT GRID */}
+        {/* MAIN HERO SPLIT GRID (Proportions match reference) */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1.15fr 0.85fr',
-            gap: '40px',
+            gridTemplateColumns: '1.18fr 0.82fr',
+            gap: '36px',
             alignItems: 'center'
           }}
           className="hero-main-grid"
         >
-          {/* LEFT: EDITORIAL TYPOGRAPHY & STATS */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+          {/* ========================================================
+              LEFT COLUMN: EDITORIAL TYPOGRAPHY, ACTIONS & STATS
+             ======================================================== */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             
-            {/* Meta Row: Name, Location, Floating Tag */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '14px' }}>
+            {/* Subhead Row: Name and Location */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <span
                 className="font-mono"
                 style={{
-                  fontSize: '0.82rem',
-                  letterSpacing: '0.15em',
+                  fontSize: '0.84rem',
+                  letterSpacing: '0.18em',
                   color: 'var(--gold-primary)',
                   fontWeight: 600,
                   textTransform: 'uppercase'
@@ -159,7 +176,7 @@ export default function HeroSection({ profile }) {
               >
                 {name.toUpperCase()}
               </span>
-              <span style={{ color: 'rgba(217, 169, 104, 0.4)' }}>|</span>
+              <span style={{ color: 'rgba(217, 169, 104, 0.4)', fontSize: '0.8rem' }}>|</span>
               <span
                 className="font-mono"
                 style={{
@@ -173,53 +190,41 @@ export default function HeroSection({ profile }) {
               >
                 <span>📍</span> {location}
               </span>
-
-              {/* Floating Pill Tag */}
-              <span
-                style={{
-                  padding: '4px 12px',
-                  borderRadius: '9999px',
-                  background: 'rgba(20, 40, 59, 0.45)',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
-                  fontSize: '0.72rem',
-                  fontFamily: 'var(--font-mono)',
-                  color: '#93C5FD',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#38BDF8' }} />
-                FULL-STACK &bull; SOLUTIONS ARCHITECT
-              </span>
             </div>
 
-            {/* Giant Editorial Title */}
+            {/* Giant Editorial Headline */}
             <div>
               <h1
-                className="font-heading"
                 style={{
-                  fontSize: 'clamp(2.6rem, 5.2vw, 4.6rem)',
-                  lineHeight: 1.08,
+                  fontFamily: "'Cinzel', 'Sora', sans-serif",
+                  fontSize: 'clamp(2.7rem, 5.2vw, 4.6rem)',
+                  lineHeight: 1.05,
                   fontWeight: 800,
-                  letterSpacing: '-0.03em',
-                  color: 'var(--text-main)',
-                  marginBottom: '18px'
+                  letterSpacing: '-0.025em',
+                  color: '#FFFFFF',
+                  marginBottom: '16px'
                 }}
               >
-                Architectural <br />
-                <span className="gold-gradient-text" style={{ textShadow: '0 0 35px rgba(217, 169, 104, 0.35)' }}>
+                Architectural<br />
+                <span
+                  style={{
+                    background: 'linear-gradient(135deg, #FFF1D6 0%, #D9A968 45%, #B58238 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    filter: 'drop-shadow(0 0 25px rgba(217, 169, 104, 0.4))'
+                  }}
+                >
                   Precision.
-                </span> <br />
+                </span><br />
                 <span>Cinematic Depth.</span>
               </h1>
 
               <p
                 style={{
-                  fontSize: '1.08rem',
+                  fontSize: '1.05rem',
                   color: 'var(--text-secondary)',
                   maxWidth: '560px',
-                  lineHeight: 1.75,
+                  lineHeight: 1.7,
                   fontWeight: 300
                 }}
               >
@@ -227,54 +232,51 @@ export default function HeroSection({ profile }) {
               </p>
             </div>
 
-            {/* Action Buttons & Handwritten Annotation */}
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '18px', position: 'relative' }}>
-              <a href="#projects" className="btn-gold" style={{ padding: '0.9rem 2.2rem', fontSize: '0.92rem' }}>
-                <span>Explore Selected Works</span>
+            {/* Action Buttons Row */}
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '16px', paddingTop: '4px' }}>
+              <a 
+                href="#projects" 
+                className="btn-gold" 
+                style={{ 
+                  padding: '0.9rem 2.2rem', 
+                  fontSize: '0.9rem',
+                  boxShadow: '0 4px 25px rgba(217, 169, 104, 0.4)'
+                }}
+              >
+                <span>Explore My Work</span>
                 <ArrowUpRight size={17} />
               </a>
 
               <button
                 onClick={() => setShowVideoModal(true)}
                 className="btn-ghost-luxury"
-                style={{ padding: '0.85rem 1.8rem', fontSize: '0.92rem', gap: '10px' }}
+                style={{ 
+                  padding: '0.85rem 1.8rem', 
+                  fontSize: '0.9rem', 
+                  gap: '10px' 
+                }}
               >
                 <div
                   style={{
                     width: '26px',
                     height: '26px',
                     borderRadius: '50%',
-                    background: 'rgba(217, 169, 104, 0.2)',
+                    background: 'linear-gradient(135deg, #FBE3BD 0%, #D9A968 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--gold-primary)'
+                    color: '#0B1018',
+                    boxShadow: '0 2px 10px rgba(217, 169, 104, 0.5)'
                   }}
                 >
-                  <Play size={12} fill="var(--gold-primary)" />
+                  <Play size={11} fill="#0B1018" style={{ marginLeft: '1px' }} />
                 </div>
                 <span>Watch Intro</span>
               </button>
-
-              {/* Hand-drawn script annotation with arrow */}
-              <div
-                className="script-annotation hero-script-note"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginLeft: '8px'
-                }}
-              >
-                <svg width="34" height="20" viewBox="0 0 34 20" fill="none">
-                  <path d="M2 15C10 2 24 4 30 14M30 14L22 13M30 14L28 6" stroke="var(--gold-light)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span>See my work in action</span>
-              </div>
             </div>
 
-            {/* Social Icons Row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', paddingTop: '6px' }}>
+            {/* Social Links Row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', paddingTop: '4px' }}>
               <span
                 className="font-mono"
                 style={{
@@ -289,147 +291,217 @@ export default function HeroSection({ profile }) {
               </span>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <a
-                  href={github}
-                  target="_blank"
-                  rel="noreferrer"
-                  title="GitHub"
-                  className="social-circle-btn"
-                >
-                  <Github size={16} />
+                <a href={github} target="_blank" rel="noreferrer" title="GitHub" className="hero-social-btn">
+                  <Github size={15} />
                 </a>
-
-                <a
-                  href={linkedin}
-                  target="_blank"
-                  rel="noreferrer"
-                  title="LinkedIn"
-                  className="social-circle-btn"
-                >
-                  <Linkedin size={16} />
+                <a href={linkedin} target="_blank" rel="noreferrer" title="LinkedIn" className="hero-social-btn">
+                  <Linkedin size={15} />
                 </a>
-
-                <a
-                  href={`mailto:${email}`}
-                  title="Direct Email"
-                  className="social-circle-btn"
-                >
-                  <Mail size={16} />
+                <a href={`mailto:${email}`} title="Email" className="hero-social-btn">
+                  <Mail size={15} />
                 </a>
-
-                <a
-                  href={twitter}
-                  target="_blank"
-                  rel="noreferrer"
-                  title="Twitter / X"
-                  className="social-circle-btn"
-                >
-                  <Twitter size={16} />
+                <a href={twitter} target="_blank" rel="noreferrer" title="Twitter / X" className="hero-social-btn">
+                  <Twitter size={15} />
                 </a>
               </div>
             </div>
 
-            {/* 4 STATS CARDS ROW (Exact match to reference) */}
+            {/* 4 STATS CARDS ROW (Exact proportions matching reference) */}
             <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, 1fr)',
                 gap: '12px',
-                marginTop: '10px',
-                paddingTop: '20px',
+                marginTop: '8px',
+                paddingTop: '18px',
                 borderTop: '1px solid rgba(245, 240, 232, 0.08)'
               }}
               className="hero-stats-row"
             >
               {/* Stat 1 */}
-              <div className="glass-panel" style={{ padding: '16px 14px', borderRadius: '14px', background: 'rgba(14, 22, 36, 0.7)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)', marginBottom: '4px' }}>
-                  <Briefcase size={16} />
-                  <span className="font-heading" style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-main)' }}>3+</span>
+              <div 
+                className="glass-panel" 
+                style={{ 
+                  padding: '14px 16px', 
+                  borderRadius: '14px', 
+                  background: 'rgba(14, 22, 36, 0.7)',
+                  border: '1px solid rgba(217, 169, 104, 0.22)' 
+                }}
+              >
+                <div 
+                  className="font-heading"
+                  style={{ 
+                    fontSize: '1.6rem', 
+                    fontWeight: 800, 
+                    color: 'var(--gold-light)', 
+                    lineHeight: 1.1 
+                  }}
+                >
+                  3+
                 </div>
-                <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                <div 
+                  className="font-mono" 
+                  style={{ 
+                    fontSize: '0.62rem', 
+                    color: 'var(--text-muted)', 
+                    letterSpacing: '0.04em', 
+                    textTransform: 'uppercase', 
+                    marginTop: '4px' 
+                  }}
+                >
                   YEARS EXPERIENCE
                 </div>
               </div>
 
               {/* Stat 2 */}
-              <div className="glass-panel" style={{ padding: '16px 14px', borderRadius: '14px', background: 'rgba(14, 22, 36, 0.7)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)', marginBottom: '4px' }}>
-                  <Layers size={16} />
-                  <span className="font-heading" style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-main)' }}>12+</span>
+              <div 
+                className="glass-panel" 
+                style={{ 
+                  padding: '14px 16px', 
+                  borderRadius: '14px', 
+                  background: 'rgba(14, 22, 36, 0.7)',
+                  border: '1px solid rgba(217, 169, 104, 0.22)' 
+                }}
+              >
+                <div 
+                  className="font-heading"
+                  style={{ 
+                    fontSize: '1.6rem', 
+                    fontWeight: 800, 
+                    color: 'var(--gold-light)', 
+                    lineHeight: 1.1 
+                  }}
+                >
+                  12+
                 </div>
-                <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                <div 
+                  className="font-mono" 
+                  style={{ 
+                    fontSize: '0.62rem', 
+                    color: 'var(--text-muted)', 
+                    letterSpacing: '0.04em', 
+                    textTransform: 'uppercase', 
+                    marginTop: '4px' 
+                  }}
+                >
                   DELIVERED SYSTEMS
                 </div>
               </div>
 
               {/* Stat 3 */}
-              <div className="glass-panel" style={{ padding: '16px 14px', borderRadius: '14px', background: 'rgba(14, 22, 36, 0.7)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)', marginBottom: '4px' }}>
-                  <Code2 size={16} />
-                  <span className="font-heading" style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-main)' }}>950+</span>
+              <div 
+                className="glass-panel" 
+                style={{ 
+                  padding: '14px 16px', 
+                  borderRadius: '14px', 
+                  background: 'rgba(14, 22, 36, 0.7)',
+                  border: '1px solid rgba(217, 169, 104, 0.22)' 
+                }}
+              >
+                <div 
+                  className="font-heading"
+                  style={{ 
+                    fontSize: '1.6rem', 
+                    fontWeight: 800, 
+                    color: 'var(--gold-light)', 
+                    lineHeight: 1.1 
+                  }}
+                >
+                  950+
                 </div>
-                <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                <div 
+                  className="font-mono" 
+                  style={{ 
+                    fontSize: '0.62rem', 
+                    color: 'var(--text-muted)', 
+                    letterSpacing: '0.04em', 
+                    textTransform: 'uppercase', 
+                    marginTop: '4px' 
+                  }}
+                >
                   CODE COMMITS
                 </div>
               </div>
 
               {/* Stat 4 */}
-              <div className="glass-panel" style={{ padding: '16px 14px', borderRadius: '14px', background: 'rgba(14, 22, 36, 0.7)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)', marginBottom: '4px' }}>
-                  <Star size={16} />
-                  <span className="font-heading" style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-main)' }}>100%</span>
+              <div 
+                className="glass-panel" 
+                style={{ 
+                  padding: '14px 16px', 
+                  borderRadius: '14px', 
+                  background: 'rgba(14, 22, 36, 0.7)',
+                  border: '1px solid rgba(217, 169, 104, 0.22)' 
+                }}
+              >
+                <div 
+                  className="font-heading"
+                  style={{ 
+                    fontSize: '1.6rem', 
+                    fontWeight: 800, 
+                    color: 'var(--gold-light)', 
+                    lineHeight: 1.1 
+                  }}
+                >
+                  100%
                 </div>
-                <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                <div 
+                  className="font-mono" 
+                  style={{ 
+                    fontSize: '0.62rem', 
+                    color: 'var(--text-muted)', 
+                    letterSpacing: '0.04em', 
+                    textTransform: 'uppercase', 
+                    marginTop: '4px' 
+                  }}
+                >
                   SATISFACTION
                 </div>
               </div>
             </div>
 
-            {/* Bottom Scroll to explore indicator */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '12px' }}>
+            {/* Bottom Scroll To Explore Indicator */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '6px' }}>
               <a
                 href="#about"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '10px',
+                  gap: '8px',
                   textDecoration: 'none',
                   color: 'var(--text-muted)'
                 }}
               >
                 <div
                   style={{
-                    width: '18px',
-                    height: '28px',
-                    borderRadius: '12px',
+                    width: '16px',
+                    height: '26px',
+                    borderRadius: '10px',
                     border: '1.5px solid var(--gold-primary)',
                     display: 'flex',
                     alignItems: 'flex-start',
                     justifyContent: 'center',
-                    paddingTop: '5px'
+                    paddingTop: '4px'
                   }}
                 >
                   <div
                     style={{
                       width: '3px',
-                      height: '6px',
+                      height: '5px',
                       borderRadius: '2px',
                       background: 'var(--gold-primary)',
                       animation: 'floatSlow 2s ease-in-out infinite'
                     }}
                   />
                 </div>
-                <span className="font-mono" style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                <span className="font-mono" style={{ fontSize: '0.68rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
                   SCROLL TO EXPLORE
                 </span>
               </a>
 
-              {/* Progress bar line */}
               <div
                 style={{
                   flex: 1,
-                  maxWidth: '120px',
+                  maxWidth: '100px',
                   height: '2px',
                   background: 'linear-gradient(90deg, var(--gold-primary) 0%, transparent 100%)',
                   borderRadius: '2px'
@@ -438,76 +510,83 @@ export default function HeroSection({ profile }) {
             </div>
           </div>
 
-          {/* RIGHT: ARCHITECTURAL PHOTO FRAME + 3D STAGE */}
+          {/* ========================================================
+              RIGHT COLUMN: ARCHITECTURAL PHOTO FRAME & 3D STAGE
+             ======================================================== */}
           <div
             style={{
               position: 'relative',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              transform: `perspective(1000px) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)`,
+              transition: 'transform 0.25s ease-out'
             }}
           >
-            {/* 3D Orbital Rings Behind Portrait */}
-            <div className="orbital-container">
-              <div className="orbital-ring orbital-ring-1" />
-              <div className="orbital-ring orbital-ring-2" />
-            </div>
+            {/* 3D Perspective Glowing Orbital Rings */}
+            <HeroOrbitalRings />
 
-            {/* TOP-RIGHT FLOATING 3D GLASS CARD */}
+            {/* TOP-RIGHT FLOATING GLASS BADGE (Matching Reference) */}
             <div
-              className="floating-orb-card"
+              className="hero-floating-top-badge"
               style={{
                 position: 'absolute',
-                top: '-25px',
-                right: '-20px',
+                top: '-15px',
+                right: '-10px',
                 zIndex: 25,
-                background: 'rgba(14, 22, 36, 0.85)',
+                background: 'rgba(14, 22, 36, 0.88)',
                 backdropFilter: 'blur(16px)',
                 border: '1px solid rgba(217, 169, 104, 0.35)',
-                borderRadius: '16px',
-                padding: '14px 18px',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px var(--gold-glow)',
+                borderRadius: '14px',
+                padding: '10px 14px',
+                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px var(--gold-glow)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '8px',
-                width: '180px'
+                gap: '2px'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(56, 189, 248, 0.3) 0%, rgba(20, 40, 59, 0.8) 100%)',
-                    border: '1px solid #38BDF8',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#38BDF8'
-                  }}
-                >
-                  <Globe2 size={18} className="animate-pulse" />
-                </div>
-                <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end', height: '14px' }}>
-                  <span style={{ width: '3px', height: '6px', background: 'var(--gold-primary)', borderRadius: '1px' }} />
-                  <span style={{ width: '3px', height: '10px', background: 'var(--gold-primary)', borderRadius: '1px' }} />
-                  <span style={{ width: '3px', height: '14px', background: 'var(--gold-primary)', borderRadius: '1px' }} />
-                </div>
+              <div 
+                className="font-mono" 
+                style={{ 
+                  fontSize: '0.62rem', 
+                  color: 'var(--gold-primary)', 
+                  letterSpacing: '0.1em',
+                  fontWeight: 600,
+                  textTransform: 'uppercase'
+                }}
+              >
+                FULL-STACK
               </div>
-              <div className="font-mono" style={{ fontSize: '0.64rem', color: 'var(--text-main)', letterSpacing: '0.06em', fontWeight: 600 }}>
-                BUILDING SCALABLE SOLUTIONS
+              <div 
+                className="font-heading" 
+                style={{ 
+                  fontSize: '0.78rem', 
+                  color: 'var(--text-main)', 
+                  fontWeight: 700,
+                  letterSpacing: '0.04em'
+                }}
+              >
+                ENGINEER
+              </div>
+              <div 
+                className="font-mono" 
+                style={{ 
+                  fontSize: '0.62rem', 
+                  color: 'var(--gold-primary)', 
+                  letterSpacing: '0.08em'
+                }}
+              >
+                SOLUTIONS ARCHITECT
               </div>
             </div>
 
-            {/* RIGHT VERTICAL MODE PILLS */}
+            {/* RIGHT VERTICAL MODE PILLS (Matching Reference) */}
             <div
-              className="vertical-mode-stack"
+              className="hero-vertical-modes"
               style={{
                 position: 'absolute',
-                right: '-48px',
-                top: '40%',
+                right: '-46px',
+                top: '45%',
                 transform: 'translateY(-50%)',
                 zIndex: 25,
                 display: 'flex',
@@ -525,16 +604,16 @@ export default function HeroSection({ profile }) {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      padding: '8px 14px',
+                      padding: '7px 14px',
                       borderRadius: '12px',
-                      background: isActive ? 'linear-gradient(135deg, rgba(217, 169, 104, 0.35) 0%, rgba(14, 22, 36, 0.9) 100%)' : 'rgba(14, 22, 36, 0.75)',
+                      background: isActive ? 'linear-gradient(135deg, rgba(217, 169, 104, 0.35) 0%, rgba(14, 22, 36, 0.9) 100%)' : 'rgba(14, 22, 36, 0.78)',
                       border: isActive ? '1.5px solid var(--gold-light)' : '1px solid rgba(245, 240, 232, 0.1)',
                       color: isActive ? 'var(--gold-light)' : 'var(--text-muted)',
                       boxShadow: isActive ? '0 0 20px var(--gold-glow)' : 'none',
                       cursor: 'pointer',
                       backdropFilter: 'blur(12px)',
                       transition: 'all 0.25s ease',
-                      fontSize: '0.78rem',
+                      fontSize: '0.76rem',
                       fontFamily: 'var(--font-heading)',
                       fontWeight: 600
                     }}
@@ -547,208 +626,118 @@ export default function HeroSection({ profile }) {
             </div>
 
             {/* THE ARCHITECTURAL GLOWING PHOTO FRAME */}
-            <div className="arch-photo-container">
+            <ArchitecturalFrame
+              imageSrc={heroImage}
+              altText={name}
+              imagePosition="center 16%"
+              imageScale={1.12}
+              sideText="FULL-STACK ENGINEER • SOLUTIONS ARCHITECT"
+            >
+              {/* Floating Bottom Nameplate Capsule (Matching Reference) */}
               <div
-                ref={portraitRef}
-                className="arch-frame"
                 style={{
-                  transform: `perspective(1000px) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)`
+                  position: 'absolute',
+                  bottom: '16px',
+                  left: '16px',
+                  right: '16px',
+                  padding: '12px 18px',
+                  borderRadius: '16px',
+                  background: 'rgba(14, 22, 36, 0.92)',
+                  backdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(217, 169, 104, 0.45)',
+                  boxShadow: '0 15px 35px rgba(0, 0, 0, 0.8), 0 0 20px var(--gold-glow)',
+                  zIndex: 25
                 }}
               >
-                {/* 4 Architectural Golden Corner Notches */}
-                <div className="arch-corner arch-corner-tl" />
-                <div className="arch-corner arch-corner-tr" />
-                <div className="arch-corner arch-corner-bl" />
-                <div className="arch-corner arch-corner-br" />
-
-                {/* Tech label on side */}
-                <div className="arch-side-label" style={{ right: '-32px' }}>
-                  FULL-STACK ENGINEER &bull; ARCHITECT
-                </div>
-
-                {/* Inner Image Container */}
-                <div className="arch-inner-box">
-                  <img
-                    src={thumbnails[activeThumb].src}
-                    alt={name}
-                    style={{
-                      width: '100%',
-                      height: 'auto',
-                      aspectRatio: '9 / 12',
-                      objectFit: 'cover',
-                      display: 'block',
-                      filter: 'contrast(1.02) saturate(1.03)',
-                      transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
-                    }}
-                    loading="eager"
-                  />
-
-                  {/* Subtle Cinematic Vignette */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'linear-gradient(to top, rgba(11, 16, 24, 0.9) 0%, rgba(11, 16, 24, 0.2) 30%, transparent 60%)',
-                      pointerEvents: 'none'
-                    }}
-                  />
-                </div>
-
-                {/* Floating Nameplate Overlay at Base */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: '18px',
-                    left: '18px',
-                    right: '18px',
-                    padding: '12px 16px',
-                    borderRadius: '16px',
-                    background: 'rgba(14, 22, 36, 0.88)',
-                    backdropFilter: 'blur(16px)',
-                    border: '1px solid rgba(217, 169, 104, 0.4)',
-                    boxShadow: '0 15px 35px rgba(0, 0, 0, 0.7), 0 0 15px var(--gold-glow)',
-                    zIndex: 20
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <div>
-                      <div
-                        className="font-heading"
-                        style={{
-                          fontSize: '0.98rem',
-                          fontWeight: 700,
-                          color: 'var(--text-main)',
-                          letterSpacing: '0.02em'
-                        }}
-                      >
-                        {name}
-                      </div>
-                      <div
-                        className="font-mono"
-                        style={{
-                          fontSize: '0.64rem',
-                          color: 'var(--gold-primary)',
-                          letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
-                          marginTop: '2px'
-                        }}
-                      >
-                        SOLUTIONS ARCHITECT &bull; LEAD ENGINEER
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981' }} />
-                        <span style={{ fontSize: '0.68rem', color: '#CBD2DE', fontFamily: 'var(--font-mono)' }}>Available for Opportunities</span>
-                      </div>
-                    </div>
-
-                    <a
-                      href="#contact"
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                  <div>
+                    <div
+                      className="font-heading"
                       style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #F2CA8E 0%, #D9A968 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#0B1018',
-                        textDecoration: 'none',
-                        boxShadow: '0 2px 10px rgba(217, 169, 104, 0.4)',
-                        flexShrink: 0
+                        fontSize: '0.96rem',
+                        fontWeight: 800,
+                        color: 'var(--text-main)',
+                        letterSpacing: '0.04em'
                       }}
                     >
-                      &rarr;
-                    </a>
+                      {name.toUpperCase()}
+                    </div>
+                    <div
+                      className="font-mono"
+                      style={{
+                        fontSize: '0.62rem',
+                        color: 'var(--gold-primary)',
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        marginTop: '2px'
+                      }}
+                    >
+                      SOLUTIONS ARCHITECT &bull; LEAD ENGINEER
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981' }} />
+                      <span style={{ fontSize: '0.68rem', color: '#CBD2DE', fontFamily: 'var(--font-mono)' }}>Available for Opportunities</span>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Bottom Thumbnail Selector Strip */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '10px',
-                  marginTop: '16px'
-                }}
-              >
-                <button
-                  onClick={() => setActiveThumb((prev) => (prev > 0 ? prev - 1 : thumbnails.length - 1))}
-                  style={{
-                    width: '26px',
-                    height: '26px',
-                    borderRadius: '50%',
-                    background: 'rgba(14, 22, 36, 0.8)',
-                    border: '1px solid var(--border-gold)',
-                    color: 'var(--gold-primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <ChevronLeft size={14} />
-                </button>
-
-                {thumbnails.map((thumb, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveThumb(idx)}
+                  <a
+                    href="#contact"
                     style={{
-                      width: '48px',
-                      height: '34px',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      border: activeThumb === idx ? '2px solid var(--gold-light)' : '1px solid rgba(245, 240, 232, 0.15)',
-                      padding: 0,
-                      cursor: 'pointer',
-                      boxShadow: activeThumb === idx ? '0 0 12px var(--gold-glow)' : 'none',
-                      transition: 'all 0.2s ease'
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #FBE3BD 0%, #D9A968 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#0B1018',
+                      textDecoration: 'none',
+                      boxShadow: '0 2px 10px rgba(217, 169, 104, 0.5)',
+                      flexShrink: 0
                     }}
                   >
-                    <img src={thumb.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </button>
-                ))}
-
-                <button
-                  onClick={() => setActiveThumb((prev) => (prev < thumbnails.length - 1 ? prev + 1 : 0))}
-                  style={{
-                    width: '26px',
-                    height: '26px',
-                    borderRadius: '50%',
-                    background: 'rgba(14, 22, 36, 0.8)',
-                    border: '1px solid var(--border-gold)',
-                    color: 'var(--gold-primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <ChevronRight size={14} />
-                </button>
+                    &rarr;
+                  </a>
+                </div>
               </div>
-            </div>
+            </ArchitecturalFrame>
 
-            {/* Giant Subtle Background Watermark Numeral */}
+            {/* GOLDEN CURSIVE SIGNATURE (Matching Reference) */}
             <div
+              className="hero-signature"
               style={{
                 position: 'absolute',
-                bottom: '-20px',
-                right: '-30px',
-                fontFamily: 'Cinzel, Georgia, serif',
-                fontSize: '5.5rem',
-                fontWeight: 800,
-                color: 'rgba(217, 169, 104, 0.05)',
-                userSelect: 'none',
-                pointerEvents: 'none',
-                zIndex: 0,
-                lineHeight: 1
+                bottom: '-28px',
+                right: '-32px',
+                zIndex: 25,
+                pointerEvents: 'none'
               }}
             >
-              01
+              <svg width="110" height="55" viewBox="0 0 110 55" fill="none">
+                {/* Flowing handwritten script "Vanojan" */}
+                <path 
+                  d="M10 35 C20 10 25 10 32 32 C38 45 42 25 48 30 C55 35 60 20 68 32 C74 40 82 25 90 28 C96 30 102 24 105 18" 
+                  stroke="url(#sigGrad)" 
+                  strokeWidth="2.2" 
+                  strokeLinecap="round" 
+                  filter="drop-shadow(0 0 8px rgba(217, 169, 104, 0.6))"
+                />
+                <path 
+                  d="M60 42 C75 44 95 38 102 32 M96 30 L104 32 L98 38" 
+                  stroke="url(#sigGrad)" 
+                  strokeWidth="1.6" 
+                  strokeLinecap="round"
+                />
+                <defs>
+                  <linearGradient id="sigGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#FBE3BD" />
+                    <stop offset="60%" stopColor="#D9A968" />
+                    <stop offset="100%" stopColor="#B88544" />
+                  </linearGradient>
+                </defs>
+              </svg>
             </div>
+
           </div>
         </div>
       </div>
@@ -848,7 +837,7 @@ export default function HeroSection({ profile }) {
                     width: '64px',
                     height: '64px',
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #F2CA8E 0%, #D9A968 100%)',
+                    background: 'linear-gradient(135deg, #FBE3BD 0%, #D9A968 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -867,25 +856,25 @@ export default function HeroSection({ profile }) {
         </div>
       )}
 
-      {/* Responsive & Visual Styles */}
+      {/* Hero Styles */}
       <style>{`
-        .social-circle-btn {
+        .hero-social-btn {
           color: var(--text-secondary);
           background: rgba(14, 22, 36, 0.8);
-          border: 1px solid var(--border-subtle);
+          border: 1px solid rgba(245, 240, 232, 0.1);
           border-radius: 50%;
-          width: 38px;
-          height: 38px;
+          width: 36px;
+          height: 36px;
           display: flex;
           align-items: center;
           justify-content: center;
           transition: all 0.25s ease;
           text-decoration: none;
         }
-        .social-circle-btn:hover {
+        .hero-social-btn:hover {
           color: var(--gold-light);
           border-color: var(--gold-primary);
-          background: rgba(217, 169, 104, 0.15);
+          background: rgba(217, 169, 104, 0.18);
           transform: translateY(-2px);
           box-shadow: 0 4px 15px var(--gold-glow);
         }
@@ -893,12 +882,12 @@ export default function HeroSection({ profile }) {
         @media (max-width: 1024px) {
           .hero-main-grid {
             grid-template-columns: 1fr !important;
-            gap: 60px !important;
+            gap: 50px !important;
           }
-          .floating-orb-card {
+          .hero-floating-top-badge {
             display: none !important;
           }
-          .vertical-mode-stack {
+          .hero-vertical-modes {
             display: none !important;
           }
         }
@@ -906,7 +895,7 @@ export default function HeroSection({ profile }) {
           .hero-stats-row {
             grid-template-columns: repeat(2, 1fr) !important;
           }
-          .hero-script-note {
+          .hero-signature {
             display: none !important;
           }
         }

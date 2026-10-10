@@ -103,28 +103,8 @@ export default function ThreeCanvas() {
     const particles = new THREE.Points(geometry, particleMaterial);
     scene.add(particles);
 
-    // 2. REFINED ARCHITECTURAL ORBITAL RINGS
-    const ringGeo1 = new THREE.TorusGeometry(32, 0.07, 16, 120);
-    const ringMat1 = new THREE.MeshBasicMaterial({
-      color: 0xD9A968,
-      transparent: true,
-      opacity: 0.15,
-      wireframe: true
-    });
-    const ring1 = new THREE.Mesh(ringGeo1, ringMat1);
-    ring1.rotation.x = Math.PI / 3;
-    scene.add(ring1);
-
-    const ringGeo2 = new THREE.TorusGeometry(36, 0.05, 16, 140);
-    const ringMat2 = new THREE.MeshBasicMaterial({
-      color: 0x60A5FA,
-      transparent: true,
-      opacity: 0.1,
-      wireframe: true
-    });
-    const ring2 = new THREE.Mesh(ringGeo2, ringMat2);
-    ring2.rotation.y = Math.PI / 4;
-    scene.add(ring2);
+    // 2. SOFT CELESTIAL BACKGROUND DEPTH
+    // Three.js provides floating cosmic particles with depth and parallax
 
     // 3. SMOOTH CAMERA LERP WITH PASSIVE LISTENER
     let mouseX = 0;
@@ -169,12 +149,6 @@ export default function ThreeCanvas() {
       particles.rotation.y = elapsedTime * 0.018;
       particles.rotation.x = Math.sin(elapsedTime * 0.012) * 0.06;
 
-      ring1.rotation.z = elapsedTime * 0.028;
-      ring1.rotation.x = Math.PI / 3 + Math.cos(elapsedTime * 0.018) * 0.08;
-
-      ring2.rotation.y = -elapsedTime * 0.02;
-      ring2.rotation.z = Math.sin(elapsedTime * 0.025) * 0.06;
-
       renderer.render(scene, camera);
     };
 
@@ -189,10 +163,6 @@ export default function ThreeCanvas() {
       }
       geometry.dispose();
       particleMaterial.dispose();
-      ringGeo1.dispose();
-      ringMat1.dispose();
-      ringGeo2.dispose();
-      ringMat2.dispose();
       if (renderer) renderer.dispose();
     };
   }, []);
