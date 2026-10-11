@@ -29,6 +29,14 @@ function getSanitizedUri() {
     uri = uri.replace('<januuthayan1967_db_user>', 'januuthayan1967_db_user');
   }
   uri = uri.replace(/<([^>]+)>/g, '$1').trim();
+
+  // Ensure target database is vanojanPortfolio if pointing to root or test
+  if (uri.includes('.mongodb.net/?') || uri.endsWith('.mongodb.net/')) {
+    uri = uri.replace('.mongodb.net/', '.mongodb.net/vanojanPortfolio');
+  } else if (uri.includes('.mongodb.net/test')) {
+    uri = uri.replace('.mongodb.net/test', '.mongodb.net/vanojanPortfolio');
+  }
+
   return uri;
 }
 
