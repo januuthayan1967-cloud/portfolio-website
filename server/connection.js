@@ -9,19 +9,19 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-// Disable query buffering so disconnected queries do not hang or block requests
+// Disable query buffering so disconnected queries do not hang
 mongoose.set('bufferCommands', false);
 
 let cachedConnection = null;
 let lastAttemptTime = 0;
 let lastAttemptError = null;
-const RETRY_COOLDOWN_MS = 15000;
+const RETRY_COOLDOWN_MS = 10000;
 
 export async function connectDb() {
   const uri = process.env.MONGODB_URI;
 
   if (!uri) {
-    console.warn('[MongoDB] Warning: MONGODB_URI not configured in .env');
+    console.warn('[MongoDB] Warning: MONGODB_URI is not set in environment.');
     return null;
   }
 
@@ -33,7 +33,6 @@ export async function connectDb() {
     return cachedConnection;
   }
 
-  // Prevent hammering with consecutive timeouts within cooldown
   const now = Date.now();
   if (lastAttemptError && now - lastAttemptTime < RETRY_COOLDOWN_MS) {
     return null;
@@ -43,7 +42,7 @@ export async function connectDb() {
 
   try {
     cachedConnection = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 4000,
+      serverSelectionTimeoutMS: 9000,
       maxPoolSize: 10,
     });
     lastAttemptError = null;
@@ -58,6 +57,14 @@ export async function connectDb() {
 }
 
 export async function pingDb() {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    return {
+      connected: false,
+      error: 'MONGODB_URI is not configured in Vercel environment variables'
+    };
+  }
+
   try {
     if (mongoose.connection.readyState !== 1) {
       await connectDb();

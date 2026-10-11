@@ -33,10 +33,14 @@ function authMiddleware(req, res, next) {
   next();
 }
 
-// Background connection attempt if not connected
+// Await DB connection for incoming API requests if MONGODB_URI is present
 app.use('/api', async (req, res, next) => {
-  if (!isDbConnected()) {
-    connectDb().catch(() => {});
+  if (!isDbConnected() && process.env.MONGODB_URI) {
+    try {
+      await connectDb();
+    } catch (err) {
+      // Continue to fallback handler
+    }
   }
   next();
 });
@@ -64,7 +68,7 @@ app.get('/api/portfolio', async (req, res) => {
         Education.find().sort({ order: 1, createdAt: 1 }).lean()
       ]);
 
-      if (profileDoc && projectsDocs.length > 0) {
+      if (profileDoc && projectsDocs && projectsDocs.length > 0) {
         const cleanProfile = (({ _id, __v, ...rest }) => rest)(profileDoc);
         const cleanProjects = projectsDocs.map(p => {
           const { _id, __v, ...rest } = p;
@@ -83,7 +87,8 @@ app.get('/api/portfolio', async (req, res) => {
           profile: cleanProfile,
           projects: cleanProjects,
           skills: cleanSkills,
-          education: cleanEducation
+          education: cleanEducation,
+          source: 'mongodb-atlas'
         });
       }
     } catch (err) {
@@ -97,7 +102,8 @@ app.get('/api/portfolio', async (req, res) => {
     profile: db.profile,
     projects: db.projects,
     skills: db.skills,
-    education: db.education
+    education: db.education,
+    source: 'local-fallback'
   });
 });
 
@@ -119,6 +125,8 @@ app.post('/api/messages', async (req, res) => {
     starred: false
   };
 
+  let savedToMongo = false;
+
   // Persist to MongoDB Atlas if connected
   if (isDbConnected()) {
     try {
@@ -128,8 +136,9 @@ app.post('/api/messages', async (req, res) => {
         { $inc: { directInquiries: 1 } },
         { upsert: true, returnDocument: 'after' }
       );
+      savedToMongo = true;
     } catch (err) {
-      console.warn('[MongoDB Query] Failed to persist message, saving to local db:', err.message);
+      console.warn('[MongoDB Query] Failed to persist message to Atlas:', err.message);
     }
   }
 
@@ -143,7 +152,12 @@ app.post('/api/messages', async (req, res) => {
     console.error('Backup save failed:', e);
   }
 
-  res.status(201).json({ success: true, message: 'Message delivered successfully.', data: newMsg });
+  res.status(201).json({
+    success: true,
+    message: 'Message delivered successfully.',
+    data: newMsg,
+    persistedToMongo: savedToMongo
+  });
 });
 
 // 3. Analytics ping
