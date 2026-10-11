@@ -48,11 +48,11 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
     { num: '03', name: 'Projects', href: '#projects', id: 'projects' },
     { num: '04', name: 'Skills', href: '#skills', id: 'skills' },
     { num: '05', name: 'Experience', href: '#experience', id: 'experience' },
-    { num: '06', name: 'Contact', href: '#contact', id: 'contact' }
+    { num: '06', name: 'Inquiries', href: '#contact', id: 'contact' }
   ];
 
   return (
-    <header
+    <header className="reference-nav"
       style={{
         position: 'fixed',
         top: 0,
@@ -60,11 +60,11 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
         right: 0,
         zIndex: 90,
         transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-        padding: scrolled ? '10px 0' : '18px 0',
-        background: scrolled ? 'rgba(11, 16, 24, 0.88)' : 'rgba(11, 16, 24, 0.4)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: scrolled ? '1px solid rgba(217, 169, 104, 0.2)' : '1px solid rgba(245, 240, 232, 0.05)'
+        padding: scrolled ? '10px 0' : '16px 0',
+        background: scrolled ? 'rgba(7, 10, 16, 0.88)' : 'rgba(7, 10, 16, 0.55)',
+        backdropFilter: 'blur(22px)',
+        WebkitBackdropFilter: 'blur(22px)',
+        borderBottom: scrolled ? '1px solid rgba(217, 169, 104, 0.22)' : '1px solid rgba(245, 240, 232, 0.05)'
       }}
     >
       <div className="container-luxury" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
@@ -87,20 +87,20 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
               width: '42px',
               height: '42px',
               borderRadius: '12px',
-              border: '1.5px solid var(--gold-primary)',
-              background: 'linear-gradient(135deg, rgba(217, 169, 104, 0.25) 0%, rgba(14, 22, 36, 0.9) 100%)',
+              border: '1.5px solid #F2C77C',
+              background: 'linear-gradient(135deg, rgba(217, 169, 104, 0.25) 0%, rgba(10, 15, 24, 0.95) 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 0 20px var(--gold-glow)'
+              boxShadow: '0 0 20px rgba(217, 169, 104, 0.35)'
             }}
           >
             <span
               style={{
                 fontFamily: 'Cinzel, Georgia, serif',
-                fontSize: '1.15rem',
+                fontSize: '1.18rem',
                 fontWeight: 700,
-                color: 'var(--gold-light)',
+                color: '#FFF5DE',
                 letterSpacing: '-0.02em',
                 lineHeight: 1
               }}
@@ -113,10 +113,10 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
             <div
               className="font-heading"
               style={{
-                fontSize: '1.05rem',
+                fontSize: '1.08rem',
                 fontWeight: 800,
                 letterSpacing: '0.08em',
-                color: 'var(--text-main)',
+                color: '#FFFFFF',
                 lineHeight: 1.15
               }}
             >
@@ -126,10 +126,10 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
               className="font-mono"
               style={{
                 fontSize: '0.62rem',
-                color: 'var(--gold-primary)',
+                color: '#D9A968',
                 letterSpacing: '0.18em',
                 textTransform: 'uppercase',
-                fontWeight: 500
+                fontWeight: 600
               }}
             >
               SOLUTIONS ARCHITECT
@@ -143,11 +143,11 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
           style={{
             display: 'flex',
             alignItems: 'center',
-            background: 'rgba(14, 21, 34, 0.75)',
-            border: '1px solid rgba(217, 169, 104, 0.25)',
+            background: 'rgba(10, 16, 26, 0.72)',
+            border: '1px solid rgba(217, 169, 104, 0.22)',
             borderRadius: '9999px',
-            padding: '4px 8px',
-            boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+            padding: '4px 10px',
+            boxShadow: '0 12px 30px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
           }}
         >
           {navLinks.map((link) => {
@@ -157,51 +157,67 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
                 key={link.id}
                 href={link.href}
                 style={{
+                  position: 'relative',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  padding: '8px 16px',
+                  padding: '7px 14px',
                   borderRadius: '9999px',
                   fontSize: '0.84rem',
                   fontWeight: isActive ? 600 : 500,
-                  color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
+                  color: isActive ? '#FFFFFF' : 'rgba(203, 210, 222, 0.75)',
                   textDecoration: 'none',
-                  background: isActive ? 'rgba(217, 169, 104, 0.16)' : 'transparent',
-                  border: isActive ? '1px solid rgba(217, 169, 104, 0.4)' : '1px solid transparent',
-                  boxShadow: isActive ? '0 0 16px rgba(217, 169, 104, 0.25)' : 'none',
-                  transition: 'all 0.25s ease'
+                  transition: 'all 0.22s ease'
                 }}
               >
                 <span
                   className="font-mono"
                   style={{
                     fontSize: '0.68rem',
-                    color: isActive ? 'var(--gold-primary)' : 'rgba(217, 169, 104, 0.55)',
+                    color: isActive ? '#D9A968' : 'rgba(217, 169, 104, 0.45)',
                     fontWeight: 600
                   }}
                 >
                   {link.num}
                 </span>
                 <span className="font-sans">{link.name}</span>
+
+                {/* Glowing Yellow/Gold underline indicator for active item */}
+                {isActive && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      bottom: '2px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: '18px',
+                      height: '2px',
+                      borderRadius: '2px',
+                      background: 'linear-gradient(90deg, #FBE3BD, #D9A968)',
+                      boxShadow: '0 0 8px #D9A968'
+                    }}
+                  />
+                )}
               </a>
             );
           })}
         </nav>
 
         {/* RIGHT ACTION BUTTONS */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           
           {/* Quick Search Button */}
           {onOpenSearch && (
             <button
               onClick={onOpenSearch}
               title="Search Portfolio"
+              aria-label="Search"
               style={{
-                width: '38px',
-                height: '38px',
+                width: '36px',
+                height: '36px',
                 borderRadius: '50%',
-                background: 'rgba(14, 22, 36, 0.8)',
-                border: '1px solid var(--border-subtle)',
+                background: 'rgba(12, 18, 28, 0.75)',
+                border: '1px solid rgba(245, 240, 232, 0.12)',
                 color: 'var(--text-secondary)',
                 display: 'flex',
                 alignItems: 'center',
@@ -210,15 +226,15 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
                 transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-gold)';
-                e.currentTarget.style.color = 'var(--gold-primary)';
+                e.currentTarget.style.borderColor = 'rgba(217, 169, 104, 0.5)';
+                e.currentTarget.style.color = '#FFF5DE';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                e.currentTarget.style.borderColor = 'rgba(245, 240, 232, 0.12)';
                 e.currentTarget.style.color = 'var(--text-secondary)';
               }}
             >
-              <Search size={16} />
+              <Search size={15} />
             </button>
           )}
 
@@ -226,38 +242,42 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
           <button
             onClick={onToggleTheme}
             aria-label="Toggle Theme"
+            aria-pressed={theme === 'light'}
             title={theme === 'dark' ? 'Switch to Ivory Light Mode' : 'Switch to Midnight Dark Mode'}
             style={{
               position: 'relative',
-              width: '54px',
+              width: '56px',
               height: '30px',
               borderRadius: '9999px',
-              background: 'rgba(14, 22, 36, 0.85)',
-              border: '1px solid var(--border-gold)',
+              background: 'rgba(12, 18, 28, 0.85)',
+              border: '1px solid rgba(217, 169, 104, 0.35)',
               cursor: 'pointer',
-              padding: '2px',
+              padding: '2px 3px',
               display: 'flex',
               alignItems: 'center',
-              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)'
+              justifyContent: 'space-between',
+              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.6)'
             }}
           >
+            <Sun size={12} style={{ color: 'rgba(242, 202, 142, 0.65)', marginLeft: '4px' }} />
+            <Moon size={12} style={{ color: 'rgba(242, 202, 142, 0.65)', marginRight: '4px' }} />
             <div
               style={{
-                width: '24px',
-                height: '24px',
+                position: 'absolute',
+                top: '3px',
+                left: theme === 'dark' ? '28px' : '3px',
+                width: '22px',
+                height: '22px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #F2CA8E 0%, #D9A968 100%)',
-                boxShadow: '0 2px 8px rgba(217, 169, 104, 0.5)',
+                background: 'linear-gradient(135deg, #FFF5DE 0%, #E5A84B 100%)',
+                boxShadow: '0 0 10px rgba(229, 168, 75, 0.7)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#0B1018',
-                transform: theme === 'dark' ? 'translateX(22px)' : 'translateX(0px)',
-                transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                transition: 'left 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
-            >
-              {theme === 'dark' ? <Moon size={13} strokeWidth={2.5} /> : <Sun size={13} strokeWidth={2.5} />}
-            </div>
+            />
           </button>
 
           {/* Consultation Button */}
@@ -265,27 +285,31 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
             href="#contact"
             className="btn-gold consultation-btn"
             style={{
-              padding: '0.65rem 1.35rem',
-              fontSize: '0.82rem',
+              padding: '0.62rem 1.35rem',
+              fontSize: '0.84rem',
               fontWeight: 700,
-              gap: '6px'
+              gap: '6px',
+              background: 'linear-gradient(135deg, #FFF5DE 0%, #E5BA7D 40%, #D9A968 70%, #B88544 100%)',
+              color: '#0B1018',
+              boxShadow: '0 0 22px rgba(217, 169, 104, 0.5), 0 4px 15px rgba(0, 0, 0, 0.5)'
             }}
           >
             <span>Consultation</span>
             <ArrowUpRight size={15} />
           </a>
 
-          {/* Admin / Menu Grid Button */}
+          {/* Admin / Menu Grid Button (4 Dots ::) */}
           <button
             onClick={onOpenAdmin}
             title="Management Console (Ctrl+Shift+A)"
+            aria-label="App Menu"
             style={{
-              width: '38px',
-              height: '38px',
+              width: '36px',
+              height: '36px',
               borderRadius: '10px',
-              background: 'rgba(14, 22, 36, 0.8)',
-              border: '1px solid var(--border-gold)',
-              color: 'var(--gold-primary)',
+              background: 'rgba(12, 18, 28, 0.8)',
+              border: '1px solid rgba(217, 169, 104, 0.3)',
+              color: '#D9A968',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -293,15 +317,20 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
               transition: 'all 0.2s ease'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(217, 169, 104, 0.15)';
+              e.currentTarget.style.background = 'rgba(217, 169, 104, 0.18)';
               e.currentTarget.style.transform = 'scale(1.05)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(14, 22, 36, 0.8)';
+              e.currentTarget.style.background = 'rgba(12, 18, 28, 0.8)';
               e.currentTarget.style.transform = 'none';
             }}
           >
-            <LayoutGrid size={16} />
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="5" cy="5" r="1.5" />
+              <circle cx="11" cy="5" r="1.5" />
+              <circle cx="5" cy="11" r="1.5" />
+              <circle cx="11" cy="11" r="1.5" />
+            </svg>
           </button>
 
           {/* Mobile Hamburger Toggle */}
@@ -310,8 +339,8 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
             aria-label="Toggle Navigation"
             className="mobile-nav-toggle"
             style={{
-              width: '40px',
-              height: '40px',
+              width: '38px',
+              height: '38px',
               borderRadius: '10px',
               border: '1px solid var(--border-gold)',
               background: 'var(--surface-card)',
@@ -335,7 +364,7 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(11, 16, 24, 0.98)',
+            background: 'rgba(7, 10, 16, 0.98)',
             backdropFilter: 'blur(24px)',
             zIndex: 85,
             padding: '30px 20px',
@@ -345,7 +374,7 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
             borderTop: '1px solid var(--border-gold)'
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {navLinks.map((link) => (
               <a
                 key={link.id}
@@ -358,8 +387,8 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
                   padding: '14px 18px',
                   borderRadius: '12px',
                   textDecoration: 'none',
-                  color: activeSection === link.id ? 'var(--gold-light)' : 'var(--text-main)',
-                  background: activeSection === link.id ? 'rgba(217, 169, 104, 0.12)' : 'rgba(20, 31, 50, 0.4)',
+                  color: activeSection === link.id ? '#FFF5DE' : 'var(--text-main)',
+                  background: activeSection === link.id ? 'rgba(217, 169, 104, 0.15)' : 'rgba(20, 31, 50, 0.4)',
                   border: '1px solid var(--border-gold)',
                   fontFamily: 'var(--font-heading)',
                   fontSize: '1.05rem',
@@ -404,7 +433,7 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
         .mobile-nav-toggle {
           display: none;
         }
-        @media (max-width: 960px) {
+        @media (max-width: 860px) {
           .desktop-nav-pill {
             display: none !important;
           }

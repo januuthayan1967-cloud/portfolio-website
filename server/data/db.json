@@ -217,7 +217,9 @@
           "name": "Responsive & Editorial UI",
           "level": 95
         }
-      ]
+      ],
+      "createdAt": "2026-10-11T07:55:56.680Z",
+      "updatedAt": "2026-10-11T07:55:56.680Z"
     },
     {
       "category": "Backend & Systems Architecture",
@@ -243,7 +245,9 @@
           "name": "RESTful API Engineering",
           "level": 94
         }
-      ]
+      ],
+      "createdAt": "2026-10-11T07:55:56.680Z",
+      "updatedAt": "2026-10-11T07:55:56.680Z"
     },
     {
       "category": "Databases & Data Management",
@@ -265,7 +269,9 @@
           "name": "Database Normalization & Indexing",
           "level": 89
         }
-      ]
+      ],
+      "createdAt": "2026-10-11T07:55:56.680Z",
+      "updatedAt": "2026-10-11T07:55:56.680Z"
     },
     {
       "category": "Engineering Tools & DevOps",
@@ -287,7 +293,9 @@
           "name": "WAMP & Server Deployments",
           "level": 90
         }
-      ]
+      ],
+      "createdAt": "2026-10-11T07:55:56.681Z",
+      "updatedAt": "2026-10-11T07:55:56.681Z"
     }
   ],
   "education": [
@@ -336,10 +344,10 @@
     }
   ],
   "analytics": {
-    "totalVisits": 1916,
+    "totalVisits": 1998,
     "uniqueVisitors": 1220,
-    "pageViews": 4651,
-    "directInquiries": 32,
+    "pageViews": 4733,
+    "directInquiries": 34,
     "projectViews": 2190,
     "avgSessionSeconds": 245,
     "history": [

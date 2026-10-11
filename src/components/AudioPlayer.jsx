@@ -74,8 +74,8 @@ export default function AudioPlayer() {
     <div
       style={{
         position: 'fixed',
-        bottom: '24px',
-        left: '24px',
+        bottom: '20px',
+        right: '24px',
         zIndex: 100
       }}
     >
