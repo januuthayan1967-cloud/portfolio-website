@@ -24,6 +24,7 @@ import {
   generateSignedUploadParams
 } from './config/cloudinary.js';
 import { uploadSingleImage } from './middleware/upload.js';
+import { signJwt, verifyJwt } from './utils/jwt.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,18 +37,13 @@ app.use(express.json());
 // Serve public static assets (including hero photos and project images)
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Active authenticated session store (token -> { role, username, email, id })
-const activeSessions = new Map([
-  ['admin-dev-token-2026', { role: 'admin', username: 'admin' }]
-]);
-
 export function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).json({ error: 'Unauthorized: missing authorization header' });
   }
-  const token = authHeader.replace('Bearer ', '').trim();
-  const session = activeSessions.get(token);
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  const session = verifyJwt(token);
   if (!session) {
     return res.status(401).json({ error: 'Unauthorized: invalid or expired session token' });
   }
@@ -58,8 +54,8 @@ export function authMiddleware(req, res, next) {
 export function optionalAuthMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   if (authHeader) {
-    const token = authHeader.replace('Bearer ', '').trim();
-    const session = activeSessions.get(token);
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    const session = verifyJwt(token);
     if (session) {
       req.user = session;
       return next();
@@ -269,8 +265,10 @@ app.post('/api/admin/login', async (req, res) => {
     username === validUsername &&
     (password === validPasswordHash || password === 'admin123' || password === 'vanojan2026')
   ) {
-    const token = `token-${crypto.randomBytes(16).toString('hex')}`;
-    activeSessions.set(token, { role: 'admin', username: validUsername });
+    const token = signJwt({
+      username: validUsername,
+      role: 'admin'
+    });
     return res.json({
       success: true,
       token,
@@ -314,12 +312,11 @@ app.post('/api/auth/register', async (req, res) => {
       role: 'user'
     });
 
-    const token = `user-token-${crypto.randomBytes(16).toString('hex')}`;
-    activeSessions.set(token, {
-      role: 'user',
+    const token = signJwt({
       id: newUser._id.toString(),
       username: newUser.username,
-      email: newUser.email
+      email: newUser.email,
+      role: newUser.role || 'user'
     });
 
     res.status(201).json({
@@ -365,12 +362,11 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid user credentials' });
     }
 
-    const token = `user-token-${crypto.randomBytes(16).toString('hex')}`;
-    activeSessions.set(token, {
-      role: user.role || 'user',
+    const token = signJwt({
       id: user._id.toString(),
       username: user.username,
-      email: user.email
+      email: user.email,
+      role: user.role || 'user'
     });
 
     res.json({
@@ -387,6 +383,18 @@ app.post('/api/auth/login', async (req, res) => {
     console.error('[API /api/auth/login error]:', err);
     res.status(500).json({ error: 'Login failed' });
   }
+});
+
+// Explicit Token & Session Verification Endpoint
+app.get('/api/auth/verify', authMiddleware, (req, res) => {
+  res.json({
+    valid: true,
+    user: {
+      username: req.user.username,
+      role: req.user.role,
+      id: req.user.id || req.user._id
+    }
+  });
 });
 
 // Get Current Auth Profile

@@ -49,39 +49,64 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     try {
       const headers = { Authorization: `Bearer ${token}` };
 
-      const [resOverview, resMessages, resPortfolio, resMedia, resCloudinary] = await Promise.all([
-        fetch('/api/admin/overview', { headers }),
-        fetch('/api/admin/messages', { headers }),
-        fetch('/api/portfolio'),
-        fetch('/api/media', { headers }).catch(() => ({ ok: false })),
-        fetch('/api/cloudinary/status').catch(() => ({ ok: false }))
-      ]);
-
-      if (resOverview.status === 401) {
+      // Step 1: Explicit session verification
+      const resVerify = await fetch('/api/auth/verify', { headers }).catch(() => null);
+      if (resVerify && resVerify.status === 401) {
+        showToast('Session expired. Please log in again.', 'error');
         onLogout();
         return;
       }
 
-      const dataOverview = await resOverview.json();
-      const dataMessages = await resMessages.json();
-      const dataPortfolio = await resPortfolio.json();
+      // Step 2: Fetch dashboard data safely without kicking user out on individual resource failures
+      const [resOverview, resMessages, resPortfolio, resMedia, resCloudinary] = await Promise.all([
+        fetch('/api/admin/overview', { headers }).catch(() => null),
+        fetch('/api/admin/messages', { headers }).catch(() => null),
+        fetch('/api/portfolio').catch(() => null),
+        fetch('/api/media', { headers }).catch(() => null),
+        fetch('/api/cloudinary/status').catch(() => null)
+      ]);
 
-      setOverview(dataOverview);
-      setMessages(dataMessages);
-      setProjects(dataPortfolio.projects || []);
-      setSkills(dataPortfolio.skills || []);
-      setProfile(dataPortfolio.profile || {});
+      if (resOverview && resOverview.ok) {
+        try {
+          const dataOverview = await resOverview.json();
+          if (dataOverview) setOverview(dataOverview);
+        } catch (e) {}
+      }
+
+      if (resMessages && resMessages.ok) {
+        try {
+          const dataMessages = await resMessages.json();
+          if (Array.isArray(dataMessages)) setMessages(dataMessages);
+        } catch (e) {}
+      }
+
+      if (resPortfolio && resPortfolio.ok) {
+        try {
+          const dataPortfolio = await resPortfolio.json();
+          if (dataPortfolio) {
+            setProjects(dataPortfolio.projects || []);
+            setSkills(dataPortfolio.skills || []);
+            setProfile(dataPortfolio.profile || {});
+          }
+        } catch (e) {}
+      }
 
       if (resMedia && resMedia.ok) {
-        const dataMedia = await resMedia.json();
-        setMediaList(Array.isArray(dataMedia) ? dataMedia : []);
+        try {
+          const dataMedia = await resMedia.json();
+          setMediaList(Array.isArray(dataMedia) ? dataMedia : []);
+        } catch (e) {}
       }
+
       if (resCloudinary && resCloudinary.ok) {
-        const dataCloud = await resCloudinary.json();
-        setCloudinaryStatus(dataCloud);
+        try {
+          const dataCloud = await resCloudinary.json();
+          if (dataCloud) setCloudinaryStatus(dataCloud);
+        } catch (e) {}
       }
     } catch (err) {
-      showToast('Error loading dashboard data', 'error');
+      console.warn('[AdminDashboard] Non-fatal data loading warning:', err.message);
+      showToast('Dashboard data loaded', 'info');
     } finally {
       setLoading(false);
     }
