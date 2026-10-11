@@ -28,6 +28,16 @@ const messageSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  imageUrl: {
+    type: String,
+    default: '',
+    trim: true
+  },
+  imagePublicId: {
+    type: String,
+    default: '',
+    trim: true
+  },
   date: {
     type: String,
     default: () => new Date().toISOString()

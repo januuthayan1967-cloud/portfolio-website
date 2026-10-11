@@ -5,7 +5,25 @@ import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import { connectDb, pingDb, isDbConnected } from './connection.js';
 import { getDb, saveDb } from './db.js';
-import { Profile, Project, SkillCategory, Education, Message, Analytics, Admin } from './models/index.js';
+import {
+  Profile,
+  Project,
+  SkillCategory,
+  Education,
+  Message,
+  Analytics,
+  Admin,
+  Media,
+  User
+} from './models/index.js';
+import {
+  uploadStream,
+  deleteCloudinaryImage,
+  getCloudinaryStatus,
+  isCloudinaryConfigured,
+  generateSignedUploadParams
+} from './config/cloudinary.js';
+import { uploadSingleImage } from './middleware/upload.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,19 +36,51 @@ app.use(express.json());
 // Serve public static assets (including hero photos and project images)
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Simple in-memory active tokens
-const activeSessions = new Set(['admin-dev-token-2026']);
+// Active authenticated session store (token -> { role, username, email, id })
+const activeSessions = new Map([
+  ['admin-dev-token-2026', { role: 'admin', username: 'admin' }]
+]);
 
-function authMiddleware(req, res, next) {
+export function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).json({ error: 'Unauthorized: missing authorization header' });
   }
   const token = authHeader.replace('Bearer ', '').trim();
-  if (!activeSessions.has(token)) {
+  const session = activeSessions.get(token);
+  if (!session) {
     return res.status(401).json({ error: 'Unauthorized: invalid or expired session token' });
   }
+  req.user = session;
   next();
+}
+
+export function optionalAuthMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const token = authHeader.replace('Bearer ', '').trim();
+    const session = activeSessions.get(token);
+    if (session) {
+      req.user = session;
+      return next();
+    }
+  }
+  // Default to guest client user role
+  req.user = {
+    role: 'user',
+    username: `client_${Date.now().toString(36)}`,
+    id: 'guest'
+  };
+  next();
+}
+
+export function adminOnlyMiddleware(req, res, next) {
+  authMiddleware(req, res, () => {
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden: Admin access required' });
+    }
+    next();
+  });
 }
 
 // Await DB connection for incoming API requests if MONGODB_URI is present
@@ -48,10 +98,13 @@ app.use('/api', async (req, res, next) => {
 // HEALTH & CONNECTION VERIFICATION
 app.get('/api/health', async (req, res) => {
   const ping = await pingDb();
+  const cloudinaryStatus = getCloudinaryStatus();
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    mongoDb: ping
+    mongoDb: ping,
+    database: ping,
+    cloudinary: cloudinaryStatus
   });
 });
 
@@ -109,7 +162,7 @@ app.get('/api/portfolio', async (req, res) => {
 
 // 2. Submit new message from contact form
 app.post('/api/messages', async (req, res) => {
-  const { name, email, subject, message } = req.body;
+  const { name, email, subject, message, imageUrl, imagePublicId } = req.body;
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Name, email, and message are required.' });
   }
@@ -120,6 +173,8 @@ app.post('/api/messages', async (req, res) => {
     email: email.trim(),
     subject: (subject || 'General Inquiry').trim(),
     message: message.trim(),
+    imageUrl: imageUrl || '',
+    imagePublicId: imagePublicId || '',
     date: new Date().toISOString(),
     read: false,
     starred: false
@@ -191,7 +246,9 @@ app.post('/api/analytics/ping', async (req, res) => {
   res.json({ success: true, totalVisits });
 });
 
-// ADMIN AUTHENTICATION
+// AUTHENTICATION ROUTES
+
+// Admin Login
 app.post('/api/admin/login', async (req, res) => {
   const { username, password } = req.body;
   let adminUser = null;
@@ -213,28 +270,325 @@ app.post('/api/admin/login', async (req, res) => {
     (password === validPasswordHash || password === 'admin123' || password === 'vanojan2026')
   ) {
     const token = `token-${crypto.randomBytes(16).toString('hex')}`;
-    activeSessions.add(token);
+    activeSessions.set(token, { role: 'admin', username: validUsername });
     return res.json({
       success: true,
       token,
-      user: { username: validUsername }
+      user: { username: validUsername, role: 'admin' }
     });
   }
 
   res.status(401).json({ error: 'Invalid admin credentials. Default is admin / vanojan2026' });
 });
 
+// User Registration
+app.post('/api/auth/register', async (req, res) => {
+  const { username, email, password } = req.body;
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: 'Username, email, and password are required' });
+  }
+
+  try {
+    if (!isDbConnected()) {
+      return res.status(503).json({ error: 'Database service currently unavailable. Please try again later.' });
+    }
+
+    const cleanUsername = username.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    const existingUser = await User.findOne({
+      $or: [{ username: cleanUsername }, { email: cleanEmail }]
+    });
+
+    if (existingUser) {
+      return res.status(409).json({ error: 'Username or email already in use' });
+    }
+
+    const salt = crypto.randomBytes(8).toString('hex');
+    const passwordHash = `${salt}:${crypto.scryptSync(password, salt, 32).toString('hex')}`;
+
+    const newUser = await User.create({
+      username: cleanUsername,
+      email: cleanEmail,
+      passwordHash,
+      role: 'user'
+    });
+
+    const token = `user-token-${crypto.randomBytes(16).toString('hex')}`;
+    activeSessions.set(token, {
+      role: 'user',
+      id: newUser._id.toString(),
+      username: newUser.username,
+      email: newUser.email
+    });
+
+    res.status(201).json({
+      success: true,
+      token,
+      user: {
+        id: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role
+      }
+    });
+  } catch (err) {
+    console.error('[API /api/auth/register error]:', err);
+    res.status(500).json({ error: 'Failed to register user' });
+  }
+});
+
+// User Login
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  try {
+    if (!isDbConnected()) {
+      return res.status(503).json({ error: 'Database service currently unavailable' });
+    }
+
+    const cleanIdentifier = username.trim();
+    const user = await User.findOne({
+      $or: [{ username: cleanIdentifier }, { email: cleanIdentifier.toLowerCase() }]
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid user credentials' });
+    }
+
+    const [salt, hash] = user.passwordHash.split(':');
+    const inputHash = crypto.scryptSync(password, salt, 32).toString('hex');
+    if (inputHash !== hash) {
+      return res.status(401).json({ error: 'Invalid user credentials' });
+    }
+
+    const token = `user-token-${crypto.randomBytes(16).toString('hex')}`;
+    activeSessions.set(token, {
+      role: user.role || 'user',
+      id: user._id.toString(),
+      username: user.username,
+      email: user.email
+    });
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role || 'user'
+      }
+    });
+  } catch (err) {
+    console.error('[API /api/auth/login error]:', err);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Get Current Auth Profile
+app.get('/api/auth/me', authMiddleware, (req, res) => {
+  res.json({ success: true, user: req.user });
+});
+
+// CLOUDINARY & MEDIA MANAGEMENT ROUTES
+
+// Cloudinary Configuration Status (Safe for public inspection)
+app.get('/api/cloudinary/status', (req, res) => {
+  res.json(getCloudinaryStatus());
+});
+
+// Cloudinary Upload Signature (Server-side signed parameters)
+app.post('/api/cloudinary/sign', authMiddleware, (req, res) => {
+  try {
+    const params = generateSignedUploadParams(req.body || {});
+    res.json({ success: true, ...params });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Universal Secure Image Upload (Supports Admin, Authenticated Users, & Client Attachments)
+app.post('/api/upload', optionalAuthMiddleware, uploadSingleImage(['file', 'image']), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No image file uploaded' });
+  }
+
+  if (!isCloudinaryConfigured()) {
+    return res.status(503).json({
+      error: 'Cloudinary storage is not configured. Please ensure CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET are set in environment variables.'
+    });
+  }
+
+  const requestedTag = req.body.tag || req.query.tag || 'general';
+  // Non-admins can only upload user_upload or avatar
+  const tag = req.user.role === 'admin' 
+    ? requestedTag 
+    : (requestedTag === 'avatar' ? 'avatar' : 'user_upload');
+  const folder = req.user.role === 'admin' 
+    ? `vanojan_portfolio/${tag}` 
+    : `vanojan_portfolio/users/${req.user.username}`;
+
+  try {
+    // If replacePublicId is specified, remove the previous image
+    if (req.body.replacePublicId) {
+      try {
+        await deleteCloudinaryImage(req.body.replacePublicId);
+        if (isDbConnected()) {
+          await Media.deleteOne({ public_id: req.body.replacePublicId });
+        }
+      } catch (repErr) {
+        console.warn('[Image Replacement Warning]:', repErr.message);
+      }
+    }
+
+    const uploadResult = await uploadStream(req.file.buffer, {
+      folder,
+      tags: [tag, req.user.role, req.user.username],
+      context: `uploader=${req.user.username}|role=${req.user.role}`
+    });
+
+    let savedMedia = null;
+    if (isDbConnected()) {
+      try {
+        savedMedia = await Media.create({
+          public_id: uploadResult.public_id,
+          url: uploadResult.secure_url,
+          format: uploadResult.format,
+          bytes: uploadResult.bytes,
+          width: uploadResult.width,
+          height: uploadResult.height,
+          tag,
+          uploaderRole: req.user.role,
+          uploaderId: req.user.username,
+          originalFilename: req.file.originalname,
+          associatedId: req.body.associatedId || ''
+        });
+
+        // Admin auto-association updates
+        if (req.user.role === 'admin') {
+          if (tag === 'profile_hero') {
+            await Profile.findOneAndUpdate(
+              {},
+              { heroImage: uploadResult.secure_url, heroImagePublicId: uploadResult.public_id },
+              { upsert: true }
+            );
+          } else if (tag === 'profile_about') {
+            await Profile.findOneAndUpdate(
+              {},
+              { aboutImage: uploadResult.secure_url, aboutImagePublicId: uploadResult.public_id },
+              { upsert: true }
+            );
+          } else if (tag === 'project' && req.body.projectId) {
+            await Project.findOneAndUpdate(
+              { id: req.body.projectId },
+              { image: uploadResult.secure_url, imagePublicId: uploadResult.public_id }
+            );
+          }
+        } else if (tag === 'avatar') {
+          await User.findOneAndUpdate(
+            { username: req.user.username },
+            { avatar: uploadResult.secure_url, avatarPublicId: uploadResult.public_id }
+          );
+        }
+      } catch (dbErr) {
+        console.warn('[MongoDB Atlas] Could not save media metadata:', dbErr.message);
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      url: uploadResult.secure_url,
+      public_id: uploadResult.public_id,
+      format: uploadResult.format,
+      bytes: uploadResult.bytes,
+      width: uploadResult.width,
+      height: uploadResult.height,
+      media: savedMedia
+    });
+  } catch (err) {
+    console.error('[Cloudinary Upload Error]:', err);
+    res.status(500).json({ error: `Upload failed: ${err.message}` });
+  }
+});
+
+// List Uploaded Media
+app.get('/api/media', authMiddleware, async (req, res) => {
+  try {
+    if (!isDbConnected()) {
+      return res.json([]);
+    }
+    const filter = req.user.role === 'admin'
+      ? {}
+      : { uploaderId: req.user.username };
+
+    if (req.query.tag) {
+      filter.tag = req.query.tag;
+    }
+
+    const items = await Media.find(filter).sort({ createdAt: -1 }).lean();
+    res.json(items);
+  } catch (err) {
+    console.error('[API /api/media error]:', err);
+    res.status(500).json({ error: 'Failed to fetch media' });
+  }
+});
+
+// Delete Media (Synchronized from Cloudinary & MongoDB Atlas)
+app.delete('/api/media/:publicId(*)', authMiddleware, async (req, res) => {
+  const publicId = req.params.publicId;
+
+  if (!publicId) {
+    return res.status(400).json({ error: 'Missing publicId' });
+  }
+
+  try {
+    let mediaDoc = null;
+    if (isDbConnected()) {
+      mediaDoc = await Media.findOne({ public_id: publicId });
+    }
+
+    // Permission check: admins can delete any; users only their own
+    if (mediaDoc && req.user.role !== 'admin' && mediaDoc.uploaderId !== req.user.username) {
+      return res.status(403).json({ error: 'Forbidden: You can only delete your own uploaded images' });
+    }
+
+    // Delete from Cloudinary
+    if (isCloudinaryConfigured()) {
+      try {
+        await deleteCloudinaryImage(publicId);
+      } catch (cloudErr) {
+        console.warn('[Cloudinary Delete Warning]:', cloudErr.message);
+      }
+    }
+
+    // Delete from MongoDB Atlas
+    if (isDbConnected()) {
+      await Media.deleteOne({ public_id: publicId });
+    }
+
+    res.json({ success: true, message: 'Image deleted successfully', public_id: publicId });
+  } catch (err) {
+    console.error('[Delete Media Error]:', err);
+    res.status(500).json({ error: `Delete failed: ${err.message}` });
+  }
+});
+
 // ADMIN PROTECTED ROUTES
 
 // Admin Overview
-app.get('/api/admin/overview', authMiddleware, async (req, res) => {
+app.get('/api/admin/overview', adminOnlyMiddleware, async (req, res) => {
   if (isDbConnected()) {
     try {
-      const [analyticsDoc, totalMessages, unreadMessages, totalProjects, recentMessagesDocs] = await Promise.all([
+      const [analyticsDoc, totalMessages, unreadMessages, totalProjects, totalMedia, recentMessagesDocs] = await Promise.all([
         Analytics.findOne().lean(),
         Message.countDocuments(),
         Message.countDocuments({ read: false }),
         Project.countDocuments(),
+        Media.countDocuments(),
         Message.find().sort({ date: -1 }).limit(5).lean()
       ]);
 
@@ -252,6 +606,7 @@ app.get('/api/admin/overview', authMiddleware, async (req, res) => {
         totalMessages: totalMessages || db.messages.length,
         unreadMessages: unreadMessages !== undefined ? unreadMessages : db.messages.filter(m => !m.read).length,
         totalProjects: totalProjects || db.projects.length,
+        totalMedia: totalMedia || 0,
         recentMessages
       });
     } catch (err) {
@@ -265,12 +620,13 @@ app.get('/api/admin/overview', authMiddleware, async (req, res) => {
     totalMessages: db.messages.length,
     unreadMessages: db.messages.filter(m => !m.read).length,
     totalProjects: db.projects.length,
+    totalMedia: 0,
     recentMessages: db.messages.slice(0, 5)
   });
 });
 
 // Admin Messages CRUD
-app.get('/api/admin/messages', authMiddleware, async (req, res) => {
+app.get('/api/admin/messages', adminOnlyMiddleware, async (req, res) => {
   if (isDbConnected()) {
     try {
       const messagesDocs = await Message.find().sort({ date: -1 }).lean();
@@ -289,7 +645,7 @@ app.get('/api/admin/messages', authMiddleware, async (req, res) => {
   res.json(db.messages);
 });
 
-app.patch('/api/admin/messages/:id', authMiddleware, async (req, res) => {
+app.patch('/api/admin/messages/:id', adminOnlyMiddleware, async (req, res) => {
   const { id } = req.params;
   const update = {};
   if (req.body.read !== undefined) update.read = Boolean(req.body.read);
@@ -326,7 +682,7 @@ app.patch('/api/admin/messages/:id', authMiddleware, async (req, res) => {
   res.json({ success: true, message: updatedMsg });
 });
 
-app.delete('/api/admin/messages/:id', authMiddleware, async (req, res) => {
+app.delete('/api/admin/messages/:id', adminOnlyMiddleware, async (req, res) => {
   const { id } = req.params;
 
   if (isDbConnected()) {
@@ -348,7 +704,7 @@ app.delete('/api/admin/messages/:id', authMiddleware, async (req, res) => {
 });
 
 // Admin Projects CRUD
-app.post('/api/admin/projects', authMiddleware, async (req, res) => {
+app.post('/api/admin/projects', adminOnlyMiddleware, async (req, res) => {
   const project = {
     id: req.body.id || `project-${Date.now()}`,
     title: req.body.title || 'Untitled Project',
@@ -358,6 +714,7 @@ app.post('/api/admin/projects', authMiddleware, async (req, res) => {
     techStack: Array.isArray(req.body.techStack) ? req.body.techStack : [],
     featured: Boolean(req.body.featured),
     image: req.body.image || '/hero/project-default.jpg',
+    imagePublicId: req.body.imagePublicId || '',
     gradient: req.body.gradient || 'from-blue-600/30 to-amber-900/30',
     liveUrl: req.body.liveUrl || '',
     githubUrl: req.body.githubUrl || '',
@@ -385,7 +742,7 @@ app.post('/api/admin/projects', authMiddleware, async (req, res) => {
   res.status(201).json({ success: true, project });
 });
 
-app.put('/api/admin/projects/:id', authMiddleware, async (req, res) => {
+app.put('/api/admin/projects/:id', adminOnlyMiddleware, async (req, res) => {
   const { id } = req.params;
   let updatedProject = null;
 
@@ -421,11 +778,19 @@ app.put('/api/admin/projects/:id', authMiddleware, async (req, res) => {
   res.json({ success: true, project: updatedProject });
 });
 
-app.delete('/api/admin/projects/:id', authMiddleware, async (req, res) => {
+app.delete('/api/admin/projects/:id', adminOnlyMiddleware, async (req, res) => {
   const { id } = req.params;
 
   if (isDbConnected()) {
     try {
+      // Find project to clean up Cloudinary asset if associated
+      const proj = await Project.findOne({ id });
+      if (proj && proj.imagePublicId && isCloudinaryConfigured()) {
+        try {
+          await deleteCloudinaryImage(proj.imagePublicId);
+          await Media.deleteOne({ public_id: proj.imagePublicId });
+        } catch (cErr) {}
+      }
       await Project.deleteOne({ id });
     } catch (err) {
       console.warn('[MongoDB Query] Project delete error:', err.message);
@@ -443,7 +808,7 @@ app.delete('/api/admin/projects/:id', authMiddleware, async (req, res) => {
 });
 
 // Admin Profile Update
-app.put('/api/admin/profile', authMiddleware, async (req, res) => {
+app.put('/api/admin/profile', adminOnlyMiddleware, async (req, res) => {
   let updatedProfile = null;
 
   if (isDbConnected()) {
@@ -473,7 +838,7 @@ app.put('/api/admin/profile', authMiddleware, async (req, res) => {
 });
 
 // Admin Skills Update
-app.put('/api/admin/skills', authMiddleware, async (req, res) => {
+app.put('/api/admin/skills', adminOnlyMiddleware, async (req, res) => {
   if (!Array.isArray(req.body.skills)) {
     return res.status(400).json({ error: 'Invalid skills format' });
   }

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
   Shield, LayoutDashboard, FolderGit2, Mail, Cpu, UserCheck,
   LogOut, Plus, Trash2, Edit3, Star, CheckCircle, Eye, ArrowUpRight,
-  TrendingUp, Users, MessageSquare, Clock, X, Save, RefreshCw
+  TrendingUp, Users, MessageSquare, Clock, X, Save, RefreshCw,
+  Image, UploadCloud, Copy, Check, ExternalLink, HardDrive
 } from 'lucide-react';
 
 export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh }) {
@@ -12,6 +13,12 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
   const [messages, setMessages] = useState([]);
   const [skills, setSkills] = useState([]);
   const [profile, setProfile] = useState({});
+  const [mediaList, setMediaList] = useState([]);
+  const [mediaFilterTag, setMediaFilterTag] = useState('all');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [copiedPublicId, setCopiedPublicId] = useState(null);
+  const [cloudinaryStatus, setCloudinaryStatus] = useState(null);
+  const [selectedTagForDirectUpload, setSelectedTagForDirectUpload] = useState('general');
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
 
@@ -26,7 +33,9 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     highlights: '',
     featured: false,
     githubUrl: '',
-    liveUrl: ''
+    liveUrl: '',
+    image: '',
+    imagePublicId: ''
   });
 
   const showToast = (msg, type = 'success') => {
@@ -40,10 +49,12 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     try {
       const headers = { Authorization: `Bearer ${token}` };
 
-      const [resOverview, resMessages, resPortfolio] = await Promise.all([
+      const [resOverview, resMessages, resPortfolio, resMedia, resCloudinary] = await Promise.all([
         fetch('/api/admin/overview', { headers }),
         fetch('/api/admin/messages', { headers }),
-        fetch('/api/portfolio')
+        fetch('/api/portfolio'),
+        fetch('/api/media', { headers }).catch(() => ({ ok: false })),
+        fetch('/api/cloudinary/status').catch(() => ({ ok: false }))
       ]);
 
       if (resOverview.status === 401) {
@@ -60,6 +71,15 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
       setProjects(dataPortfolio.projects || []);
       setSkills(dataPortfolio.skills || []);
       setProfile(dataPortfolio.profile || {});
+
+      if (resMedia && resMedia.ok) {
+        const dataMedia = await resMedia.json();
+        setMediaList(Array.isArray(dataMedia) ? dataMedia : []);
+      }
+      if (resCloudinary && resCloudinary.ok) {
+        const dataCloud = await resCloudinary.json();
+        setCloudinaryStatus(dataCloud);
+      }
     } catch (err) {
       showToast('Error loading dashboard data', 'error');
     } finally {
@@ -122,7 +142,9 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
       highlights: '',
       featured: true,
       githubUrl: 'https://github.com',
-      liveUrl: 'https://github.com'
+      liveUrl: 'https://github.com',
+      image: '',
+      imagePublicId: ''
     });
   };
 
@@ -137,7 +159,9 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
       highlights: (proj.highlights || []).join('\n'),
       featured: Boolean(proj.featured),
       githubUrl: proj.githubUrl || '',
-      liveUrl: proj.liveUrl || ''
+      liveUrl: proj.liveUrl || '',
+      image: proj.image || '',
+      imagePublicId: proj.imagePublicId || ''
     });
   };
 
@@ -153,7 +177,9 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
       highlights: projectForm.highlights.split('\n').map((s) => s.trim()).filter(Boolean),
       featured: projectForm.featured,
       githubUrl: projectForm.githubUrl,
-      liveUrl: projectForm.liveUrl
+      liveUrl: projectForm.liveUrl,
+      image: projectForm.image || '',
+      imagePublicId: projectForm.imagePublicId || ''
     };
 
     try {
@@ -189,6 +215,142 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     } catch (err) {
       showToast('Error saving project', 'error');
     }
+  };
+
+  // Upload Project Image to Cloudinary
+  const handleUploadProjectImage = async (file) => {
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('Image size exceeds 8MB maximum', 'error');
+      return;
+    }
+    setUploadingImage(true);
+    const fd = new FormData();
+    fd.append('image', file);
+    fd.append('tag', 'project');
+    if (projectForm.imagePublicId) {
+      fd.append('replacePublicId', projectForm.imagePublicId);
+    }
+    if (editingProject && editingProject !== 'new') {
+      fd.append('projectId', editingProject);
+    }
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      setProjectForm((prev) => ({
+        ...prev,
+        image: data.url,
+        imagePublicId: data.public_id
+      }));
+      showToast('Project image uploaded to Cloudinary');
+      fetchData();
+    } catch (err) {
+      showToast(`Cloudinary upload failed: ${err.message}`, 'error');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // Upload Profile Image (Hero or About) to Cloudinary
+  const handleUploadProfileImage = async (file, tag) => {
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('Image size exceeds 8MB limit', 'error');
+      return;
+    }
+    setUploadingImage(true);
+    const fd = new FormData();
+    fd.append('image', file);
+    fd.append('tag', tag);
+    const oldPublicId = tag === 'profile_hero' ? profile.heroImagePublicId : profile.aboutImagePublicId;
+    if (oldPublicId) {
+      fd.append('replacePublicId', oldPublicId);
+    }
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      if (tag === 'profile_hero') {
+        setProfile((prev) => ({ ...prev, heroImage: data.url, heroImagePublicId: data.public_id }));
+      } else {
+        setProfile((prev) => ({ ...prev, aboutImage: data.url, aboutImagePublicId: data.public_id }));
+      }
+      showToast(`${tag === 'profile_hero' ? 'Hero' : 'About'} image uploaded and saved`);
+      fetchData();
+      onDataRefresh?.();
+    } catch (err) {
+      showToast(`Upload failed: ${err.message}`, 'error');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // Direct Asset Upload (Media Library)
+  const handleDirectAssetUpload = async (file, tag = 'general') => {
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('Image size exceeds 8MB limit', 'error');
+      return;
+    }
+    setUploadingImage(true);
+    const fd = new FormData();
+    fd.append('image', file);
+    fd.append('tag', tag);
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      showToast('Asset uploaded to Cloudinary');
+      fetchData();
+      onDataRefresh?.();
+    } catch (err) {
+      showToast(`Upload failed: ${err.message}`, 'error');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // Delete Media Image from Cloudinary & MongoDB Atlas
+  const handleDeleteMedia = async (publicId) => {
+    if (!window.confirm(`Permanently delete this image from Cloudinary and MongoDB Atlas?\n\nPublic ID: ${publicId}`)) return;
+    try {
+      const res = await fetch(`/api/media/${encodeURIComponent(publicId)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Delete failed');
+      setMediaList((prev) => prev.filter((m) => m.public_id !== publicId));
+      showToast('Image deleted from Cloudinary & database');
+      fetchData();
+      onDataRefresh?.();
+    } catch (err) {
+      showToast(`Delete failed: ${err.message}`, 'error');
+    }
+  };
+
+  // Copy Cloudinary URL
+  const handleCopyUrl = (url, publicId) => {
+    navigator.clipboard.writeText(url);
+    setCopiedPublicId(publicId);
+    showToast('Cloudinary URL copied to clipboard');
+    setTimeout(() => setCopiedPublicId(null), 2200);
   };
 
   // Delete Project
@@ -383,6 +545,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
           {[
             { id: 'overview', label: 'Analytics Overview', icon: LayoutDashboard },
             { id: 'projects', label: 'Projects Manager', icon: FolderGit2, badge: projects.length },
+            { id: 'media', label: 'Cloudinary Assets', icon: Image, badge: mediaList.length },
             { id: 'messages', label: 'Inbox & Inquiries', icon: Mail, badge: messages.filter((m) => !m.read).length },
             { id: 'skills', label: 'Skills Matrix', icon: Cpu },
             { id: 'profile', label: 'Identity & Bio', icon: UserCheck }
@@ -676,6 +839,272 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
             </div>
           )}
 
+          {/* TAB: CLOUDINARY MEDIA ASSETS */}
+          {activeTab === 'media' && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <h2 className="font-editorial" style={{ fontSize: '1.8rem', color: '#ffffff' }}>
+                    Cloudinary Media Assets ({mediaList.length})
+                  </h2>
+                  <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                    Persistent cloud-hosted images synchronized directly with MongoDB Atlas and Cloudinary CDN.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <select
+                    value={selectedTagForDirectUpload}
+                    onChange={(e) => setSelectedTagForDirectUpload(e.target.value)}
+                    style={{
+                      background: 'rgba(10, 16, 28, 0.95)',
+                      border: '1px solid rgba(212, 175, 55, 0.3)',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      color: '#f3d078',
+                      fontSize: '0.8rem',
+                      fontFamily: 'var(--font-mono)'
+                    }}
+                  >
+                    <option value="general">Tag: General Asset</option>
+                    <option value="project">Tag: Project Showcase</option>
+                    <option value="profile_hero">Tag: Profile Hero</option>
+                    <option value="profile_about">Tag: Profile About</option>
+                  </select>
+
+                  <label
+                    className="btn-gold"
+                    style={{
+                      cursor: uploadingImage ? 'wait' : 'pointer',
+                      opacity: uploadingImage ? 0.7 : 1,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '0.6rem 1.2rem',
+                      fontSize: '0.82rem'
+                    }}
+                  >
+                    <UploadCloud size={16} />
+                    <span>{uploadingImage ? 'Uploading to Cloudinary...' : 'Upload Image Asset'}</span>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                      disabled={uploadingImage}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleDirectAssetUpload(file, selectedTagForDirectUpload);
+                          e.target.value = '';
+                        }
+                      }}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Cloudinary Status Banner */}
+              <div
+                className="glass-panel"
+                style={{
+                  padding: '16px 20px',
+                  borderRadius: '14px',
+                  border: '1px solid rgba(212, 175, 55, 0.25)',
+                  background: 'rgba(14, 22, 38, 0.65)',
+                  marginBottom: '24px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '12px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(15, 23, 42, 0.9))',
+                      border: '1px solid #d4af37',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#d4af37'
+                    }}
+                  >
+                    <HardDrive size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#f8fafc' }}>
+                      Cloudinary Cloud: <span style={{ color: '#d4af37' }}>{cloudinaryStatus?.cloudName || 'vyr3hnbq'}</span>
+                    </div>
+                    <div className="font-mono" style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: cloudinaryStatus?.configured ? '#10b981' : '#f59e0b' }}>
+                        ● {cloudinaryStatus?.configured ? 'Active & Authenticated' : 'Configured (Cloud Name: vyr3hnbq)'}
+                      </span>
+                      <span>&bull; Serverless In-Memory Streaming Active</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filter Pills */}
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {['all', 'project', 'profile_hero', 'profile_about', 'user_upload', 'general'].map((tag) => {
+                    const isSelected = mediaFilterTag === tag;
+                    return (
+                      <button
+                        key={tag}
+                        onClick={() => setMediaFilterTag(tag)}
+                        style={{
+                          background: isSelected ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                          border: isSelected ? '1px solid #d4af37' : '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          color: isSelected ? '#f3d078' : '#94a3b8',
+                          fontSize: '0.74rem',
+                          fontFamily: 'var(--font-mono)',
+                          cursor: 'pointer',
+                          textTransform: 'uppercase'
+                        }}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Media Cards Grid */}
+              {mediaList.filter((m) => mediaFilterTag === 'all' || m.tag === mediaFilterTag).length === 0 ? (
+                <div className="glass-panel" style={{ padding: '60px', textAlign: 'center', borderRadius: '16px' }}>
+                  <Image size={40} color="#64748b" style={{ margin: '0 auto 16px' }} />
+                  <div style={{ color: '#cbd5e1', fontSize: '1rem', marginBottom: '8px' }}>
+                    No media items found for tag: {mediaFilterTag}
+                  </div>
+                  <p style={{ color: '#64748b', fontSize: '0.84rem' }}>
+                    Upload images through the button above or attach images when creating/editing projects and profile pictures.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                  {mediaList
+                    .filter((m) => mediaFilterTag === 'all' || m.tag === mediaFilterTag)
+                    .map((item) => (
+                      <div
+                        key={item.public_id}
+                        className="glass-panel"
+                        style={{
+                          borderRadius: '16px',
+                          border: '1px solid rgba(212, 175, 55, 0.2)',
+                          background: 'rgba(14, 22, 38, 0.75)',
+                          overflow: 'hidden',
+                          display: 'flex',
+                          flexDirection: 'column'
+                        }}
+                      >
+                        {/* Image Preview */}
+                        <div style={{ position: 'relative', width: '100%', height: '170px', background: '#06080d' }}>
+                          <img
+                            src={item.url}
+                            alt={item.public_id}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '10px',
+                              left: '10px',
+                              display: 'flex',
+                              gap: '6px'
+                            }}
+                          >
+                            <span className="badge-gold" style={{ fontSize: '0.65rem' }}>
+                              {item.tag || 'general'}
+                            </span>
+                            <span className="badge-navy" style={{ fontSize: '0.65rem' }}>
+                              {item.uploaderRole || 'admin'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Meta info & actions */}
+                        <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                          <div>
+                            <div className="font-mono" style={{ fontSize: '0.74rem', color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }} title={item.public_id}>
+                              {item.public_id}
+                            </div>
+                            <div className="font-mono" style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                              <span>{item.format ? item.format.toUpperCase() : 'IMG'} &bull; {item.width && item.height ? `${item.width}×${item.height}` : 'Auto'}</span>
+                              <span>{item.bytes ? `${Math.round(item.bytes / 1024)} KB` : ''}</span>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                            <button
+                              onClick={() => handleCopyUrl(item.url, item.public_id)}
+                              style={{
+                                flex: 1,
+                                background: copiedPublicId === item.public_id ? 'rgba(16, 185, 129, 0.2)' : 'rgba(212, 175, 55, 0.15)',
+                                border: copiedPublicId === item.public_id ? '1px solid #10b981' : '1px solid rgba(212, 175, 55, 0.3)',
+                                borderRadius: '8px',
+                                padding: '6px 10px',
+                                color: copiedPublicId === item.public_id ? '#34d399' : '#f3d078',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                fontSize: '0.74rem'
+                              }}
+                            >
+                              {copiedPublicId === item.public_id ? <Check size={13} /> : <Copy size={13} />}
+                              <span>{copiedPublicId === item.public_id ? 'Copied!' : 'Copy URL'}</span>
+                            </button>
+
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="Inspect full image in Cloudinary CDN"
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '8px',
+                                padding: '6px 10px',
+                                color: '#cbd5e1',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                textDecoration: 'none'
+                              }}
+                            >
+                              <ExternalLink size={13} />
+                            </a>
+
+                            <button
+                              onClick={() => handleDeleteMedia(item.public_id)}
+                              title="Delete from Cloudinary & Database"
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.15)',
+                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                                borderRadius: '8px',
+                                padding: '6px 10px',
+                                color: '#f87171',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* TAB 3: INBOX & MESSAGES */}
           {activeTab === 'messages' && (
             <div>
@@ -781,6 +1210,35 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                       <p style={{ color: '#cbd5e1', fontSize: '0.94rem', lineHeight: 1.7, background: 'rgba(6, 8, 13, 0.6)', padding: '16px', borderRadius: '10px' }}>
                         {m.message}
                       </p>
+
+                      {/* Optional Attached Cloudinary Image */}
+                      {m.imageUrl && (
+                        <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px', borderRadius: '10px', background: 'rgba(212, 175, 55, 0.08)', border: '1px solid rgba(212, 175, 55, 0.25)' }}>
+                          <img
+                            src={m.imageUrl}
+                            alt="Client attachment"
+                            style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.4)' }}
+                          />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div className="font-mono" style={{ fontSize: '0.7rem', color: '#d4af37', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              Cloudinary Attached Media
+                            </div>
+                            <div style={{ fontSize: '0.78rem', color: '#cbd5e1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {m.imageUrl}
+                            </div>
+                          </div>
+                          <a
+                            href={m.imageUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn-gold"
+                            style={{ padding: '6px 12px', fontSize: '0.74rem', textDecoration: 'none' }}
+                          >
+                            <span>Inspect</span>
+                            <ExternalLink size={12} />
+                          </a>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -949,6 +1407,99 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   />
                 </div>
 
+                {/* CLOUDINARY PROFILE IMAGE UPLOADS */}
+                <div style={{ marginBottom: '28px', padding: '20px', borderRadius: '14px', background: 'rgba(6, 8, 13, 0.65)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+                  <div className="font-editorial" style={{ fontSize: '1.15rem', color: '#f3d078', marginBottom: '14px' }}>
+                    Cloudinary Visual Assets (Hero &amp; About Portraits)
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
+                    {/* Hero Portrait */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <label className="font-mono" style={{ fontSize: '0.72rem', color: '#cbd5e1', textTransform: 'uppercase' }}>
+                        Hero Portrait ({profile.heroImage ? 'Cloudinary Hosted' : 'Default Asset'})
+                      </label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                        <img
+                          src={profile.heroImage || '/hero/image2.jpeg'}
+                          alt="Hero Portrait"
+                          style={{ width: '64px', height: '64px', borderRadius: '12px', objectFit: 'cover', border: '1.5px solid #d4af37' }}
+                        />
+                        <label
+                          className="btn-gold"
+                          style={{
+                            padding: '8px 14px',
+                            fontSize: '0.75rem',
+                            cursor: uploadingImage ? 'wait' : 'pointer',
+                            opacity: uploadingImage ? 0.7 : 1,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <UploadCloud size={14} />
+                          <span>{uploadingImage ? 'Uploading...' : 'Upload Hero Image'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={uploadingImage}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleUploadProfileImage(file, 'profile_hero');
+                                e.target.value = '';
+                              }
+                            }}
+                            style={{ display: 'none' }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* About Section Architectural Portrait */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <label className="font-mono" style={{ fontSize: '0.72rem', color: '#cbd5e1', textTransform: 'uppercase' }}>
+                        About Narrative Portrait ({profile.aboutImage ? 'Cloudinary Hosted' : 'Default Asset'})
+                      </label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                        <img
+                          src={profile.aboutImage || '/hero/image1.jpeg'}
+                          alt="About Portrait"
+                          style={{ width: '64px', height: '64px', borderRadius: '12px', objectFit: 'cover', border: '1.5px solid #d4af37' }}
+                        />
+                        <label
+                          className="btn-gold"
+                          style={{
+                            padding: '8px 14px',
+                            fontSize: '0.75rem',
+                            cursor: uploadingImage ? 'wait' : 'pointer',
+                            opacity: uploadingImage ? 0.7 : 1,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <UploadCloud size={14} />
+                          <span>{uploadingImage ? 'Uploading...' : 'Upload About Image'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={uploadingImage}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleUploadProfileImage(file, 'profile_about');
+                                e.target.value = '';
+                              }
+                            }}
+                            style={{ display: 'none' }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <button type="submit" className="btn-gold" style={{ padding: '0.9rem 2rem' }}>
                   <Save size={16} />
                   <span>Update Profile Configuration</span>
@@ -1068,6 +1619,81 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   value={projectForm.highlights}
                   onChange={(e) => setProjectForm({ ...projectForm, highlights: e.target.value })}
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                />
+              </div>
+
+              {/* Project Image (Cloudinary Cloud Storage) */}
+              <div>
+                <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                  Project Showcase Image (Cloudinary Cloud Storage)
+                </label>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '8px' }}>
+                  {projectForm.image ? (
+                    <img
+                      src={projectForm.image}
+                      alt="Project preview"
+                      style={{ width: '64px', height: '44px', objectFit: 'cover', borderRadius: '8px', border: '1.5px solid #d4af37' }}
+                    />
+                  ) : (
+                    <div style={{ width: '64px', height: '44px', background: '#06080d', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Image size={18} color="#64748b" />
+                    </div>
+                  )}
+
+                  <label
+                    className="btn-gold"
+                    style={{
+                      padding: '8px 14px',
+                      fontSize: '0.75rem',
+                      cursor: uploadingImage ? 'wait' : 'pointer',
+                      opacity: uploadingImage ? 0.7 : 1,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <UploadCloud size={14} />
+                    <span>{uploadingImage ? 'Uploading...' : 'Upload Image'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingImage}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleUploadProjectImage(file);
+                          e.target.value = '';
+                        }
+                      }}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+
+                  {projectForm.image && (
+                    <button
+                      type="button"
+                      onClick={() => setProjectForm({ ...projectForm, image: '', imagePublicId: '' })}
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        color: '#f87171',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                <input
+                  type="text"
+                  placeholder="https://res.cloudinary.com/... or /hero/project-analytics.jpg"
+                  value={projectForm.image}
+                  onChange={(e) => setProjectForm({ ...projectForm, image: e.target.value })}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}
                 />
               </div>
 

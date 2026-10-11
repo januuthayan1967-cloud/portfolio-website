@@ -42,7 +42,9 @@
         "value": "100%",
         "icon": "ShieldCheck"
       }
-    ]
+    ],
+    "createdAt": "2026-10-11T07:55:56.220Z",
+    "updatedAt": "2026-10-11T13:51:02.349Z"
   },
   "projects": [
     {
@@ -330,7 +332,7 @@
       "message": "Hello Vanojan, we reviewed your work and were extremely impressed by your architectural craftsmanship and aesthetic standard. We'd love to schedule an introductory consultation regarding a fintech web platform.",
       "date": "2026-10-07T14:30:00.000Z",
       "read": true,
-      "starred": true
+      "starred": false
     },
     {
       "id": "msg-2",
@@ -339,14 +341,14 @@
       "subject": "Interactive 3D Enterprise Application",
       "message": "Your portfolio design is breathtaking. The cinematic lighting and Three.js execution perfectly reflect the quality we need for our upcoming product suite. Are you open for a contract engagement this quarter?",
       "date": "2026-10-08T09:15:00.000Z",
-      "read": false,
+      "read": true,
       "starred": true
     }
   ],
   "analytics": {
-    "totalVisits": 1999,
+    "totalVisits": 2011,
     "uniqueVisitors": 1220,
-    "pageViews": 4734,
+    "pageViews": 4746,
     "directInquiries": 35,
     "projectViews": 2190,
     "avgSessionSeconds": 245,

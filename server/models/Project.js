@@ -41,6 +41,10 @@ const projectSchema = new mongoose.Schema({
     type: String,
     default: '/hero/project-default.jpg'
   },
+  imagePublicId: {
+    type: String,
+    default: ''
+  },
   gradient: {
     type: String,
     default: 'from-blue-600/30 to-slate-900/30'

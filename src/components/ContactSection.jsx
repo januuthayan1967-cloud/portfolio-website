@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send, Check, Copy, ArrowUpRight } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Check, Copy, ArrowUpRight, UploadCloud, Image, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function ContactSection({ profile }) {
@@ -13,9 +13,12 @@ export default function ContactSection({ profile }) {
     name: '',
     email: '',
     subject: '',
-    message: ''
+    message: '',
+    imageUrl: '',
+    imagePublicId: ''
   });
 
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [status, setStatus] = useState({ loading: false, success: false, error: null });
   const [copiedField, setCopiedField] = useState(null);
 
@@ -23,6 +26,37 @@ export default function ContactSection({ profile }) {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2500);
+  };
+
+  const handleAttachmentChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      setStatus({ loading: false, success: false, error: 'Attachment exceeds 8MB maximum size.' });
+      return;
+    }
+    setUploadingAttachment(true);
+    setStatus((s) => ({ ...s, error: null }));
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('tag', 'user_upload');
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: fd
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to upload attachment');
+      setFormData((prev) => ({
+        ...prev,
+        imageUrl: data.url,
+        imagePublicId: data.public_id
+      }));
+    } catch (err) {
+      setStatus({ loading: false, success: false, error: `Upload error: ${err.message}` });
+    } finally {
+      setUploadingAttachment(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -40,7 +74,7 @@ export default function ContactSection({ profile }) {
       if (!res.ok) throw new Error(data.error || 'Failed to submit message');
 
       setStatus({ loading: false, success: true, error: null });
-      setFormData({ name: '', email: '', subject: '', message: '' });
+      setFormData({ name: '', email: '', subject: '', message: '', imageUrl: '', imagePublicId: '' });
 
       // Trigger celebration confetti
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -404,6 +438,102 @@ export default function ContactSection({ profile }) {
                   onFocus={(e) => (e.target.style.borderColor = 'var(--gold-primary)')}
                   onBlur={(e) => (e.target.style.borderColor = 'rgba(245, 240, 232, 0.1)')}
                 />
+              </div>
+
+              {/* Optional Cloudinary Image Attachment */}
+              <div
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: '12px',
+                  background: 'rgba(20, 31, 50, 0.45)',
+                  border: '1px dashed rgba(217, 169, 104, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      background: 'rgba(217, 169, 104, 0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--gold-primary)'
+                    }}
+                  >
+                    <Image size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                      Attach Reference Screenshot
+                    </div>
+                    <div className="font-mono" style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                      Optional mockup, architecture sketch or brief (Max 8MB)
+                    </div>
+                  </div>
+                </div>
+
+                {formData.imageUrl ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <img
+                      src={formData.imageUrl}
+                      alt="Uploaded preview"
+                      style={{ width: '38px', height: '38px', borderRadius: '6px', objectFit: 'cover', border: '1px solid var(--gold-light)' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, imageUrl: '', imagePublicId: '' }))}
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        borderRadius: '6px',
+                        padding: '6px 10px',
+                        color: '#f87171',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <X size={12} />
+                      <span>Remove</span>
+                    </button>
+                  </div>
+                ) : (
+                  <label
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      background: 'rgba(217, 169, 104, 0.15)',
+                      border: '1px solid rgba(217, 169, 104, 0.35)',
+                      color: 'var(--gold-light)',
+                      fontSize: '0.76rem',
+                      fontFamily: 'var(--font-mono)',
+                      cursor: uploadingAttachment ? 'wait' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <UploadCloud size={14} />
+                    <span>{uploadingAttachment ? 'Uploading...' : 'Upload Image'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingAttachment}
+                      onChange={handleAttachmentChange}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                )}
               </div>
 
               {/* Status alerts */}

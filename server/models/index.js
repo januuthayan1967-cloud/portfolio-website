@@ -5,3 +5,5 @@ export { Education } from './Education.js';
 export { Message } from './Message.js';
 export { Analytics } from './Analytics.js';
 export { Admin } from './Admin.js';
+export { Media } from './Media.js';
+export { User } from './User.js';
