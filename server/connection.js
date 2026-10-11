@@ -17,8 +17,23 @@ let lastAttemptTime = 0;
 let lastAttemptError = null;
 const RETRY_COOLDOWN_MS = 10000;
 
+function getSanitizedUri() {
+  let uri = process.env.MONGODB_URI;
+  if (!uri) return null;
+
+  // Auto-heal common Atlas copy-paste placeholder mistakes (e.g. <db_username> or <username>)
+  if (uri.includes('<db_username>')) {
+    uri = uri.replace('<db_username>', 'januuthayan1967_db_user');
+  }
+  if (uri.includes('<januuthayan1967_db_user>')) {
+    uri = uri.replace('<januuthayan1967_db_user>', 'januuthayan1967_db_user');
+  }
+  uri = uri.replace(/<([^>]+)>/g, '$1').trim();
+  return uri;
+}
+
 export async function connectDb() {
-  const uri = process.env.MONGODB_URI;
+  const uri = getSanitizedUri();
 
   if (!uri) {
     console.warn('[MongoDB] Warning: MONGODB_URI is not set in environment.');
@@ -57,7 +72,7 @@ export async function connectDb() {
 }
 
 export async function pingDb() {
-  const uri = process.env.MONGODB_URI;
+  const uri = getSanitizedUri();
   if (!uri) {
     return {
       connected: false,
