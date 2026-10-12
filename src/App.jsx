@@ -15,6 +15,8 @@ import SearchModal from './components/SearchModal';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminDashboard from './components/admin/AdminDashboard';
 
+import { initAnalyticsTracker } from './utils/analytics';
+
 export default function App() {
   const [data, setData] = useState({
     profile: null,
@@ -63,8 +65,8 @@ export default function App() {
   useEffect(() => {
     loadPortfolioData();
 
-    // Ping analytics visit
-    fetch('/api/analytics/ping', { method: 'POST' }).catch(() => {});
+    // Initialize Genuine First-Party Visitor Analytics Tracking
+    const cleanupAnalytics = initAnalyticsTracker();
 
     // Global keyboard shortcut to trigger Admin Console (Ctrl + Shift + A)
     const handleKeyDown = (e) => {
@@ -75,7 +77,10 @@ export default function App() {
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      cleanupAnalytics();
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [loadPortfolioData]);
 
   // Support direct URL triggers (?resetToken=XYZ, ?openAdmin=true/inbox, /admin)

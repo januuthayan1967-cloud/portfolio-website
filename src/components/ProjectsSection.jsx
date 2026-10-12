@@ -13,12 +13,20 @@ import {
   Layers
 } from 'lucide-react';
 import CinematicAtmosphere from './CinematicAtmosphere';
+import { trackProjectView } from '../utils/analytics';
 
 export default function ProjectsSection({ projects = [] }) {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState(null);
   const [galleryProject, setGalleryProject] = useState(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
+
+  useEffect(() => {
+    if (selectedProject) {
+      const slug = selectedProject.slug || selectedProject._id || selectedProject.id || selectedProject.title;
+      trackProjectView(slug, selectedProject.title);
+    }
+  }, [selectedProject]);
 
   const categories = ['All', 'Web Apps', 'Mobile', 'Enterprise', 'Systems', 'UI/UX'];
 

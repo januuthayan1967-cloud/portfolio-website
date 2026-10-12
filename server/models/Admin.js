@@ -37,6 +37,18 @@ const adminSchema = new mongoose.Schema({
   lockUntil: {
     type: Date,
     default: null
+  },
+  profileImageUrl: {
+    type: String,
+    default: ''
+  },
+  profileImagePublicId: {
+    type: String,
+    default: ''
+  },
+  profileImageUpdatedAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true

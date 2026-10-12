@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Shield, LayoutDashboard, FolderGit2, Mail, Cpu, UserCheck,
   LogOut, Plus, Trash2, Edit3, Star, CheckCircle, Eye, ArrowUpRight,
@@ -6,7 +6,8 @@ import {
   Image, UploadCloud, Copy, Check, ExternalLink, HardDrive,
   GraduationCap, MailCheck, KeyRound, Lock, Send, Search, Filter,
   Images, FileText, ChevronUp, ChevronDown, ChevronRight, Sun, Moon,
-  Bell, Menu, MoreVertical, Crown, PieChart, BarChart3
+  Bell, Menu, MoreVertical, Crown, PieChart, BarChart3, Camera,
+  Sparkles, ShieldCheck
 } from 'lucide-react';
 
 import '../../styles/admin.css';
@@ -15,6 +16,7 @@ import AdminVisitorAnalyticsChart from './AdminVisitorAnalyticsChart';
 import AdminTrafficSourcesChart from './AdminTrafficSourcesChart';
 import ProjectGalleryModal from './ProjectGalleryModal';
 import EmailReplyModal from './EmailReplyModal';
+import AdminProfilePhotoModal from './AdminProfilePhotoModal';
 
 export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh }) {
   // Theme state: defaults to 'light' on initial load matching Reference 2, or reads saved preference
@@ -59,6 +61,34 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
   // Account Security State
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [changingPassword, setChangingPassword] = useState(false);
+
+  // Profile Photo Management & Dropdown State
+  const [adminAvatar, setAdminAvatar] = useState('');
+  const [adminUserMeta, setAdminUserMeta] = useState({
+    name: 'Uthayagunasingam Vanojan',
+    role: 'Executive Administrator',
+    username: 'vanojanSE'
+  });
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef(null);
+
+  // Real Visitor Analytics State
+  const [analyticsRange, setAnalyticsRange] = useState('7d');
+  const [analyticsReport, setAnalyticsReport] = useState({
+    summary: {
+      totalVisitors: 0,
+      uniqueVisitors: 0,
+      pageViews: 0,
+      avgSessionSeconds: 0,
+      activeVisitors: 0
+    },
+    chartHistory: [],
+    trafficSources: [],
+    topPages: [],
+    topProjects: []
+  });
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   // Project Modal State
   const [editingProject, setEditingProject] = useState(null);
@@ -161,6 +191,23 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
         .then((r) => r.json())
         .then((data) => { if (data) setSmtpStatus(data); })
         .catch(() => {});
+
+      // Fetch Admin Avatar from Cloudinary & MongoDB
+      fetch('/api/admin/profile/avatar', { headers })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.success) {
+            if (data.avatarUrl) setAdminAvatar(data.avatarUrl);
+            if (data.name || data.role || data.username) {
+              setAdminUserMeta({
+                name: data.name || 'Uthayagunasingam Vanojan',
+                role: data.role === 'admin' ? 'Executive Administrator' : (data.role || 'Administrator'),
+                username: data.username || 'vanojanSE'
+              });
+            }
+          }
+        })
+        .catch(() => {});
     } catch (err) {
       console.warn('[AdminDashboard] Non-fatal data loading warning:', err.message);
       showToast('Dashboard data loaded', 'info');
@@ -169,9 +216,60 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     }
   };
 
+  // Fetch Real Visitor Analytics Report
+  const fetchAnalyticsReport = useCallback(async (range = '7d', isSilent = false) => {
+    if (!isSilent) setAnalyticsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/analytics/report?range=${range}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success) {
+          setAnalyticsReport(data);
+        }
+      }
+    } catch (e) {
+      // Non-blocking fallback
+    } finally {
+      if (!isSilent) setAnalyticsLoading(false);
+    }
+  }, [token]);
+
+  const handleAnalyticsRangeChange = (newRange) => {
+    setAnalyticsRange(newRange);
+    fetchAnalyticsReport(newRange);
+  };
+
   useEffect(() => {
     fetchData();
+    fetchAnalyticsReport(analyticsRange);
   }, [token]);
+
+  // Polling every 35s for live real visitor metrics without full dashboard reload
+  useEffect(() => {
+    const pollTimer = setInterval(() => {
+      fetchAnalyticsReport(analyticsRange, true);
+    }, 35000);
+    return () => clearInterval(pollTimer);
+  }, [fetchAnalyticsReport, analyticsRange]);
+
+  // Click outside listener for Admin Profile Dropdown
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(e.target)) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+    if (isProfileDropdownOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+      document.addEventListener('touchstart', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [isProfileDropdownOpen]);
 
   // Handle Verify Gmail SMTP Connection
   const handleVerifySmtp = async () => {
@@ -670,21 +768,137 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
             <div className="admin-theme-switch-slider" />
           </button>
 
-          {/* Admin Avatar Profile Pill */}
-          <div className="admin-profile-pill">
-            <img
-              src="/profile.jpg"
-              alt="Vanojan"
-              className="admin-avatar-img"
-              onError={(e) => {
-                e.target.src = profile?.heroImage || '/hero/portrait-gold-cinematic.png';
-              }}
-            />
-            <div className="hidden-mobile">
-              <div className="admin-profile-name">Vanojan</div>
-              <div className="admin-profile-role">Administrator</div>
+          {/* Admin Avatar Profile Pill with Luxury Dropdown */}
+          <div style={{ position: 'relative' }} ref={profileDropdownRef}>
+            <div
+              className="admin-profile-pill"
+              onClick={() => setIsProfileDropdownOpen((prev) => !prev)}
+              title="Administrator Profile & Photo Management"
+            >
+              {adminAvatar ? (
+                <img
+                  src={adminAvatar}
+                  alt={adminUserMeta.name}
+                  className="admin-avatar-img"
+                  onError={() => setAdminAvatar('')}
+                />
+              ) : (
+                <div className="admin-avatar-monogram">
+                  UV
+                </div>
+              )}
+              <div className="hidden-mobile">
+                <div className="admin-profile-name">
+                  {adminUserMeta.name.split(' ').pop() || 'Vanojan'}
+                </div>
+                <div className="admin-profile-role">
+                  {adminUserMeta.role}
+                </div>
+              </div>
+              <ChevronDown
+                size={14}
+                color="var(--adm-text-muted)"
+                style={{
+                  transform: isProfileDropdownOpen ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 0.2s ease'
+                }}
+              />
             </div>
-            <ChevronDown size={14} color="var(--adm-text-muted)" />
+
+            {/* Dropdown Menu */}
+            {isProfileDropdownOpen && (
+              <div className="admin-profile-dropdown-menu">
+                <div className="admin-dropdown-header">
+                  <div className="admin-dropdown-avatar-wrap">
+                    {adminAvatar ? (
+                      <img
+                        src={adminAvatar}
+                        alt={adminUserMeta.name}
+                        className="admin-dropdown-avatar-img"
+                        onError={() => setAdminAvatar('')}
+                      />
+                    ) : (
+                      <div className="admin-dropdown-avatar-monogram">UV</div>
+                    )}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div className="admin-dropdown-title-name">{adminUserMeta.name}</div>
+                    <div className="admin-dropdown-title-role">{adminUserMeta.role}</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--adm-text-muted)', fontFamily: 'var(--font-mono)' }}>
+                      @{adminUserMeta.username}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="admin-dropdown-items-list">
+                  <button
+                    type="button"
+                    className="admin-dropdown-item"
+                    onClick={() => {
+                      setIsProfileDropdownOpen(false);
+                      setIsPhotoModalOpen(true);
+                    }}
+                  >
+                    <Camera size={16} color="var(--adm-gold-primary)" />
+                    <span>Change Profile Photo</span>
+                  </button>
+
+                  {adminAvatar && (
+                    <button
+                      type="button"
+                      className="admin-dropdown-item danger"
+                      onClick={() => {
+                        setIsProfileDropdownOpen(false);
+                        setIsPhotoModalOpen(true);
+                      }}
+                    >
+                      <Trash2 size={16} />
+                      <span>Remove Profile Photo</span>
+                    </button>
+                  )}
+
+                  <div className="admin-dropdown-divider" />
+
+                  <button
+                    type="button"
+                    className="admin-dropdown-item"
+                    onClick={() => {
+                      setActiveTab('security');
+                      setIsProfileDropdownOpen(false);
+                    }}
+                  >
+                    <Shield size={16} color="var(--adm-gold-primary)" />
+                    <span>Account Security</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="admin-dropdown-item"
+                    onClick={() => {
+                      setActiveTab('profile');
+                      setIsProfileDropdownOpen(false);
+                    }}
+                  >
+                    <UserCheck size={16} color="var(--adm-gold-primary)" />
+                    <span>Identity, Bio &amp; CV</span>
+                  </button>
+
+                  <div className="admin-dropdown-divider" />
+
+                  <button
+                    type="button"
+                    className="admin-dropdown-item danger"
+                    onClick={() => {
+                      setIsProfileDropdownOpen(false);
+                      onLogout();
+                    }}
+                  >
+                    <LogOut size={16} />
+                    <span>Logout Console</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Action Button: Sync Data */}
@@ -900,10 +1114,14 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   </div>
                   <div className="admin-stat-label">Total Visitors</div>
                   <div className="admin-stat-value">
-                    {overview?.analytics?.totalVisits?.toLocaleString() || '2,086'}
+                    {analyticsReport.summary.totalVisitors > 0
+                      ? analyticsReport.summary.totalVisitors.toLocaleString()
+                      : (overview?.analytics?.totalVisits?.toLocaleString() || '0')}
                   </div>
                   <div className="admin-stat-trend green">
-                    ↑ +14.2% engagement this week
+                    {analyticsReport.summary.uniqueVisitors > 0
+                      ? `↑ ${analyticsReport.summary.uniqueVisitors.toLocaleString()} unique visitor${analyticsReport.summary.uniqueVisitors === 1 ? '' : 's'}`
+                      : '• Genuine first-party visits'}
                   </div>
                 </div>
 
@@ -924,10 +1142,16 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   </div>
                   <div className="admin-stat-label">Page Impressions</div>
                   <div className="admin-stat-value">
-                    {overview?.analytics?.pageViews?.toLocaleString() || '4,821'}
+                    {analyticsReport.summary.pageViews > 0
+                      ? analyticsReport.summary.pageViews.toLocaleString()
+                      : (overview?.analytics?.pageViews?.toLocaleString() || '0')}
                   </div>
                   <div className="admin-stat-trend blue">
-                    • Average 2m 45s dwell time
+                    {analyticsReport.summary.avgSessionSeconds > 0
+                      ? `• Avg ${Math.floor(analyticsReport.summary.avgSessionSeconds / 60)}m ${analyticsReport.summary.avgSessionSeconds % 60}s session`
+                      : (analyticsReport.summary.activeVisitors > 0
+                          ? `• ${analyticsReport.summary.activeVisitors} active visitor${analyticsReport.summary.activeVisitors === 1 ? '' : 's'} right now`
+                          : '• Verified page views')}
                   </div>
                 </div>
 
@@ -948,10 +1172,10 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   </div>
                   <div className="admin-stat-label">Inquiries Received</div>
                   <div className="admin-stat-value">
-                    {overview?.totalMessages || messages.length || 5}
+                    {overview?.totalMessages || messages.length || 0}
                   </div>
                   <div className="admin-stat-trend amber">
-                    {unreadCount || 3} unread requiring review
+                    {unreadCount || 0} unread requiring review
                   </div>
                 </div>
 
@@ -972,18 +1196,30 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   </div>
                   <div className="admin-stat-label">Live Projects</div>
                   <div className="admin-stat-value">
-                    {projects.length || 5}
+                    {projects.length || 0}
                   </div>
                   <div className="admin-stat-trend purple">
-                    {projects.filter((p) => p.featured).length || 3} designated Featured
+                    {projects.filter((p) => p.featured).length || 0} designated Featured
                   </div>
                 </div>
               </div>
 
               {/* Middle Charts Row (Visitor Analytics Spline & Traffic Sources Donut) */}
               <div className="admin-charts-grid">
-                <AdminVisitorAnalyticsChart />
-                <AdminTrafficSourcesChart totalVisitors={overview?.analytics?.totalVisits?.toLocaleString() || '2,086'} />
+                <AdminVisitorAnalyticsChart
+                  timeRange={analyticsRange}
+                  onTimeRangeChange={handleAnalyticsRangeChange}
+                  chartHistory={analyticsReport.chartHistory}
+                  loading={analyticsLoading}
+                  onRefresh={() => fetchAnalyticsReport(analyticsRange)}
+                />
+                <AdminTrafficSourcesChart
+                  trafficSources={analyticsReport.trafficSources}
+                  totalVisitors={analyticsReport.summary.totalVisitors}
+                  timeRange={analyticsRange}
+                  onTimeRangeChange={handleAnalyticsRangeChange}
+                  loading={analyticsLoading}
+                />
               </div>
 
               {/* Bottom Row: Recent Inquiries & Recent Projects Panels */}
@@ -2148,6 +2384,97 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                 </p>
               </div>
 
+              {/* Administrator Profile Photo Management Card */}
+              <div className="admin-card" style={{ marginBottom: '28px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+                    <div
+                      style={{
+                        position: 'relative',
+                        width: '68px',
+                        height: '68px',
+                        borderRadius: '50%',
+                        padding: '2.5px',
+                        background: 'linear-gradient(135deg, #D4A23A, #F5D77F, #8F6B21)',
+                        boxShadow: '0 6px 20px rgba(212, 162, 58, 0.25)',
+                        flexShrink: 0
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '50%',
+                          overflow: 'hidden',
+                          background: 'var(--adm-surface)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {adminAvatar ? (
+                          <img
+                            src={adminAvatar}
+                            alt="Admin Avatar"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={() => setAdminAvatar('')}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              background: '#0F172A',
+                              color: '#E6B65B',
+                              fontSize: '1.25rem',
+                              fontWeight: 800,
+                              fontFamily: 'var(--font-heading)'
+                            }}
+                          >
+                            UV
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.25rem', color: 'var(--adm-text-title)', margin: '0 0 4px 0' }}>
+                        Executive Profile Avatar
+                      </h3>
+                      <p style={{ color: 'var(--adm-text-muted)', fontSize: '0.82rem', margin: 0 }}>
+                        Synced persistently via Cloudinary (<code>portfolio/admin/profile</code>) and MongoDB Atlas.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsPhotoModalOpen(true)}
+                      className="admin-btn-primary"
+                      style={{ padding: '8px 16px', fontSize: '0.82rem' }}
+                    >
+                      <Camera size={15} />
+                      <span>{adminAvatar ? 'Change Photo' : 'Upload Photo'}</span>
+                    </button>
+                    {adminAvatar && (
+                      <button
+                        type="button"
+                        onClick={() => setIsPhotoModalOpen(true)}
+                        className="admin-btn-secondary"
+                        style={{ padding: '8px 14px', fontSize: '0.82rem', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#EF4444' }}
+                      >
+                        <Trash2 size={15} />
+                        <span>Remove</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="admin-card" style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <div className="admin-chart-icon-box" style={{ width: '48px', height: '48px' }}>
                   <Shield size={22} />
@@ -2457,6 +2784,21 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
           showToast={showToast}
         />
       )}
+
+      {/* ADMIN PROFILE PHOTO MANAGEMENT MODAL */}
+      <AdminProfilePhotoModal
+        isOpen={isPhotoModalOpen}
+        onClose={() => setIsPhotoModalOpen(false)}
+        token={token}
+        currentAvatarUrl={adminAvatar}
+        adminName={adminUserMeta.name}
+        adminRole={adminUserMeta.role}
+        onAvatarUpdated={(newUrl) => {
+          setAdminAvatar(newUrl);
+          showToast(newUrl ? 'Profile photo updated and saved' : 'Profile photo removed');
+          fetchData();
+        }}
+      />
     </div>
   );
 }

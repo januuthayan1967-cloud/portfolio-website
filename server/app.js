@@ -34,6 +34,7 @@ import {
   verifySmtpConnection,
   getSmtpConfig
 } from './services/email.js';
+import { recordAnalyticsEvent, generateAnalyticsReport } from './services/analytics.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -314,9 +315,83 @@ app.post('/api/messages', async (req, res) => {
 });
 
 
-// 3. Analytics ping
+// 3. Genuine First-Party Visitor Analytics Tracking
+app.post('/api/analytics/track', async (req, res) => {
+  try {
+    const {
+      visitorId,
+      sessionId,
+      path = '/',
+      title = '',
+      referrer = '',
+      eventType = 'pageview',
+      projectSlug = '',
+      dwellSeconds = 0,
+      isAdmin = false
+    } = req.body || {};
+
+    const userAgent = req.headers['user-agent'] || '';
+    const host = req.headers.host || '';
+
+    const result = await recordAnalyticsEvent({
+      visitorId,
+      sessionId,
+      path,
+      title,
+      referrer,
+      eventType,
+      projectSlug,
+      dwellSeconds,
+      userAgent,
+      host,
+      isAdmin: Boolean(isAdmin),
+      isDbConnected: isDbConnected()
+    });
+
+    return res.json(result);
+  } catch (err) {
+    console.error('[API /api/analytics/track error]:', err.message);
+    return res.status(500).json({ success: false, error: 'Tracking failed' });
+  }
+});
+
+// Admin Analytics Comprehensive Report Endpoint (Protected)
+app.get('/api/admin/analytics/report', adminOnlyMiddleware, async (req, res) => {
+  try {
+    const range = String(req.query.range || '7d').toLowerCase();
+    const report = await generateAnalyticsReport(range, isDbConnected());
+    return res.json(report);
+  } catch (err) {
+    console.error('[API /api/admin/analytics/report error]:', err.message);
+    return res.status(500).json({ success: false, error: 'Failed to generate report' });
+  }
+});
+
+// Legacy / Fast Analytics Ping (Maintains backward compatibility with tests & external pings)
 app.post('/api/analytics/ping', async (req, res) => {
   let totalVisits = 0;
+
+  // If payload contains visitor & session, record genuine event
+  if (req.body?.visitorId && req.body?.sessionId) {
+    try {
+      const userAgent = req.headers['user-agent'] || '';
+      const host = req.headers.host || '';
+      await recordAnalyticsEvent({
+        visitorId: req.body.visitorId,
+        sessionId: req.body.sessionId,
+        path: req.body.path || '/',
+        title: req.body.title || '',
+        referrer: req.body.referrer || '',
+        eventType: req.body.eventType || 'pageview',
+        projectSlug: req.body.projectSlug || '',
+        dwellSeconds: req.body.dwellSeconds || 0,
+        userAgent,
+        host,
+        isAdmin: Boolean(req.body.isAdmin),
+        isDbConnected: isDbConnected()
+      });
+    } catch (e) {}
+  }
 
   if (isDbConnected()) {
     try {
@@ -1547,6 +1622,226 @@ app.put('/api/admin/profile', adminOnlyMiddleware, async (req, res) => {
   } catch (e) {}
 
   res.json({ success: true, profile: updatedProfile });
+});
+
+// --------------------------------------------------------------------------
+// ADMIN PROFILE AVATAR MANAGEMENT (Cloudinary & MongoDB Atlas Sync)
+// --------------------------------------------------------------------------
+
+// 1. Get current admin profile avatar metadata
+app.get('/api/admin/profile/avatar', authMiddleware, async (req, res) => {
+  try {
+    let avatarUrl = '';
+    let avatarPublicId = '';
+    let updatedAt = null;
+
+    if (isDbConnected()) {
+      const adminDoc = await Admin.findOne({ username: req.user.username }).lean();
+      if (adminDoc && adminDoc.profileImageUrl) {
+        avatarUrl = adminDoc.profileImageUrl;
+        avatarPublicId = adminDoc.profileImagePublicId || '';
+        updatedAt = adminDoc.profileImageUpdatedAt || adminDoc.updatedAt;
+      } else {
+        const profileDoc = await Profile.findOne().lean();
+        if (profileDoc && profileDoc.avatarImage) {
+          avatarUrl = profileDoc.avatarImage;
+          avatarPublicId = profileDoc.avatarImagePublicId || '';
+          updatedAt = profileDoc.avatarImageUpdatedAt || profileDoc.updatedAt;
+        }
+      }
+    }
+
+    if (!avatarUrl) {
+      const db = getDb();
+      avatarUrl = db.admin?.profileImageUrl || db.profile?.avatarImage || '';
+      avatarPublicId = db.admin?.profileImagePublicId || db.profile?.avatarImagePublicId || '';
+      updatedAt = db.admin?.profileImageUpdatedAt || null;
+    }
+
+    return res.json({
+      success: true,
+      avatarUrl,
+      avatarPublicId,
+      updatedAt,
+      username: req.user.username,
+      name: 'Uthayagunasingam Vanojan',
+      role: req.user.role
+    });
+  } catch (err) {
+    console.error('[GET /api/admin/profile/avatar error]:', err.message);
+    return res.status(500).json({ error: 'Failed to retrieve profile avatar' });
+  }
+});
+
+// 2. Upload, crop & replace admin profile avatar (Max 5MB, JPEG/PNG/WebP)
+app.post('/api/admin/profile/avatar', adminOnlyMiddleware, uploadSingleImage(['avatar', 'file', 'image']), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No image file provided for upload.' });
+  }
+
+  // File size validation (5MB max)
+  const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+  if (req.file.size > MAX_AVATAR_BYTES) {
+    return res.status(400).json({ error: 'Image file size exceeds the 5MB maximum limit.' });
+  }
+
+  // Format validation
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(req.file.mimetype.toLowerCase())) {
+    return res.status(400).json({ error: 'Unsupported format. Allowed formats: JPEG, PNG, WebP.' });
+  }
+
+  if (!isCloudinaryConfigured()) {
+    return res.status(503).json({ error: 'Cloudinary image service is not configured.' });
+  }
+
+  try {
+    // Upload to Cloudinary under folder portfolio/admin/profile
+    const publicIdSuffix = `${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    const uploadOptions = {
+      folder: 'portfolio/admin/profile',
+      public_id: `admin_avatar_${publicIdSuffix}`,
+      resource_type: 'image',
+      transformation: [
+        { width: 600, height: 600, crop: 'limit', quality: 'auto', fetch_format: 'auto' }
+      ]
+    };
+
+    const result = await uploadStream(req.file.buffer, uploadOptions);
+    if (!result || !result.secure_url) {
+      throw new Error('Cloudinary did not return a valid secure URL.');
+    }
+
+    const now = new Date();
+    let oldPublicId = '';
+
+    // Update Admin document in MongoDB Atlas
+    if (isDbConnected()) {
+      const existingAdmin = await Admin.findOne({ username: req.user.username });
+      if (existingAdmin) {
+        oldPublicId = existingAdmin.profileImagePublicId || '';
+        existingAdmin.profileImageUrl = result.secure_url;
+        existingAdmin.profileImagePublicId = result.public_id;
+        existingAdmin.profileImageUpdatedAt = now;
+        await existingAdmin.save();
+      }
+
+      // Also update Profile document so it is synchronized
+      const existingProfile = await Profile.findOne();
+      if (existingProfile) {
+        if (!oldPublicId) oldPublicId = existingProfile.avatarImagePublicId || '';
+        existingProfile.avatarImage = result.secure_url;
+        existingProfile.avatarImagePublicId = result.public_id;
+        existingProfile.avatarImageUpdatedAt = now;
+        await existingProfile.save();
+      }
+
+      // Save media record for Cloudinary Assets library
+      await Media.create({
+        public_id: result.public_id,
+        url: result.secure_url,
+        format: result.format || 'webp',
+        width: result.width || 600,
+        height: result.height || 600,
+        bytes: result.bytes || req.file.size,
+        tag: 'profile_hero',
+        uploaderId: req.user.username,
+        uploaderRole: req.user.role
+      }).catch(() => {});
+    }
+
+    // Update Local JSON db backup
+    const db = getDb();
+    if (db.admin) {
+      if (!oldPublicId) oldPublicId = db.admin.profileImagePublicId || '';
+      db.admin.profileImageUrl = result.secure_url;
+      db.admin.profileImagePublicId = result.public_id;
+      db.admin.profileImageUpdatedAt = now;
+    }
+    if (db.profile) {
+      db.profile.avatarImage = result.secure_url;
+      db.profile.avatarImagePublicId = result.public_id;
+      db.profile.avatarImageUpdatedAt = now;
+    }
+    saveDb(db);
+
+    // Safe Cleanup: Clean up previous Cloudinary asset after replacement is confirmed
+    if (oldPublicId && oldPublicId !== result.public_id) {
+      deleteCloudinaryImage(oldPublicId).catch((err) => {
+        console.warn('[Cloudinary Avatar Cleanup Warning]:', err.message);
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Admin profile photo uploaded and updated successfully.',
+      avatarUrl: result.secure_url,
+      avatarPublicId: result.public_id,
+      updatedAt: now
+    });
+  } catch (uploadErr) {
+    console.error('[POST /api/admin/profile/avatar error]:', uploadErr);
+    return res.status(500).json({ error: `Avatar upload failed: ${uploadErr.message}` });
+  }
+});
+
+// 3. Remove admin profile avatar (revert to default monogram)
+app.delete('/api/admin/profile/avatar', adminOnlyMiddleware, async (req, res) => {
+  try {
+    let publicIdToDelete = '';
+    const now = new Date();
+
+    if (isDbConnected()) {
+      const adminDoc = await Admin.findOne({ username: req.user.username });
+      if (adminDoc) {
+        publicIdToDelete = adminDoc.profileImagePublicId || '';
+        adminDoc.profileImageUrl = '';
+        adminDoc.profileImagePublicId = '';
+        adminDoc.profileImageUpdatedAt = now;
+        await adminDoc.save();
+      }
+
+      const profileDoc = await Profile.findOne();
+      if (profileDoc) {
+        if (!publicIdToDelete) publicIdToDelete = profileDoc.avatarImagePublicId || '';
+        profileDoc.avatarImage = '';
+        profileDoc.avatarImagePublicId = '';
+        profileDoc.avatarImageUpdatedAt = now;
+        await profileDoc.save();
+      }
+    }
+
+    const db = getDb();
+    if (db.admin) {
+      if (!publicIdToDelete) publicIdToDelete = db.admin.profileImagePublicId || '';
+      db.admin.profileImageUrl = '';
+      db.admin.profileImagePublicId = '';
+      db.admin.profileImageUpdatedAt = now;
+    }
+    if (db.profile) {
+      db.profile.avatarImage = '';
+      db.profile.avatarImagePublicId = '';
+      db.profile.avatarImageUpdatedAt = now;
+    }
+    saveDb(db);
+
+    // Safe deletion from Cloudinary
+    if (publicIdToDelete && isCloudinaryConfigured()) {
+      try {
+        await deleteCloudinaryImage(publicIdToDelete);
+      } catch (cloudErr) {
+        console.warn('[Cloudinary Avatar Delete Warning]:', cloudErr.message);
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: 'Admin profile photo removed. Default monogram avatar restored.'
+    });
+  } catch (err) {
+    console.error('[DELETE /api/admin/profile/avatar error]:', err);
+    return res.status(500).json({ error: `Avatar removal failed: ${err.message}` });
+  }
 });
 
 // Admin Skills Update

@@ -44,7 +44,10 @@
       }
     ],
     "createdAt": "2026-10-11T07:55:56.220Z",
-    "updatedAt": "2026-10-11T13:51:02.349Z"
+    "updatedAt": "2026-10-11T13:51:02.349Z",
+    "avatarImage": "",
+    "avatarImagePublicId": "",
+    "avatarImageUpdatedAt": "2026-10-12T11:32:14.413Z"
   },
   "projects": [
     {
@@ -362,9 +365,9 @@
     }
   ],
   "analytics": {
-    "totalVisits": 2084,
+    "totalVisits": 2088,
     "uniqueVisitors": 1220,
-    "pageViews": 4819,
+    "pageViews": 4823,
     "directInquiries": 39,
     "projectViews": 2190,
     "avgSessionSeconds": 245,
@@ -409,6 +412,9 @@
   "admin": {
     "username": "vanojanSE",
     "email": "uthayanvanojan5@gmail.com",
-    "passwordHash": "$2b$12$6DF9QNa0FSGiZYmwZDCU6uzMUW0dNKotRttEtFY/nGZMP1yKQk7d2"
+    "passwordHash": "$2b$12$6DF9QNa0FSGiZYmwZDCU6uzMUW0dNKotRttEtFY/nGZMP1yKQk7d2",
+    "profileImageUrl": "",
+    "profileImagePublicId": "",
+    "profileImageUpdatedAt": "2026-10-12T11:32:14.413Z"
   }
 }
