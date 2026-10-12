@@ -8,6 +8,7 @@ import {
   Palette,
   ArrowRight
 } from 'lucide-react';
+import CinematicAtmosphere from './CinematicAtmosphere';
 
 // Brand SVG Icons crafted to match the reference design exactly
 const BrandIcons = {
@@ -331,6 +332,8 @@ export default function SkillsSection() {
         overflow: 'hidden'
       }}
     >
+      <CinematicAtmosphere variant="skills" particlesCount={14} />
+
       {/* Subtle ambient decorative waves */}
       <div
         style={{

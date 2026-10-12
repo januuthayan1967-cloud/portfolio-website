@@ -20,6 +20,14 @@
   --amber-warm: #E5A84B;
   --amber-glow: rgba(229, 168, 75, 0.16);
   
+  /* Golden Luxury Master Palette Specification */
+  --gold-bright: #FFD978;
+  --gold-metallic: #D6A548;
+  --gold-champagne: #F2C879;
+  --gold-deep: #98631F;
+  --gold-highlight: #FFF1BC;
+  --gold-bloom-intense: 0 0 25px rgba(214, 165, 72, 0.45), 0 0 50px rgba(214, 165, 72, 0.2);
+  
   /* Deep Navy & Slate Accents (Matches dark backdrop in portrait image2.jpeg) */
   --navy-deep: #0D1626;
   --navy-mid: #14283B;
@@ -391,6 +399,28 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes travelGoldLight {
+  0% { stroke-dashoffset: 1600; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes cornerPulse {
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.22); filter: drop-shadow(0 0 8px rgba(255, 217, 120, 0.9)); }
+}
+
+@keyframes sparkFloat {
+  0%, 100% { transform: translateY(0px) scale(1); opacity: 0.55; }
+  50% { transform: translateY(-10px) scale(1.35); opacity: 0.95; }
+}
+
+@keyframes shimmerLightSweep {
+  0% { transform: translateX(-150%) skewX(-20deg); opacity: 0; }
+  15% { opacity: 0.45; }
+  30% { transform: translateX(250%) skewX(-20deg); opacity: 0; }
+  100% { transform: translateX(250%) skewX(-20deg); opacity: 0; }
+}
+
 .animate-float {
   animation: floatSlow 6s ease-in-out infinite;
 }
@@ -401,6 +431,36 @@ body {
 
 .animate-hero-fade {
   animation: fadeInHero 0.9s var(--ease-cinematic) forwards;
+}
+
+/* Atmosphere sparks */
+.atmosphere-spark {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: sparkFloat 5s ease-in-out infinite;
+}
+
+.atmosphere-spark-gold {
+  background: var(--gold-bright, #FFD978);
+  box-shadow: 0 0 7px 2px rgba(255, 217, 120, 0.75), 0 0 16px rgba(214, 165, 72, 0.4);
+}
+
+.atmosphere-spark-blue {
+  background: #D9F1FF;
+  box-shadow: 0 0 8px 2px rgba(56, 189, 248, 0.75), 0 0 16px rgba(56, 189, 248, 0.4);
+}
+
+[data-theme="light"] .atmosphere-nebula-sapphire {
+  background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 70%) !important;
+}
+
+[data-theme="light"] .atmosphere-nebula-gold {
+  background: radial-gradient(circle at 50% 50%, rgba(212, 162, 58, 0.10) 0%, transparent 70%) !important;
+}
+
+[data-theme="light"] .atmosphere-energy-beam {
+  opacity: 0.28 !important;
 }
 
 /* Reduced Motion Respect */

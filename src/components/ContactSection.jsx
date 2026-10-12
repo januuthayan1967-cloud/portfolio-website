@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, Check, Copy, ArrowUpRight, UploadCloud, Image, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import CinematicAtmosphere from './CinematicAtmosphere';
 
 export default function ContactSection({ profile }) {
   const {
@@ -104,7 +105,7 @@ export default function ContactSection({ profile }) {
         overflow: 'hidden'
       }}
     >
-      <div className="ambient-glow-gold" style={{ bottom: '10%', right: '10%', opacity: 0.5 }} />
+      <CinematicAtmosphere variant="contact" particlesCount={14} />
 
       <div className="container-luxury" style={{ position: 'relative', zIndex: 10 }}>
         

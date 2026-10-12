@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, Briefcase, GraduationCap, Building2, MapPin, Sparkles } from 'lucide-react';
+import CinematicAtmosphere from './CinematicAtmosphere';
 
 export default function ExperienceSection({ education = [] }) {
   const [activeTab, setActiveTab] = useState('experience');
@@ -37,6 +38,8 @@ export default function ExperienceSection({ education = [] }) {
         overflow: 'hidden'
       }}
     >
+      <CinematicAtmosphere variant="experience" particlesCount={14} />
+
       <div className="container-luxury" style={{ position: 'relative', zIndex: 10 }}>
         
         {/* SECTION HEADER */}

@@ -12,6 +12,7 @@ import {
   Eye,
   Layers
 } from 'lucide-react';
+import CinematicAtmosphere from './CinematicAtmosphere';
 
 export default function ProjectsSection({ projects = [] }) {
   const [activeFilter, setActiveFilter] = useState('All');
@@ -86,6 +87,8 @@ export default function ProjectsSection({ projects = [] }) {
         overflow: 'hidden'
       }}
     >
+      <CinematicAtmosphere variant="projects" particlesCount={14} />
+
       <div className="container-luxury" style={{ position: 'relative', zIndex: 10 }}>
         
         {/* SECTION HEADER WITH FILTERS */}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowUp, Shield } from 'lucide-react';
+import CinematicAtmosphere from './CinematicAtmosphere';
 
 export default function Footer({ onOpenAdmin, profile }) {
   const scrollToTop = () => {
@@ -14,10 +15,12 @@ export default function Footer({ onOpenAdmin, profile }) {
         borderTop: '1px solid var(--border-gold)',
         background: 'var(--surface-card)',
         boxShadow: '0 -4px 25px rgba(212, 162, 58, 0.05)',
-        zIndex: 10
+        zIndex: 10,
+        overflow: 'hidden'
       }}
     >
-      <div className="container-luxury">
+      <CinematicAtmosphere variant="footer" particlesCount={8} showEnergyBeam={false} />
+      <div className="container-luxury" style={{ position: 'relative', zIndex: 1 }}>
         <div
           style={{
             display: 'flex',

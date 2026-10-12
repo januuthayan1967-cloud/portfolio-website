@@ -1,18 +1,21 @@
 import React from 'react';
 
 /**
- * ArchitecturalFrame: Reconstructs the multi-layered sci-fi cyber-luxury chamfered photo frame
- * with glowing illuminated gold neon edges, corner brackets, and tech coordinates from the reference.
+ * ArchitecturalFrame: Reconstructs the multi-layered futuristic chamfered photo frame
+ * with glowing illuminated gold edges, traveling golden light, pulsing nodes,
+ * and tech coordinates matching Reference Image 1 & 2.
  */
 export default function ArchitecturalFrame({ 
-  imageSrc, 
-  altText, 
+  imageSrc = "/hero/image1.jpeg", 
+  altText = "Uthayagunasingam Vanojan — Solutions Architect", 
   children, 
   aspectRatio = "420 / 530",
   imagePosition = "center 18%",
   imageScale = 1.08,
   sideText = "FULL-STACK ENGINEER • SOLUTIONS ARCHITECT"
 }) {
+  const chassisPath = "M 38,8 L 382,8 L 412,38 L 412,492 L 382,522 L 38,522 L 8,492 L 8,38 Z";
+
   return (
     <div 
       className="architectural-frame-wrapper"
@@ -22,30 +25,33 @@ export default function ArchitecturalFrame({
         maxWidth: '430px',
         margin: '0 auto',
         aspectRatio: aspectRatio,
-        filter: 'drop-shadow(0 20px 45px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 35px rgba(217, 169, 104, 0.28))'
+        filter: 'drop-shadow(0 20px 45px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 28px rgba(214, 165, 72, 0.35))',
+        transition: 'transform 0.4s var(--ease-cinematic), filter 0.4s ease'
       }}
     >
-      {/* Ambient Sapphire & Gold Backlight Aura */}
+      {/* 1. Ambient Sapphire & Gold Backlight Aura */}
       <div
         style={{
           position: 'absolute',
           inset: '-8%',
-          background: 'radial-gradient(circle at 35% 30%, rgba(217, 169, 104, 0.28) 0%, rgba(20, 40, 59, 0.35) 50%, transparent 75%)',
-          filter: 'blur(35px)',
+          background: 'radial-gradient(circle at 35% 30%, rgba(255, 217, 120, 0.28) 0%, rgba(2, 132, 199, 0.24) 45%, rgba(14, 25, 44, 0.55) 70%, transparent 85%)',
+          filter: 'blur(38px)',
           zIndex: 0,
-          pointerEvents: 'none'
+          pointerEvents: 'none',
+          borderRadius: '24px'
         }}
       />
 
-      {/* Clipped Inner Container Housing Photograph */}
+      {/* 2. Clipped Inner Container Housing Photograph */}
       <div
         style={{
           position: 'absolute',
           inset: '8px',
           clipPath: 'polygon(32px 0%, calc(100% - 32px) 0%, 100% 32px, 100% calc(100% - 32px), calc(100% - 32px) 100%, 32px 100%, 0% calc(100% - 32px), 0% 32px)',
-          background: '#0B1018',
+          background: '#070D18',
           overflow: 'hidden',
-          zIndex: 1
+          zIndex: 1,
+          boxShadow: 'inset 0 0 30px rgba(0, 0, 0, 0.85)'
         }}
       >
         <img
@@ -58,7 +64,8 @@ export default function ArchitecturalFrame({
             objectPosition: imagePosition,
             transform: `scale(${imageScale})`,
             display: 'block',
-            filter: 'contrast(1.04) saturate(1.04)'
+            filter: 'contrast(1.05) saturate(1.04)',
+            transition: 'opacity 0.4s ease, transform 0.5s ease'
           }}
           loading="eager"
         />
@@ -68,7 +75,7 @@ export default function ArchitecturalFrame({
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to top, rgba(11, 16, 24, 0.92) 0%, rgba(11, 16, 24, 0.25) 35%, transparent 65%)',
+            background: 'linear-gradient(to top, rgba(7, 13, 24, 0.94) 0%, rgba(7, 13, 24, 0.3) 35%, transparent 65%)',
             pointerEvents: 'none'
           }}
         />
@@ -81,13 +88,27 @@ export default function ArchitecturalFrame({
             left: 0,
             width: '60%',
             height: '70%',
-            background: 'radial-gradient(circle at 10% 20%, rgba(245, 208, 157, 0.2) 0%, transparent 60%)',
+            background: 'radial-gradient(circle at 10% 20%, rgba(255, 217, 120, 0.18) 0%, transparent 60%)',
             pointerEvents: 'none'
+          }}
+        />
+
+        {/* Moving Light Reflection Sheen */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '-50%',
+            left: '-50%',
+            width: '200%',
+            height: '200%',
+            background: 'linear-gradient(115deg, transparent 40%, rgba(255, 241, 188, 0.12) 48%, rgba(255, 255, 255, 0.18) 50%, rgba(255, 241, 188, 0.12) 52%, transparent 60%)',
+            pointerEvents: 'none',
+            animation: 'shimmerLightSweep 8.5s ease-in-out infinite'
           }}
         />
       </div>
 
-      {/* SVG Multi-Layered Illuminated Architectural HUD Frame Overlay */}
+      {/* 3. SVG Multi-Layered Illuminated Architectural HUD Frame Overlay */}
       <svg
         viewBox="0 0 420 530"
         style={{
@@ -101,25 +122,30 @@ export default function ArchitecturalFrame({
         }}
       >
         <defs>
-          {/* Champagne Gold Neon Linear Gradient */}
-          <linearGradient id="goldChassisGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FBE3BD" />
-            <stop offset="35%" stopColor="#D9A968" />
-            <stop offset="70%" stopColor="#E5A84B" />
-            <stop offset="100%" stopColor="#9E7438" />
+          <linearGradient id="chassisGradAbout" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FFF1BC" />
+            <stop offset="25%" stopColor="#FFD978" />
+            <stop offset="50%" stopColor="#F2C879" />
+            <stop offset="75%" stopColor="#D6A548" />
+            <stop offset="100%" stopColor="#98631F" />
           </linearGradient>
 
-          {/* Neon Bloom Filter */}
-          <filter id="neonGoldBloom" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
+          <linearGradient id="travelLightGradAbout" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="50%" stopColor="#FFF1BC" />
+            <stop offset="100%" stopColor="#FFD978" />
+          </linearGradient>
+
+          <filter id="neonGoldBloomAbout" x="-25%" y="-25%" width="150%" height="150%">
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
 
-          <filter id="intenseBloom" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="6" result="blur1" />
+          <filter id="intenseBloomAbout" x="-35%" y="-35%" width="170%" height="170%">
+            <feGaussianBlur stdDeviation="5.5" result="blur1" />
             <feGaussianBlur stdDeviation="2" result="blur2" />
             <feMerge>
               <feMergeNode in="blur1" />
@@ -129,98 +155,106 @@ export default function ArchitecturalFrame({
           </filter>
         </defs>
 
-        {/* Outer Fine Neon Contour Line */}
+        {/* Outer Contour Line */}
         <path
-          d="M 38,8 L 382,8 L 412,38 L 412,492 L 382,522 L 38,522 L 8,492 L 8,38 Z"
+          d={chassisPath}
           fill="none"
-          stroke="url(#goldChassisGrad)"
-          strokeWidth="1.5"
-          filter="url(#neonGoldBloom)"
-          opacity="0.85"
+          stroke="url(#chassisGradAbout)"
+          strokeWidth="1.8"
+          filter="url(#neonGoldBloomAbout)"
+          opacity="0.95"
+        />
+
+        {/* Slow Golden Light Traveling Along Contour */}
+        <path
+          d={chassisPath}
+          fill="none"
+          stroke="url(#travelLightGradAbout)"
+          strokeWidth="2.8"
+          strokeDasharray="120 600"
+          strokeLinecap="round"
+          filter="url(#neonGoldBloomAbout)"
+          style={{ animation: 'travelGoldLight 7s linear infinite' }}
         />
 
         {/* Inner Secondary Technical Line */}
         <path
           d="M 44,14 L 376,14 L 406,44 L 406,486 L 376,516 L 44,516 L 14,486 L 14,44 Z"
           fill="none"
-          stroke="rgba(217, 169, 104, 0.35)"
+          stroke="rgba(242, 200, 121, 0.42)"
           strokeWidth="1"
           strokeDasharray="12 4 4 4"
         />
 
-        {/* HEAVY ILLUMINATED CORNER BRACKETS WITH HIGH-INTENSITY BLOOM */}
-        {/* Top-Left Corner Bracket */}
+        {/* ILLUMINATED CORNER BRACKETS */}
+        {/* Top-Left */}
         <path
           d="M 8,68 L 8,38 L 38,8 L 68,8"
           fill="none"
-          stroke="#FBE3BD"
-          strokeWidth="3.5"
+          stroke="#FFF1BC"
+          strokeWidth="3.6"
           strokeLinecap="round"
-          filter="url(#intenseBloom)"
+          filter="url(#intenseBloomAbout)"
         />
-        {/* Top-Left Accent Dot */}
-        <circle cx="38" cy="8" r="3" fill="#FFF" filter="url(#neonGoldBloom)" />
-        <circle cx="8" cy="38" r="3" fill="#FFF" filter="url(#neonGoldBloom)" />
+        <circle cx="38" cy="8" r="3.2" fill="#FFF" filter="url(#neonGoldBloomAbout)" style={{ animation: 'cornerPulse 3s infinite ease-in-out' }} />
+        <circle cx="8" cy="38" r="3.2" fill="#FFF" filter="url(#neonGoldBloomAbout)" style={{ animation: 'cornerPulse 3s infinite ease-in-out' }} />
 
-        {/* Top-Right Corner Bracket */}
+        {/* Top-Right */}
         <path
           d="M 352,8 L 382,8 L 412,38 L 412,68"
           fill="none"
-          stroke="#FBE3BD"
-          strokeWidth="3.5"
+          stroke="#FFF1BC"
+          strokeWidth="3.6"
           strokeLinecap="round"
-          filter="url(#intenseBloom)"
+          filter="url(#intenseBloomAbout)"
         />
-        {/* Top-Right Accent Dot */}
-        <circle cx="382" cy="8" r="3" fill="#FFF" filter="url(#neonGoldBloom)" />
-        <circle cx="412" cy="38" r="3" fill="#FFF" filter="url(#neonGoldBloom)" />
+        <circle cx="382" cy="8" r="3.2" fill="#FFF" filter="url(#neonGoldBloomAbout)" style={{ animation: 'cornerPulse 3s infinite ease-in-out' }} />
+        <circle cx="412" cy="38" r="3.2" fill="#FFF" filter="url(#neonGoldBloomAbout)" style={{ animation: 'cornerPulse 3s infinite ease-in-out' }} />
 
-        {/* Bottom-Left Corner Bracket */}
+        {/* Bottom-Left */}
         <path
           d="M 8,462 L 8,492 L 38,522 L 68,522"
           fill="none"
-          stroke="#FBE3BD"
-          strokeWidth="3.5"
+          stroke="#FFF1BC"
+          strokeWidth="3.6"
           strokeLinecap="round"
-          filter="url(#intenseBloom)"
+          filter="url(#intenseBloomAbout)"
         />
-        {/* Bottom-Left Accent Dot */}
-        <circle cx="8" cy="492" r="3" fill="#FFF" filter="url(#neonGoldBloom)" />
-        <circle cx="38" cy="522" r="3" fill="#FFF" filter="url(#neonGoldBloom)" />
+        <circle cx="8" cy="492" r="3.2" fill="#FFF" filter="url(#neonGoldBloomAbout)" style={{ animation: 'cornerPulse 3s infinite ease-in-out' }} />
+        <circle cx="38" cy="522" r="3.2" fill="#FFF" filter="url(#neonGoldBloomAbout)" style={{ animation: 'cornerPulse 3s infinite ease-in-out' }} />
 
-        {/* Bottom-Right Corner Bracket */}
+        {/* Bottom-Right */}
         <path
           d="M 352,522 L 382,522 L 412,492 L 412,462"
           fill="none"
-          stroke="#FBE3BD"
-          strokeWidth="3.5"
+          stroke="#FFF1BC"
+          strokeWidth="3.6"
           strokeLinecap="round"
-          filter="url(#intenseBloom)"
+          filter="url(#intenseBloomAbout)"
         />
-        {/* Bottom-Right Accent Dot */}
-        <circle cx="382" cy="522" r="3" fill="#FFF" filter="url(#neonGoldBloom)" />
-        <circle cx="412" cy="492" r="3" fill="#FFF" filter="url(#neonGoldBloom)" />
+        <circle cx="382" cy="522" r="3.2" fill="#FFF" filter="url(#neonGoldBloomAbout)" style={{ animation: 'cornerPulse 3s infinite ease-in-out' }} />
+        <circle cx="412" cy="492" r="3.2" fill="#FFF" filter="url(#neonGoldBloomAbout)" style={{ animation: 'cornerPulse 3s infinite ease-in-out' }} />
 
         {/* Top Center Stepped Notch Accents */}
         <path
           d="M 180,8 L 190,14 L 230,14 L 240,8"
           fill="none"
-          stroke="url(#goldChassisGrad)"
-          strokeWidth="2"
+          stroke="url(#chassisGradAbout)"
+          strokeWidth="2.2"
         />
-        <circle cx="210" cy="14" r="2.5" fill="#FBE3BD" />
+        <circle cx="210" cy="14" r="2.5" fill="#FFF1BC" />
 
         {/* Bottom Center Notch Accents */}
         <path
           d="M 180,522 L 190,516 L 230,516 L 240,522"
           fill="none"
-          stroke="url(#goldChassisGrad)"
-          strokeWidth="2"
+          stroke="url(#chassisGradAbout)"
+          strokeWidth="2.2"
         />
 
         {/* Side Midpoint Crosshair Ticks */}
-        <line x1="2" y1="265" x2="14" y2="265" stroke="#FBE3BD" strokeWidth="2" />
-        <line x1="406" y1="265" x2="418" y2="265" stroke="#FBE3BD" strokeWidth="2" />
+        <line x1="2" y1="265" x2="14" y2="265" stroke="#FFD978" strokeWidth="2" />
+        <line x1="406" y1="265" x2="418" y2="265" stroke="#FFD978" strokeWidth="2" />
       </svg>
 
       {/* Vertical Coordinate Marking along right inner edge */}
@@ -235,12 +269,13 @@ export default function ArchitecturalFrame({
             fontFamily: 'var(--font-mono)',
             fontSize: '0.62rem',
             letterSpacing: '0.28em',
-            color: 'var(--gold-light)',
-            textShadow: '0 0 10px rgba(217, 169, 104, 0.6)',
-            opacity: 0.85,
+            color: 'var(--gold-bright, #FFD978)',
+            textShadow: '0 0 12px rgba(255, 217, 120, 0.75)',
+            opacity: 0.9,
             zIndex: 15,
             whiteSpace: 'nowrap',
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            fontWeight: 600
           }}
         >
           {sideText}

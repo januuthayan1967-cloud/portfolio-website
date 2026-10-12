@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowUpRight, MessageSquare, Sparkles, CheckCircle2, FileText, X } from 'lucide-react';
+import { ArrowUpRight, MessageSquare, Sparkles, CheckCircle2, FileText, X, Cpu, Layers, Users } from 'lucide-react';
 import ArchitecturalFrame from './ArchitecturalFrame';
+import CinematicAtmosphere from './CinematicAtmosphere';
 
 export default function AboutSection({ profile }) {
   const {
@@ -22,14 +23,17 @@ export default function AboutSection({ profile }) {
   const journeyPillars = [
     {
       title: "Problem Solving",
+      icon: Cpu,
       desc: "Deconstructing complex enterprise challenges into clean, modular, and maintainable logic."
     },
     {
       title: "Clean Architecture",
+      icon: Layers,
       desc: "Building resilient microservices, normalized databases, and scalable distributed patterns."
     },
     {
       title: "User Focused",
+      icon: Users,
       desc: "Crafting intuitive, accessible, and high-performance digital experiences with cinematic aesthetics."
     }
   ];
@@ -43,19 +47,45 @@ export default function AboutSection({ profile }) {
         overflow: 'hidden'
       }}
     >
+      {/* Cinematic Ambient Atmosphere Background (Extending Hero Visuals) */}
+      <CinematicAtmosphere variant="about" particlesCount={16} />
+
       <div className="container-luxury" style={{ position: 'relative', zIndex: 10 }}>
         
-        {/* SECTION HEADER EYEBROW */}
-        <div style={{ marginBottom: '32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-            <span className="badge-gold">02 // ABOUT</span>
+        {/* SECTION HEADER EYEBROW (Matches Reference Image 1) */}
+        <div style={{ marginBottom: '36px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
             <span
-              className="font-mono"
               style={{
-                fontSize: '0.78rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '4px 14px',
+                borderRadius: '9999px',
+                background: 'rgba(214, 165, 72, 0.12)',
+                border: '1px solid rgba(242, 200, 121, 0.4)',
+                color: 'var(--gold-bright, #FFD978)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                letterSpacing: '0.08em'
+              }}
+            >
+              02 - ABOUT
+            </span>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '4px 12px',
+                borderRadius: '9999px',
+                background: 'rgba(14, 22, 36, 0.6)',
+                border: '1px solid var(--border-subtle)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.72rem',
                 color: 'var(--text-muted)',
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase'
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                fontWeight: 600
               }}
             >
               PASSION &bull; PRECISION &bull; PROGRESS
@@ -69,10 +99,11 @@ export default function AboutSection({ profile }) {
               fontWeight: 800,
               color: 'var(--text-main)',
               lineHeight: 1.15,
-              maxWidth: '850px'
+              maxWidth: '850px',
+              margin: '0 0 8px 0'
             }}
           >
-            Turning Complex Ideas into <span className="gold-gradient-text">Scalable Real Solutions.</span>
+            Turning Complex <span className="gold-gradient-text">Ideas into Scalable Real Solutions.</span>
           </h2>
         </div>
 
@@ -86,35 +117,47 @@ export default function AboutSection({ profile }) {
           }}
           className="about-main-grid"
         >
-          {/* LEFT: BIOGRAPHY, METRICS, JOURNEY */}
+          {/* LEFT COLUMN: BIOGRAPHY, METRICS, CTA, JOURNEY */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
             
             {/* Professional Biography */}
             <p
               style={{
-                fontSize: '1.08rem',
+                fontSize: '1.06rem',
                 color: 'var(--text-secondary)',
-                lineHeight: 1.8,
-                fontWeight: 300
+                lineHeight: 1.75,
+                fontWeight: 300,
+                margin: 0
               }}
             >
               {bio}
             </p>
 
-            {/* 4 Stat Metrics */}
+            {/* 4 Stat Metrics Cards (Matches Reference Image 1) */}
             <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: '12px',
-                padding: '20px 0',
-                borderTop: '1px solid rgba(245, 240, 232, 0.08)',
-                borderBottom: '1px solid rgba(245, 240, 232, 0.08)'
+                gap: '14px'
               }}
               className="about-metrics-row"
             >
               {metrics.map((m) => (
-                <div key={m.label} style={{ display: 'flex', flexDirection: 'column' }}>
+                <div 
+                  key={m.label} 
+                  style={{ 
+                    padding: '16px 14px',
+                    borderRadius: '16px',
+                    background: 'var(--surface-card)',
+                    border: '1px solid var(--border-gold)',
+                    boxShadow: 'var(--card-shadow, 0 8px 24px rgba(0, 0, 0, 0.4))',
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    transition: 'all 0.3s ease'
+                  }}
+                  className="about-stat-card"
+                >
                   <span
                     className="font-heading gold-gradient-text"
                     style={{ fontSize: '1.85rem', fontWeight: 800, lineHeight: 1.1 }}
@@ -124,11 +167,13 @@ export default function AboutSection({ profile }) {
                   <span
                     className="font-mono"
                     style={{
-                      fontSize: '0.65rem',
+                      fontSize: '0.68rem',
                       color: 'var(--text-muted)',
-                      letterSpacing: '0.06em',
+                      letterSpacing: '0.04em',
                       textTransform: 'uppercase',
-                      marginTop: '4px'
+                      marginTop: '6px',
+                      fontWeight: 600,
+                      lineHeight: 1.3
                     }}
                   >
                     {m.label}
@@ -137,48 +182,91 @@ export default function AboutSection({ profile }) {
               ))}
             </div>
 
-            {/* Action Buttons: Download CV & Let's Connect */}
+            {/* Action Buttons: Download CV & Let's Connect (Matches Reference Image 1) */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
               <a
                 href={resumeUrl || "#contact"}
                 download={resumeUrl ? "Vanojan_CV.pdf" : undefined}
                 target={resumeUrl ? "_blank" : undefined}
                 rel="noopener noreferrer"
-                className="btn-gold"
-                style={{ padding: '0.85rem 2rem', fontSize: '0.88rem' }}
+                className="btn-gold reference-primary"
+                style={{ 
+                  padding: '0.85rem 2.2rem', 
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  borderRadius: '9999px',
+                  textDecoration: 'none'
+                }}
               >
                 <span>Download CV</span>
-                <ArrowUpRight size={16} />
+                <ArrowUpRight size={17} />
               </a>
 
               <a
                 href="#contact"
                 className="btn-ghost-luxury"
-                style={{ padding: '0.85rem 1.8rem', fontSize: '0.88rem' }}
+                style={{ 
+                  padding: '0.85rem 1.9rem', 
+                  fontSize: '0.88rem',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  borderRadius: '9999px',
+                  textDecoration: 'none',
+                  background: 'var(--surface-elevated)',
+                  border: '1px solid var(--border-gold)',
+                  color: 'var(--text-main)',
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                }}
               >
-                <MessageSquare size={16} color="var(--gold-primary)" />
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: 'rgba(214, 165, 72, 0.15)',
+                  border: '1px solid var(--border-gold)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <MessageSquare size={13} color="var(--gold-bright, #FFD978)" />
+                </div>
                 <span>Let's Connect</span>
               </a>
             </div>
 
-            {/* MY JOURNEY SUBSECTION */}
+            {/* MY JOURNEY SUBSECTION (Matches Reference Image 1) */}
             <div
-              className="glass-panel"
               style={{
-                marginTop: '10px',
-                padding: '24px 28px',
-                borderRadius: '20px',
+                marginTop: '6px',
+                padding: '24px 26px',
+                borderRadius: '22px',
                 border: '1.5px solid var(--border-gold)',
                 background: 'var(--surface-card)',
-                boxShadow: 'var(--card-shadow)'
+                boxShadow: 'var(--card-shadow, 0 10px 30px rgba(0, 0, 0, 0.5))'
               }}
             >
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span className="font-heading" style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                  <span className="font-heading" style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
                     MY JOURNEY
                   </span>
-                  <span className="badge-gold" style={{ fontSize: '0.68rem', padding: '2px 8px' }}>
+                  <span 
+                    style={{ 
+                      fontSize: '0.68rem', 
+                      padding: '3px 10px',
+                      borderRadius: '9999px',
+                      background: 'rgba(214, 165, 72, 0.12)',
+                      border: '1px solid rgba(242, 200, 121, 0.35)',
+                      color: 'var(--gold-bright, #FFD978)',
+                      fontFamily: 'var(--font-mono)',
+                      fontWeight: 600
+                    }}
+                  >
                     Passion Driven Developer
                   </span>
                 </div>
@@ -186,16 +274,19 @@ export default function AboutSection({ profile }) {
                 <button
                   onClick={() => setShowJourneyModal(true)}
                   style={{
-                    background: 'none',
+                    padding: '6px 14px',
+                    borderRadius: '9999px',
+                    background: 'linear-gradient(135deg, #F2C879 0%, #D6A548 100%)',
                     border: 'none',
-                    color: 'var(--text-gold)',
-                    fontSize: '0.82rem',
-                    fontWeight: 600,
-                    fontFamily: 'var(--font-mono)',
+                    color: '#0B1018',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-sans)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px'
+                    gap: '5px',
+                    boxShadow: '0 2px 10px rgba(214, 165, 72, 0.35)'
                   }}
                 >
                   <span>Read More</span>
@@ -204,10 +295,10 @@ export default function AboutSection({ profile }) {
               </div>
 
               <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: '20px' }}>
-                A quick look at my journey, values and what drives me to build scalable, high-impact digital solutions.
+                A quick look at my journey, values and what drives me to build better solutions.
               </p>
 
-              {/* 3 Journey Pillar Cards */}
+              {/* 3 Journey Pillar Cards (Matches Reference Image 1) */}
               <div
                 style={{
                   display: 'grid',
@@ -216,45 +307,62 @@ export default function AboutSection({ profile }) {
                 }}
                 className="about-pillars-grid"
               >
-                {journeyPillars.map((p) => (
-                  <div
-                    key={p.title}
-                    style={{
-                      padding: '16px',
-                      borderRadius: '14px',
-                      background: 'var(--surface-elevated)',
-                      border: '1px solid var(--border-gold)',
-                      boxShadow: '0 2px 8px rgba(212, 162, 58, 0.06)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '6px'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--gold-dark)' }}>
-                      <CheckCircle2 size={14} color="var(--gold-dark)" />
-                      <span className="font-heading" style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                {journeyPillars.map((p) => {
+                  const Icon = p.icon;
+                  return (
+                    <div
+                      key={p.title}
+                      style={{
+                        padding: '16px 14px',
+                        borderRadius: '16px',
+                        background: 'var(--surface-elevated)',
+                        border: '1px solid var(--border-gold)',
+                        boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        textAlign: 'center',
+                        gap: '8px',
+                        transition: 'all 0.3s ease'
+                      }}
+                      className="pillar-card"
+                    >
+                      <div
+                        style={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '50%',
+                          background: 'rgba(214, 165, 72, 0.12)',
+                          border: '1px solid rgba(242, 200, 121, 0.45)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'var(--gold-bright, #FFD978)',
+                          boxShadow: '0 0 12px rgba(214, 165, 72, 0.2)'
+                        }}
+                      >
+                        <Icon size={18} />
+                      </div>
+                      <span className="font-heading" style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)' }}>
                         {p.title}
                       </span>
                     </div>
-                    <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                      {p.desc}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          {/* RIGHT: PORTRAIT PHOTOGRAPH (image1.jpeg) IN ARCHITECTURAL FRAME */}
+          {/* RIGHT COLUMN: PORTRAIT IN ARCHITECTURAL FRAME (Matches Reference Image 1) */}
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <ArchitecturalFrame
               imageSrc={aboutImage}
               altText={name}
-              imagePosition="center 20%"
+              imagePosition="center 18%"
               imageScale={1.08}
               sideText="FULL-STACK ENGINEER • SOLUTIONS ARCHITECT"
             >
-              {/* Overlay Badge at Bottom of Frame */}
+              {/* Overlay Glass Badge at Bottom of Frame (Matches Reference Image 1) */}
               <div
                 style={{
                   position: 'absolute',
@@ -262,11 +370,12 @@ export default function AboutSection({ profile }) {
                   left: '18px',
                   right: '18px',
                   padding: '12px 18px',
-                  borderRadius: '16px',
-                  background: 'rgba(14, 22, 36, 0.92)',
+                  borderRadius: '14px',
+                  background: 'rgba(7, 13, 24, 0.90)',
                   backdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(217, 169, 104, 0.45)',
-                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.7), 0 0 15px var(--gold-glow)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1.5px solid rgba(242, 200, 121, 0.65)',
+                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(214, 165, 72, 0.25)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -275,14 +384,14 @@ export default function AboutSection({ profile }) {
                 }}
               >
                 <div>
-                  <div className="font-heading" style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '0.04em' }}>
+                  <div className="font-heading" style={{ fontSize: '0.90rem', fontWeight: 800, color: '#F5F0E8', letterSpacing: '0.04em' }}>
                     FULL-STACK ENGINEER
                   </div>
-                  <div className="font-mono" style={{ fontSize: '0.62rem', color: 'var(--gold-primary)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  <div className="font-mono" style={{ fontSize: '0.62rem', color: 'var(--gold-bright, #FFD978)', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700 }}>
                     SOLUTIONS ARCHITECT
                   </div>
                 </div>
-                <Sparkles size={16} color="var(--gold-primary)" />
+                <Sparkles size={16} color="var(--gold-bright, #FFD978)" />
               </div>
             </ArchitecturalFrame>
           </div>
@@ -295,7 +404,7 @@ export default function AboutSection({ profile }) {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(11, 16, 24, 0.92)',
+            background: 'rgba(7, 12, 21, 0.94)',
             backdropFilter: 'blur(20px)',
             zIndex: 100,
             display: 'flex',
@@ -311,10 +420,10 @@ export default function AboutSection({ profile }) {
               width: '100%',
               maxWidth: '680px',
               background: 'var(--surface-card)',
-              border: '1px solid var(--border-gold)',
+              border: '1.5px solid var(--border-gold)',
               borderRadius: '24px',
               padding: '36px',
-              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8)'
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85), 0 0 35px var(--gold-glow)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -324,7 +433,7 @@ export default function AboutSection({ profile }) {
                 position: 'absolute',
                 top: '20px',
                 right: '20px',
-                background: 'rgba(217, 169, 104, 0.1)',
+                background: 'rgba(214, 165, 72, 0.1)',
                 border: '1px solid var(--border-gold)',
                 borderRadius: '50%',
                 width: '36px',
@@ -359,16 +468,17 @@ export default function AboutSection({ profile }) {
         @media (max-width: 1024px) {
           .about-main-grid {
             grid-template-columns: 1fr !important;
-            gap: 50px !important;
+            gap: 40px !important;
           }
         }
         @media (max-width: 640px) {
           .about-metrics-row {
             grid-template-columns: repeat(2, 1fr) !important;
-            gap: 20px !important;
+            gap: 12px !important;
           }
           .about-pillars-grid {
-            grid-template-columns: 1fr !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 8px !important;
           }
         }
       `}</style>
