@@ -128,7 +128,7 @@
  .cinematic-tagline{font-size:15px;margin-top:14px}.cinematic-actions{gap:12px;flex-wrap:wrap}.reference-primary{min-height:52px;padding:0 17px;font-size:11px;gap:12px}
  .reference-intro{min-height:52px;padding:0 12px;gap:9px;font-size:11px}.reference-intro>span{width:29px;height:29px}.work-note{display:none}
  .cinematic-socials{gap:13px}.cinematic-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
- .cinematic-stage{grid-template-columns:minmax(0,1fr);max-width:440px}.cinematic-hud{padding:0;display:flex;justify-content:center}.cinematic-hud .holographic-globe-hud,.cinematic-watermark{display:none!important}
+ .cinematic-stage{grid-template-columns:minmax(0,1fr);max-width:440px}.cinematic-hud{padding:0;display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:14px;width:100%}.cinematic-hud .holographic-globe-hud{display:flex!important;transform:none!important;margin:0 auto!important;width:172px!important;max-width:90%!important}.cinematic-watermark{display:none!important}
  .cinematic-hud .capability-selector{margin:0;width:100%!important;flex-direction:row!important;justify-content:center}.cinematic-hud .capability-btn{flex:1;justify-content:center!important;gap:7px!important;padding:9px 5px!important;font-size:10px!important;min-width:0}
  .cinematic-identity{padding:13px;bottom:20px;left:12px;right:12px}.cinematic-identity strong{font-size:13px}.cinematic-identity div>span{font-size:7px}.cinematic-identity small{font-size:9px}
  .cinematic-portrait .gallery-thumb-btn{width:20vw!important;height:54px!important}.cinematic-portrait .portrait-gallery-container{gap:10px!important}
