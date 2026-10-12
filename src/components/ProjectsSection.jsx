@@ -127,18 +127,19 @@ export default function ProjectsSection({ projects = [] }) {
                     key={cat}
                     onClick={() => setActiveFilter(cat)}
                     style={{
-                      padding: '7px 16px',
+                      padding: '7px 18px',
                       borderRadius: '9999px',
                       fontSize: '0.8rem',
                       fontFamily: 'var(--font-mono)',
+                      fontWeight: 600,
                       cursor: 'pointer',
                       transition: 'all 0.25s ease',
-                      border: isActive ? '1.5px solid var(--gold-light)' : '1px solid rgba(245, 240, 232, 0.1)',
+                      border: isActive ? '1.5px solid #D4A23A' : '1px solid var(--border-gold)',
                       background: isActive
-                        ? 'linear-gradient(135deg, rgba(217, 169, 104, 0.28) 0%, rgba(14, 22, 36, 0.95) 100%)'
-                        : 'rgba(14, 22, 36, 0.7)',
-                      color: isActive ? 'var(--gold-light)' : 'var(--text-muted)',
-                      boxShadow: isActive ? '0 0 16px var(--gold-glow)' : 'none'
+                        ? 'linear-gradient(135deg, #F2CE83 0%, #D4A23A 100%)'
+                        : 'var(--surface-card)',
+                      color: isActive ? '#111827' : 'var(--text-secondary)',
+                      boxShadow: isActive ? '0 4px 14px rgba(212, 162, 58, 0.28)' : 'none'
                     }}
                   >
                     {cat}
@@ -153,9 +154,10 @@ export default function ProjectsSection({ projects = [] }) {
                   alignItems: 'center',
                   gap: '6px',
                   marginLeft: '12px',
-                  color: 'var(--gold-light)',
+                  color: 'var(--text-gold)',
                   fontFamily: 'var(--font-mono)',
                   fontSize: '0.8rem',
+                  fontWeight: 600,
                   textDecoration: 'none'
                 }}
               >
@@ -184,8 +186,9 @@ export default function ProjectsSection({ projects = [] }) {
                 style={{
                   borderRadius: '18px',
                   padding: '16px',
-                  border: '1px solid rgba(217, 169, 104, 0.22)',
-                  background: 'rgba(12, 19, 32, 0.82)',
+                  border: '1.5px solid var(--border-gold)',
+                  background: 'var(--surface-card)',
+                  boxShadow: 'var(--card-shadow)',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
@@ -194,13 +197,13 @@ export default function ProjectsSection({ projects = [] }) {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-6px)';
-                  e.currentTarget.style.borderColor = 'var(--gold-light)';
-                  e.currentTarget.style.boxShadow = '0 25px 50px rgba(0, 0, 0, 0.7), 0 0 25px var(--gold-glow)';
+                  e.currentTarget.style.borderColor = 'var(--gold-primary)';
+                  e.currentTarget.style.boxShadow = 'var(--card-shadow-hover)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.borderColor = 'rgba(217, 169, 104, 0.22)';
-                  e.currentTarget.style.boxShadow = '0 20px 40px -15px rgba(0, 0, 0, 0.4)';
+                  e.currentTarget.style.borderColor = 'var(--border-gold)';
+                  e.currentTarget.style.boxShadow = 'var(--card-shadow)';
                 }}
               >
                 {/* Image Preview Container */}
@@ -331,8 +334,8 @@ export default function ProjectsSection({ projects = [] }) {
                       style={{
                         padding: '3px 8px',
                         borderRadius: '6px',
-                        background: 'rgba(20, 31, 50, 0.65)',
-                        border: '1px solid rgba(245, 240, 232, 0.08)',
+                        background: 'var(--surface-elevated)',
+                        border: '1px solid var(--border-subtle)',
                         fontSize: '0.68rem',
                         fontFamily: 'var(--font-mono)',
                         color: 'var(--text-secondary)'
@@ -350,7 +353,7 @@ export default function ProjectsSection({ projects = [] }) {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     paddingTop: '12px',
-                    borderTop: '1px solid rgba(245, 240, 232, 0.08)',
+                    borderTop: '1px solid var(--border-subtle)',
                     gap: '8px'
                   }}
                 >
@@ -361,9 +364,10 @@ export default function ProjectsSection({ projects = [] }) {
                         flex: 1,
                         padding: '6px 10px',
                         borderRadius: '8px',
-                        background: 'rgba(217, 169, 104, 0.12)',
-                        border: '1px solid rgba(217, 169, 104, 0.3)',
-                        color: 'var(--gold-light)',
+                        background: 'rgba(212, 162, 58, 0.12)',
+                        border: '1px solid var(--border-gold)',
+                        color: 'var(--text-gold)',
+                        fontWeight: 600,
                         fontSize: '0.72rem',
                         fontFamily: 'var(--font-mono)',
                         cursor: 'pointer',
@@ -382,9 +386,9 @@ export default function ProjectsSection({ projects = [] }) {
                       style={{
                         padding: '6px 10px',
                         borderRadius: '8px',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        color: 'var(--text-muted)',
+                        background: 'var(--surface-elevated)',
+                        border: '1px solid var(--border-subtle)',
+                        color: 'var(--text-secondary)',
                         fontSize: '0.72rem',
                         fontFamily: 'var(--font-mono)',
                         cursor: 'pointer',
@@ -695,11 +699,11 @@ export default function ProjectsSection({ projects = [] }) {
               maxWidth: '820px',
               maxHeight: '90vh',
               overflowY: 'auto',
-              background: '#0d1526',
-              border: '1px solid var(--border-gold)',
+              background: 'var(--surface-card)',
+              border: '1.5px solid var(--border-gold)',
               borderRadius: '24px',
               padding: '36px',
-              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px var(--gold-glow)'
+              boxShadow: 'var(--card-shadow-hover)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -810,7 +814,7 @@ export default function ProjectsSection({ projects = [] }) {
                     style={{
                       padding: '5px 12px',
                       borderRadius: '8px',
-                      background: 'rgba(20, 31, 50, 0.7)',
+                      background: 'var(--surface-elevated)',
                       border: '1px solid var(--border-gold)',
                       fontSize: '0.78rem',
                       fontFamily: 'var(--font-mono)',

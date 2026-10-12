@@ -24,9 +24,9 @@ export default function App() {
   });
   const [loading, setLoading] = useState(true);
 
-  // Theme Management (Dark / Light)
+  // Theme Management (Light by default for first-time visitors / Dark via toggle)
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('vanojan_theme') || 'dark';
+    return localStorage.getItem('vanojan_theme') || 'light';
   });
 
   useEffect(() => {

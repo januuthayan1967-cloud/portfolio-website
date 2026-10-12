@@ -75,23 +75,25 @@ export default function ExperienceSection({ education = [] }) {
                 display: 'inline-flex',
                 padding: '4px',
                 borderRadius: '9999px',
-                background: 'rgba(14, 22, 36, 0.8)',
-                border: '1px solid var(--border-gold)'
+                background: 'var(--surface-elevated)',
+                border: '1px solid var(--border-gold)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
               }}
             >
               <button
                 onClick={() => setActiveTab('experience')}
                 style={{
-                  padding: '7px 18px',
+                  padding: '7px 20px',
                   borderRadius: '9999px',
                   border: 'none',
-                  background: activeTab === 'experience' ? 'linear-gradient(135deg, #F2CA8E 0%, #D9A968 100%)' : 'transparent',
-                  color: activeTab === 'experience' ? '#0B1018' : 'var(--text-muted)',
+                  background: activeTab === 'experience' ? 'linear-gradient(135deg, #F2CE83 0%, #D4A23A 100%)' : 'transparent',
+                  color: activeTab === 'experience' ? '#111827' : 'var(--text-secondary)',
                   fontFamily: 'var(--font-heading)',
-                  fontSize: '0.8rem',
+                  fontSize: '0.82rem',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  transition: 'all 0.25s ease'
+                  transition: 'all 0.25s ease',
+                  boxShadow: activeTab === 'experience' ? '0 2px 10px rgba(212, 162, 58, 0.25)' : 'none'
                 }}
               >
                 Work Experience
@@ -99,16 +101,17 @@ export default function ExperienceSection({ education = [] }) {
               <button
                 onClick={() => setActiveTab('education')}
                 style={{
-                  padding: '7px 18px',
+                  padding: '7px 20px',
                   borderRadius: '9999px',
                   border: 'none',
-                  background: activeTab === 'education' ? 'linear-gradient(135deg, #F2CA8E 0%, #D9A968 100%)' : 'transparent',
-                  color: activeTab === 'education' ? '#0B1018' : 'var(--text-muted)',
+                  background: activeTab === 'education' ? 'linear-gradient(135deg, #F2CE83 0%, #D4A23A 100%)' : 'transparent',
+                  color: activeTab === 'education' ? '#111827' : 'var(--text-secondary)',
                   fontFamily: 'var(--font-heading)',
-                  fontSize: '0.8rem',
+                  fontSize: '0.82rem',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  transition: 'all 0.25s ease'
+                  transition: 'all 0.25s ease',
+                  boxShadow: activeTab === 'education' ? '0 2px 10px rgba(212, 162, 58, 0.25)' : 'none'
                 }}
               >
                 Education
@@ -136,8 +139,9 @@ export default function ExperienceSection({ education = [] }) {
                   style={{
                     padding: '24px',
                     borderRadius: '18px',
-                    border: '1px solid rgba(217, 169, 104, 0.25)',
-                    background: 'rgba(14, 22, 36, 0.75)',
+                    border: '1.5px solid var(--border-gold)',
+                    background: 'var(--surface-card)',
+                    boxShadow: 'var(--card-shadow)',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '10px',
@@ -145,13 +149,13 @@ export default function ExperienceSection({ education = [] }) {
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.borderColor = 'var(--gold-light)';
-                    e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px var(--gold-glow)';
+                    e.currentTarget.style.borderColor = 'var(--gold-primary)';
+                    e.currentTarget.style.boxShadow = 'var(--card-shadow-hover)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.borderColor = 'rgba(217, 169, 104, 0.25)';
-                    e.currentTarget.style.boxShadow = '0 20px 40px -15px rgba(0, 0, 0, 0.4)';
+                    e.currentTarget.style.borderColor = 'var(--border-gold)';
+                    e.currentTarget.style.boxShadow = 'var(--card-shadow)';
                   }}
                 >
                   {/* Period Pill */}
@@ -232,7 +236,7 @@ export default function ExperienceSection({ education = [] }) {
                     width: '18px',
                     height: '18px',
                     borderRadius: '50%',
-                    background: '#0B1018',
+                    background: 'var(--surface-card)',
                     border: '2px solid var(--gold-primary)',
                     boxShadow: '0 0 12px var(--gold-glow)',
                     display: 'flex',
@@ -240,7 +244,7 @@ export default function ExperienceSection({ education = [] }) {
                     justifyContent: 'center'
                   }}
                 >
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--gold-light)' }} />
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--gold-primary)' }} />
                 </div>
 
                 {/* Card */}
@@ -249,8 +253,9 @@ export default function ExperienceSection({ education = [] }) {
                   style={{
                     padding: '20px',
                     borderRadius: '16px',
-                    border: '1px solid rgba(217, 169, 104, 0.25)',
-                    background: 'rgba(14, 22, 36, 0.75)'
+                    border: '1.5px solid var(--border-gold)',
+                    background: 'var(--surface-card)',
+                    boxShadow: 'var(--card-shadow)'
                   }}
                 >
                   <span className="badge-gold" style={{ fontSize: '0.7rem', padding: '2px 8px', marginBottom: '8px' }}>

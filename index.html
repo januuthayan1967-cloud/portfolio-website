@@ -19,6 +19,19 @@
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>" />
+    
+    <!-- Zero-Flash Theme Initialization (Defaults to Light Mode for first-time visitors) -->
+    <script>
+      (function() {
+        try {
+          var savedTheme = localStorage.getItem('vanojan_theme');
+          var activeTheme = savedTheme || 'light';
+          document.documentElement.setAttribute('data-theme', activeTheme);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

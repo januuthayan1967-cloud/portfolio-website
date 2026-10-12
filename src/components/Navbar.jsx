@@ -61,10 +61,12 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
         zIndex: 90,
         transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
         padding: scrolled ? '10px 0' : '16px 0',
-        background: scrolled ? 'rgba(7, 10, 16, 0.88)' : 'rgba(7, 10, 16, 0.55)',
+        background: scrolled 
+          ? (theme === 'light' ? 'rgba(255, 252, 247, 0.94)' : 'rgba(7, 10, 16, 0.88)') 
+          : (theme === 'light' ? 'rgba(255, 252, 247, 0.65)' : 'rgba(7, 10, 16, 0.55)'),
         backdropFilter: 'blur(22px)',
         WebkitBackdropFilter: 'blur(22px)',
-        borderBottom: scrolled ? '1px solid rgba(217, 169, 104, 0.22)' : '1px solid rgba(245, 240, 232, 0.05)'
+        borderBottom: scrolled ? '1px solid var(--border-gold)' : '1px solid var(--border-subtle)'
       }}
     >
       <div className="container-luxury" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
@@ -87,12 +89,16 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
               width: '42px',
               height: '42px',
               borderRadius: '12px',
-              border: '1.5px solid #F2C77C',
-              background: 'linear-gradient(135deg, rgba(217, 169, 104, 0.25) 0%, rgba(10, 15, 24, 0.95) 100%)',
+              border: theme === 'light' ? '1.5px solid #D4A23A' : '1.5px solid #F2C77C',
+              background: theme === 'light'
+                ? 'linear-gradient(135deg, #FFFDF8 0%, #FEF3C7 100%)'
+                : 'linear-gradient(135deg, rgba(217, 169, 104, 0.25) 0%, rgba(10, 15, 24, 0.95) 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 0 20px rgba(217, 169, 104, 0.35)'
+              boxShadow: theme === 'light'
+                ? '0 2px 10px rgba(212, 162, 58, 0.2)'
+                : '0 0 20px rgba(217, 169, 104, 0.35)'
             }}
           >
             <span
@@ -100,7 +106,7 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
                 fontFamily: 'Cinzel, Georgia, serif',
                 fontSize: '1.18rem',
                 fontWeight: 700,
-                color: '#FFF5DE',
+                color: theme === 'light' ? '#B7791F' : '#FFF5DE',
                 letterSpacing: '-0.02em',
                 lineHeight: 1
               }}
@@ -116,7 +122,7 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
                 fontSize: '1.08rem',
                 fontWeight: 800,
                 letterSpacing: '0.08em',
-                color: '#FFFFFF',
+                color: 'var(--text-main)',
                 lineHeight: 1.15
               }}
             >
@@ -126,7 +132,7 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
               className="font-mono"
               style={{
                 fontSize: '0.62rem',
-                color: '#D9A968',
+                color: 'var(--text-gold)',
                 letterSpacing: '0.18em',
                 textTransform: 'uppercase',
                 fontWeight: 600
@@ -143,11 +149,13 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
           style={{
             display: 'flex',
             alignItems: 'center',
-            background: 'rgba(10, 16, 26, 0.72)',
-            border: '1px solid rgba(217, 169, 104, 0.22)',
+            background: theme === 'light' ? 'rgba(255, 255, 255, 0.85)' : 'rgba(10, 16, 26, 0.72)',
+            border: theme === 'light' ? '1.5px solid var(--border-gold)' : '1px solid rgba(217, 169, 104, 0.22)',
             borderRadius: '9999px',
             padding: '4px 10px',
-            boxShadow: '0 12px 30px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
+            boxShadow: theme === 'light'
+              ? '0 10px 25px rgba(212, 162, 58, 0.1), inset 0 1px 0 #ffffff'
+              : '0 12px 30px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
           }}
         >
           {navLinks.map((link) => {
@@ -164,8 +172,10 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
                   padding: '7px 14px',
                   borderRadius: '9999px',
                   fontSize: '0.84rem',
-                  fontWeight: isActive ? 600 : 500,
-                  color: isActive ? '#FFFFFF' : 'rgba(203, 210, 222, 0.75)',
+                  fontWeight: isActive ? 700 : 500,
+                  color: isActive
+                    ? (theme === 'light' ? '#111827' : '#FFFFFF')
+                    : (theme === 'light' ? '#475569' : 'rgba(203, 210, 222, 0.75)'),
                   textDecoration: 'none',
                   transition: 'all 0.22s ease'
                 }}
@@ -174,8 +184,8 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
                   className="font-mono"
                   style={{
                     fontSize: '0.68rem',
-                    color: isActive ? '#D9A968' : 'rgba(217, 169, 104, 0.45)',
-                    fontWeight: 600
+                    color: theme === 'light' ? '#B7791F' : (isActive ? '#D9A968' : 'rgba(217, 169, 104, 0.45)'),
+                    fontWeight: 700
                   }}
                 >
                   {link.num}
@@ -190,11 +200,11 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
                       bottom: '2px',
                       left: '50%',
                       transform: 'translateX(-50%)',
-                      width: '18px',
-                      height: '2px',
+                      width: '20px',
+                      height: '2.5px',
                       borderRadius: '2px',
-                      background: 'linear-gradient(90deg, #FBE3BD, #D9A968)',
-                      boxShadow: '0 0 8px #D9A968'
+                      background: 'linear-gradient(90deg, #F2CE83, #D4A23A)',
+                      boxShadow: '0 0 8px rgba(212, 162, 58, 0.6)'
                     }}
                   />
                 )}
@@ -364,7 +374,7 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(7, 10, 16, 0.98)',
+            background: theme === 'light' ? 'rgba(255, 252, 247, 0.98)' : 'rgba(7, 10, 16, 0.98)',
             backdropFilter: 'blur(24px)',
             zIndex: 85,
             padding: '30px 20px',
@@ -387,15 +397,16 @@ export default function Navbar({ onOpenAdmin, profile, theme, onToggleTheme, onO
                   padding: '14px 18px',
                   borderRadius: '12px',
                   textDecoration: 'none',
-                  color: activeSection === link.id ? '#FFF5DE' : 'var(--text-main)',
-                  background: activeSection === link.id ? 'rgba(217, 169, 104, 0.15)' : 'rgba(20, 31, 50, 0.4)',
-                  border: '1px solid var(--border-gold)',
+                  color: activeSection === link.id ? 'var(--text-gold)' : 'var(--text-main)',
+                  background: activeSection === link.id ? 'rgba(212, 162, 58, 0.15)' : 'var(--surface-card)',
+                  border: '1.5px solid var(--border-gold)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                   fontFamily: 'var(--font-heading)',
                   fontSize: '1.05rem',
                   fontWeight: 600
                 }}
               >
-                <span className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--gold-primary)' }}>
+                <span className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-gold)', fontWeight: 700 }}>
                   {link.num}
                 </span>
                 <span>{link.name}</span>

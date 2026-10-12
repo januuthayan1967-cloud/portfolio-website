@@ -149,41 +149,43 @@ export default function ContactSection({ profile }) {
           className="contact-main-grid"
         >
           {/* LEFT: DIRECT CONTACT INFO */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             
             {/* Email item */}
             <div
               className="glass-panel"
               style={{
-                padding: '20px',
-                borderRadius: '16px',
-                border: '1px solid rgba(217, 169, 104, 0.22)',
-                background: 'rgba(14, 22, 36, 0.72)',
+                padding: '20px 24px',
+                borderRadius: '18px',
+                border: '1.5px solid var(--border-gold)',
+                background: 'var(--surface-card)',
+                boxShadow: 'var(--card-shadow)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: '14px'
+                gap: '14px',
+                transition: 'all 0.3s ease'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div
                   style={{
-                    width: '42px',
-                    height: '42px',
+                    width: '44px',
+                    height: '44px',
                     borderRadius: '50%',
-                    background: 'rgba(217, 169, 104, 0.15)',
+                    background: 'rgba(212, 162, 58, 0.12)',
                     border: '1px solid var(--border-gold)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--gold-primary)',
+                    color: 'var(--text-gold)',
                     flexShrink: 0
                   }}
                 >
                   <Mail size={18} />
                 </div>
                 <div>
-                  <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     Email
                   </div>
                   <a
@@ -219,35 +221,37 @@ export default function ContactSection({ profile }) {
             <div
               className="glass-panel"
               style={{
-                padding: '20px',
-                borderRadius: '16px',
-                border: '1px solid rgba(217, 169, 104, 0.22)',
-                background: 'rgba(14, 22, 36, 0.72)',
+                padding: '20px 24px',
+                borderRadius: '18px',
+                border: '1.5px solid var(--border-gold)',
+                background: 'var(--surface-card)',
+                boxShadow: 'var(--card-shadow)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: '14px'
+                gap: '14px',
+                transition: 'all 0.3s ease'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div
                   style={{
-                    width: '42px',
-                    height: '42px',
+                    width: '44px',
+                    height: '44px',
                     borderRadius: '50%',
-                    background: 'rgba(217, 169, 104, 0.15)',
+                    background: 'rgba(212, 162, 58, 0.12)',
                     border: '1px solid var(--border-gold)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--gold-primary)',
+                    color: 'var(--text-gold)',
                     flexShrink: 0
                   }}
                 >
                   <Phone size={18} />
                 </div>
                 <div>
-                  <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     Phone
                   </div>
                   <a
@@ -283,33 +287,35 @@ export default function ContactSection({ profile }) {
             <div
               className="glass-panel"
               style={{
-                padding: '20px',
-                borderRadius: '16px',
-                border: '1px solid rgba(217, 169, 104, 0.22)',
-                background: 'rgba(14, 22, 36, 0.72)',
+                padding: '20px 24px',
+                borderRadius: '18px',
+                border: '1.5px solid var(--border-gold)',
+                background: 'var(--surface-card)',
+                boxShadow: 'var(--card-shadow)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '14px'
+                gap: '14px',
+                transition: 'all 0.3s ease'
               }}
             >
               <div
                 style={{
-                  width: '42px',
-                  height: '42px',
+                  width: '44px',
+                  height: '44px',
                   borderRadius: '50%',
-                  background: 'rgba(217, 169, 104, 0.15)',
+                  background: 'rgba(212, 162, 58, 0.12)',
                   border: '1px solid var(--border-gold)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'var(--gold-primary)',
+                  color: 'var(--text-gold)',
                   flexShrink: 0
                 }}
               >
                 <MapPin size={18} />
               </div>
               <div>
-                <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                <div className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Location
                 </div>
                 <div style={{ fontSize: '0.94rem', fontWeight: 600, color: 'var(--text-main)' }}>
@@ -324,10 +330,11 @@ export default function ContactSection({ profile }) {
           <div
             className="glass-panel"
             style={{
-              padding: '32px',
+              padding: '34px',
               borderRadius: '24px',
-              border: '1px solid rgba(217, 169, 104, 0.3)',
-              background: 'rgba(14, 22, 36, 0.8)'
+              border: '1.5px solid var(--border-gold)',
+              background: 'var(--surface-card)',
+              boxShadow: 'var(--card-shadow)'
             }}
           >
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -362,16 +369,22 @@ export default function ContactSection({ profile }) {
                       width: '100%',
                       padding: '14px 18px',
                       borderRadius: '12px',
-                      background: 'rgba(20, 31, 50, 0.65)',
-                      border: '1px solid rgba(245, 240, 232, 0.1)',
+                      background: 'var(--surface-elevated)',
+                      border: '1px solid var(--border-subtle)',
                       color: 'var(--text-main)',
                       fontSize: '0.92rem',
                       fontFamily: 'var(--font-sans)',
                       outline: 'none',
-                      transition: 'border-color 0.25s'
+                      transition: 'all 0.25s ease'
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = 'var(--gold-primary)')}
-                    onBlur={(e) => (e.target.style.borderColor = 'rgba(245, 240, 232, 0.1)')}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = 'var(--gold-primary)';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(212, 162, 58, 0.15)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'var(--border-subtle)';
+                      e.target.style.boxShadow = 'none';
+                    }}
                   />
                 </div>
 
@@ -386,16 +399,22 @@ export default function ContactSection({ profile }) {
                       width: '100%',
                       padding: '14px 18px',
                       borderRadius: '12px',
-                      background: 'rgba(20, 31, 50, 0.65)',
-                      border: '1px solid rgba(245, 240, 232, 0.1)',
+                      background: 'var(--surface-elevated)',
+                      border: '1px solid var(--border-subtle)',
                       color: 'var(--text-main)',
                       fontSize: '0.92rem',
                       fontFamily: 'var(--font-sans)',
                       outline: 'none',
-                      transition: 'border-color 0.25s'
+                      transition: 'all 0.25s ease'
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = 'var(--gold-primary)')}
-                    onBlur={(e) => (e.target.style.borderColor = 'rgba(245, 240, 232, 0.1)')}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = 'var(--gold-primary)';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(212, 162, 58, 0.15)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'var(--border-subtle)';
+                      e.target.style.boxShadow = 'none';
+                    }}
                   />
                 </div>
               </div>
@@ -411,16 +430,22 @@ export default function ContactSection({ profile }) {
                     width: '100%',
                     padding: '14px 18px',
                     borderRadius: '12px',
-                    background: 'rgba(20, 31, 50, 0.65)',
-                    border: '1px solid rgba(245, 240, 232, 0.1)',
+                    background: 'var(--surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
                     color: 'var(--text-main)',
                     fontSize: '0.92rem',
                     fontFamily: 'var(--font-sans)',
                     outline: 'none',
-                    transition: 'border-color 0.25s'
+                    transition: 'all 0.25s ease'
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = 'var(--gold-primary)')}
-                  onBlur={(e) => (e.target.style.borderColor = 'rgba(245, 240, 232, 0.1)')}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'var(--gold-primary)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(212, 162, 58, 0.15)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'var(--border-subtle)';
+                    e.target.style.boxShadow = 'none';
+                  }}
                 />
               </div>
 
@@ -436,27 +461,33 @@ export default function ContactSection({ profile }) {
                     width: '100%',
                     padding: '14px 18px',
                     borderRadius: '12px',
-                    background: 'rgba(20, 31, 50, 0.65)',
-                    border: '1px solid rgba(245, 240, 232, 0.1)',
+                    background: 'var(--surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
                     color: 'var(--text-main)',
                     fontSize: '0.92rem',
                     fontFamily: 'var(--font-sans)',
                     outline: 'none',
                     resize: 'vertical',
-                    transition: 'border-color 0.25s'
+                    transition: 'all 0.25s ease'
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = 'var(--gold-primary)')}
-                  onBlur={(e) => (e.target.style.borderColor = 'rgba(245, 240, 232, 0.1)')}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'var(--gold-primary)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(212, 162, 58, 0.15)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'var(--border-subtle)';
+                    e.target.style.boxShadow = 'none';
+                  }}
                 />
               </div>
 
               {/* Optional Cloudinary Image Attachment */}
               <div
                 style={{
-                  padding: '12px 16px',
+                  padding: '14px 18px',
                   borderRadius: '12px',
-                  background: 'rgba(20, 31, 50, 0.45)',
-                  border: '1px dashed rgba(217, 169, 104, 0.3)',
+                  background: 'var(--surface-elevated)',
+                  border: '1px dashed var(--border-gold)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',

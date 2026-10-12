@@ -43,10 +43,10 @@ export default function SearchModal({ isOpen, onClose, projects = [], skills = [
         style={{
           width: '100%',
           maxWidth: '640px',
-          background: 'rgba(14, 22, 36, 0.95)',
+          background: 'var(--surface-card)',
           border: '1.5px solid var(--border-gold)',
           borderRadius: '24px',
-          boxShadow: '0 25px 70px rgba(0, 0, 0, 0.8), 0 0 30px var(--gold-glow)',
+          boxShadow: 'var(--card-shadow-hover)',
           overflow: 'hidden'
         }}
         onClick={(e) => e.stopPropagation()}
@@ -57,7 +57,7 @@ export default function SearchModal({ isOpen, onClose, projects = [], skills = [
             display: 'flex',
             alignItems: 'center',
             padding: '18px 24px',
-            borderBottom: '1px solid rgba(245, 240, 232, 0.08)',
+            borderBottom: '1px solid var(--border-subtle)',
             gap: '14px'
           }}
         >
@@ -117,18 +117,18 @@ export default function SearchModal({ isOpen, onClose, projects = [], skills = [
                     justifyContent: 'space-between',
                     padding: '12px 16px',
                     borderRadius: '12px',
-                    background: 'rgba(20, 31, 50, 0.4)',
-                    border: '1px solid rgba(245, 240, 232, 0.06)',
+                    background: 'var(--surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
                     textDecoration: 'none',
                     transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = 'var(--gold-primary)';
-                    e.currentTarget.style.background = 'rgba(217, 169, 104, 0.12)';
+                    e.currentTarget.style.background = 'rgba(212, 162, 58, 0.12)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(245, 240, 232, 0.06)';
-                    e.currentTarget.style.background = 'rgba(20, 31, 50, 0.4)';
+                    e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                    e.currentTarget.style.background = 'var(--surface-elevated)';
                   }}
                 >
                   <div>

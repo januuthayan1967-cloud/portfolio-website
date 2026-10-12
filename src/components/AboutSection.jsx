@@ -168,8 +168,9 @@ export default function AboutSection({ profile }) {
                 marginTop: '10px',
                 padding: '24px 28px',
                 borderRadius: '20px',
-                border: '1px solid rgba(217, 169, 104, 0.25)',
-                background: 'rgba(14, 22, 36, 0.65)'
+                border: '1.5px solid var(--border-gold)',
+                background: 'var(--surface-card)',
+                boxShadow: 'var(--card-shadow)'
               }}
             >
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
@@ -187,8 +188,9 @@ export default function AboutSection({ profile }) {
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: 'var(--gold-light)',
-                    fontSize: '0.8rem',
+                    color: 'var(--text-gold)',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
                     fontFamily: 'var(--font-mono)',
                     cursor: 'pointer',
                     display: 'flex',
@@ -218,18 +220,19 @@ export default function AboutSection({ profile }) {
                   <div
                     key={p.title}
                     style={{
-                      padding: '14px 16px',
-                      borderRadius: '12px',
-                      background: 'rgba(20, 31, 50, 0.45)',
-                      border: '1px solid rgba(245, 240, 232, 0.08)',
+                      padding: '16px',
+                      borderRadius: '14px',
+                      background: 'var(--surface-elevated)',
+                      border: '1px solid var(--border-gold)',
+                      boxShadow: '0 2px 8px rgba(212, 162, 58, 0.06)',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '4px'
+                      gap: '6px'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--gold-primary)' }}>
-                      <CheckCircle2 size={13} />
-                      <span className="font-heading" style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--gold-dark)' }}>
+                      <CheckCircle2 size={14} color="var(--gold-dark)" />
+                      <span className="font-heading" style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--text-main)' }}>
                         {p.title}
                       </span>
                     </div>

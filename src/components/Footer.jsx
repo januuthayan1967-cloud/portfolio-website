@@ -11,8 +11,9 @@ export default function Footer({ onOpenAdmin, profile }) {
       style={{
         position: 'relative',
         padding: '60px 0 35px',
-        borderTop: '1px solid rgba(217, 169, 104, 0.2)',
-        background: 'rgba(11, 16, 24, 0.95)',
+        borderTop: '1px solid var(--border-gold)',
+        background: 'var(--surface-card)',
+        boxShadow: '0 -4px 25px rgba(212, 162, 58, 0.05)',
         zIndex: 10
       }}
     >
@@ -31,18 +32,19 @@ export default function Footer({ onOpenAdmin, profile }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div
               style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                border: '1.5px solid var(--gold-primary)',
-                background: 'linear-gradient(135deg, rgba(217, 169, 104, 0.25) 0%, rgba(14, 22, 36, 0.9) 100%)',
+                width: '42px',
+                height: '42px',
+                borderRadius: '12px',
+                border: '1.5px solid var(--border-gold)',
+                background: 'var(--surface-elevated)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontFamily: 'Cinzel, Georgia, serif',
                 fontWeight: 700,
-                fontSize: '1.05rem',
-                color: 'var(--gold-light)'
+                fontSize: '1.1rem',
+                color: 'var(--text-gold)',
+                boxShadow: '0 2px 8px rgba(212, 162, 58, 0.12)'
               }}
             >
               UV
@@ -51,7 +53,7 @@ export default function Footer({ onOpenAdmin, profile }) {
               <span className="font-heading" style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '0.06em', color: 'var(--text-main)' }}>
                 VANOJAN
               </span>
-              <div className="font-mono" style={{ fontSize: '0.62rem', color: 'var(--gold-primary)', letterSpacing: '0.15em' }}>
+              <div className="font-mono" style={{ fontSize: '0.62rem', color: 'var(--text-gold)', letterSpacing: '0.15em', fontWeight: 600 }}>
                 SOLUTIONS ARCHITECT &bull; LEAD ENGINEER
               </div>
             </div>
@@ -59,12 +61,12 @@ export default function Footer({ onOpenAdmin, profile }) {
 
           {/* Quick Nav Links */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center' }}>
-            <a href="#hero" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', textDecoration: 'none', transition: 'color 0.2s' }}>Home</a>
-            <a href="#about" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', textDecoration: 'none', transition: 'color 0.2s' }}>About</a>
-            <a href="#projects" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', textDecoration: 'none', transition: 'color 0.2s' }}>Projects</a>
-            <a href="#skills" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', textDecoration: 'none', transition: 'color 0.2s' }}>Skills</a>
-            <a href="#experience" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', textDecoration: 'none', transition: 'color 0.2s' }}>Experience</a>
-            <a href="#contact" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', textDecoration: 'none', transition: 'color 0.2s' }}>Contact</a>
+            <a href="#hero" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}>Home</a>
+            <a href="#about" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}>About</a>
+            <a href="#projects" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}>Projects</a>
+            <a href="#skills" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}>Skills</a>
+            <a href="#experience" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}>Experience</a>
+            <a href="#contact" style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}>Contact</a>
           </div>
 
           {/* Back to top */}
@@ -72,12 +74,13 @@ export default function Footer({ onOpenAdmin, profile }) {
             onClick={scrollToTop}
             title="Return to Top"
             style={{
-              width: '40px',
-              height: '40px',
+              width: '42px',
+              height: '42px',
               borderRadius: '50%',
-              background: 'rgba(14, 22, 36, 0.8)',
-              border: '1px solid var(--border-gold)',
-              color: 'var(--gold-primary)',
+              background: 'var(--surface-elevated)',
+              border: '1.5px solid var(--border-gold)',
+              color: 'var(--text-gold)',
+              boxShadow: 'var(--card-shadow)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -85,12 +88,14 @@ export default function Footer({ onOpenAdmin, profile }) {
               transition: 'all 0.25s ease'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(217, 169, 104, 0.2)';
+              e.currentTarget.style.background = 'rgba(212, 162, 58, 0.18)';
               e.currentTarget.style.transform = 'translateY(-3px)';
+              e.currentTarget.style.boxShadow = 'var(--card-shadow-hover)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(14, 22, 36, 0.8)';
+              e.currentTarget.style.background = 'var(--surface-elevated)';
               e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = 'var(--card-shadow)';
             }}
           >
             <ArrowUp size={16} />
