@@ -3,8 +3,12 @@ import {
   Shield, LayoutDashboard, FolderGit2, Mail, Cpu, UserCheck,
   LogOut, Plus, Trash2, Edit3, Star, CheckCircle, Eye, ArrowUpRight,
   TrendingUp, Users, MessageSquare, Clock, X, Save, RefreshCw,
-  Image, UploadCloud, Copy, Check, ExternalLink, HardDrive
+  Image, UploadCloud, Copy, Check, ExternalLink, HardDrive,
+  GraduationCap, MailCheck, KeyRound, Lock, Send, Search, Filter,
+  Images, FileText, ChevronUp, ChevronDown
 } from 'lucide-react';
+import ProjectGalleryModal from './ProjectGalleryModal';
+import EmailReplyModal from './EmailReplyModal';
 
 export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh }) {
   const [activeTab, setActiveTab] = useState('overview');
@@ -12,6 +16,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
   const [projects, setProjects] = useState([]);
   const [messages, setMessages] = useState([]);
   const [skills, setSkills] = useState([]);
+  const [education, setEducation] = useState([]);
   const [profile, setProfile] = useState({});
   const [mediaList, setMediaList] = useState([]);
   const [mediaFilterTag, setMediaFilterTag] = useState('all');
@@ -21,6 +26,25 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
   const [selectedTagForDirectUpload, setSelectedTagForDirectUpload] = useState('general');
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
+
+  // Project Gallery Modal State
+  const [galleryProject, setGalleryProject] = useState(null);
+
+  // Email Reply Modal State
+  const [replyingMessage, setReplyingMessage] = useState(null);
+
+  // Messages Search & Filter
+  const [messageSearch, setMessageSearch] = useState('');
+  const [messageFilter, setMessageFilter] = useState('all'); // 'all' | 'unread' | 'replied' | 'starred'
+
+  // Email Settings State
+  const [smtpStatus, setSmtpStatus] = useState(null);
+  const [testingSmtp, setTestingSmtp] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState('');
+
+  // Account Security State
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   // Project Modal State
   const [editingProject, setEditingProject] = useState(null);
@@ -42,6 +66,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   };
+
 
   // Fetch all initial admin data
   const fetchData = async () => {
@@ -86,6 +111,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
           if (dataPortfolio) {
             setProjects(dataPortfolio.projects || []);
             setSkills(dataPortfolio.skills || []);
+            setEducation(dataPortfolio.education || []);
             setProfile(dataPortfolio.profile || {});
           }
         } catch (e) {}
@@ -104,6 +130,12 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
           if (dataCloud) setCloudinaryStatus(dataCloud);
         } catch (e) {}
       }
+
+      // Fetch Gmail SMTP status
+      fetch('/api/admin/email/status', { headers })
+        .then((r) => r.json())
+        .then((data) => { if (data) setSmtpStatus(data); })
+        .catch(() => {});
     } catch (err) {
       console.warn('[AdminDashboard] Non-fatal data loading warning:', err.message);
       showToast('Dashboard data loaded', 'info');
@@ -115,6 +147,115 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
   useEffect(() => {
     fetchData();
   }, [token]);
+
+  // Handle Verify Gmail SMTP Connection
+  const handleVerifySmtp = async () => {
+    setTestingSmtp(true);
+    try {
+      const res = await fetch('/api/admin/email/status', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      setSmtpStatus(data);
+      if (data.connected) {
+        showToast('Gmail SMTP connection verified and operational!');
+      } else {
+        showToast(data.message || 'SMTP connection verification failed', 'error');
+      }
+    } catch (err) {
+      showToast(`Verification error: ${err.message}`, 'error');
+    } finally {
+      setTestingSmtp(false);
+    }
+  };
+
+  // Handle Send Diagnostic Test Email
+  const handleSendTestEmail = async (e) => {
+    e.preventDefault();
+    setTestingSmtp(true);
+    try {
+      const res = await fetch('/api/admin/email/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ targetEmail: testEmailAddress.trim() || undefined })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || 'Diagnostic email dispatched successfully!');
+      } else {
+        showToast(data.error || 'Diagnostic email dispatch failed', 'error');
+      }
+    } catch (err) {
+      showToast(`Test failed: ${err.message}`, 'error');
+    } finally {
+      setTestingSmtp(false);
+    }
+  };
+
+  // Handle Save Education / Timelines
+  const handleSaveEducation = async () => {
+    try {
+      const res = await fetch('/api/admin/education', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ education })
+      });
+      if (res.ok) {
+        showToast('Experience & education trajectory updated');
+        onDataRefresh?.();
+      } else {
+        showToast('Failed to save education milestones', 'error');
+      }
+    } catch (err) {
+      showToast('Save failed', 'error');
+    }
+  };
+
+  // Handle Account Security Password Change
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (passwordForm.newPassword.length < 8) {
+      showToast('New password must contain at least 8 characters', 'error');
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      showToast('New passwords do not match', 'error');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const res = await fetch('/api/admin/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Administrator passphrase updated with secure bcrypt hashing');
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      } else {
+        showToast(data.error || 'Password update failed', 'error');
+      }
+    } catch (err) {
+      showToast(`Error: ${err.message}`, 'error');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
 
   // Handle Message Read / Star
   const toggleMessageStatus = async (id, field, currentVal) => {
@@ -569,11 +710,14 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
         >
           {[
             { id: 'overview', label: 'Analytics Overview', icon: LayoutDashboard },
-            { id: 'projects', label: 'Projects Manager', icon: FolderGit2, badge: projects.length },
+            { id: 'projects', label: 'Projects & Gallery', icon: FolderGit2, badge: projects.length },
             { id: 'media', label: 'Cloudinary Assets', icon: Image, badge: mediaList.length },
-            { id: 'messages', label: 'Inbox & Inquiries', icon: Mail, badge: messages.filter((m) => !m.read).length },
+            { id: 'messages', label: 'Inbox & Dispatches', icon: Mail, badge: messages.filter((m) => !m.read).length },
             { id: 'skills', label: 'Skills Matrix', icon: Cpu },
-            { id: 'profile', label: 'Identity & Bio', icon: UserCheck }
+            { id: 'education', label: 'Timelines & Journey', icon: GraduationCap },
+            { id: 'profile', label: 'Identity, Bio & CV', icon: UserCheck },
+            { id: 'email', label: 'Gmail & SMTP', icon: MailCheck },
+            { id: 'security', label: 'Account Security', icon: KeyRound }
           ].map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -840,6 +984,25 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                           <Edit3 size={13} />
                           <span>Edit</span>
                         </button>
+                        <button
+                          onClick={() => setGalleryProject(p)}
+                          style={{
+                            background: 'rgba(212, 175, 55, 0.15)',
+                            border: '1px solid rgba(212, 175, 55, 0.3)',
+                            borderRadius: '8px',
+                            padding: '6px 12px',
+                            color: '#f3d078',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '0.75rem'
+                          }}
+                        >
+                          <Images size={13} />
+                          <span>Gallery ({p.gallery?.length || 0})</span>
+                        </button>
+
                         <button
                           onClick={() => handleDeleteProject(p.id)}
                           style={{
@@ -1133,139 +1296,245 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
           {/* TAB 3: INBOX & MESSAGES */}
           {activeTab === 'messages' && (
             <div>
-              <div style={{ marginBottom: '28px' }}>
+              <div style={{ marginBottom: '24px' }}>
                 <h2 className="font-editorial" style={{ fontSize: '1.8rem', color: '#ffffff' }}>
                   Inbound Dispatches &amp; Inquiries ({messages.length})
                 </h2>
                 <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
-                  Live inquiries captured directly from the portfolio contact form.
+                  Live inquiries captured directly from the portfolio contact form with direct Gmail SMTP reply dispatch.
                 </p>
               </div>
 
-              {messages.length === 0 ? (
+              {/* Search and Filters */}
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
+                  <Search size={16} color="#64748b" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <input
+                    type="text"
+                    placeholder="Search inquiries by name, email, subject, or message..."
+                    value={messageSearch}
+                    onChange={(e) => setMessageSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px 10px 38px',
+                      borderRadius: '10px',
+                      background: '#0d1526',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: '#fff',
+                      fontSize: '0.85rem'
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {['all', 'unread', 'replied', 'starred'].map((filterKey) => (
+                    <button
+                      key={filterKey}
+                      onClick={() => setMessageFilter(filterKey)}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        border: messageFilter === filterKey ? '1px solid #d4af37' : '1px solid rgba(255,255,255,0.08)',
+                        background: messageFilter === filterKey ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255,255,255,0.03)',
+                        color: messageFilter === filterKey ? '#f3d078' : '#94a3b8',
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        textTransform: 'capitalize'
+                      }}
+                    >
+                      {filterKey}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {messages.filter((m) => {
+                const q = messageSearch.toLowerCase();
+                const matches = !q || m.name?.toLowerCase().includes(q) || m.email?.toLowerCase().includes(q) || m.subject?.toLowerCase().includes(q) || m.message?.toLowerCase().includes(q);
+                if (!matches) return false;
+                if (messageFilter === 'unread') return !m.read;
+                if (messageFilter === 'replied') return m.replied;
+                if (messageFilter === 'starred') return m.starred;
+                return true;
+              }).length === 0 ? (
                 <div className="glass-panel" style={{ padding: '60px', textAlign: 'center', borderRadius: '16px' }}>
                   <Mail size={40} color="#64748b" style={{ margin: '0 auto 16px' }} />
-                  <div style={{ color: '#cbd5e1', fontSize: '1rem' }}>No messages in the inbox yet.</div>
+                  <div style={{ color: '#cbd5e1', fontSize: '1rem' }}>No messages match your search or filter.</div>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {messages.map((m) => (
-                    <div
-                      key={m.id}
-                      className="glass-panel"
-                      style={{
-                        padding: '24px',
-                        borderRadius: '16px',
-                        border: m.read ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(212, 175, 55, 0.4)',
-                        background: m.read ? 'rgba(11, 18, 33, 0.6)' : 'rgba(21, 32, 54, 0.85)'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>{m.name}</span>
-                            <span className="badge-navy" style={{ fontSize: '0.7rem' }}>{m.email}</span>
-                            {!m.read && <span className="badge-gold">UNREAD</span>}
+                  {messages
+                    .filter((m) => {
+                      const q = messageSearch.toLowerCase();
+                      const matches = !q || m.name?.toLowerCase().includes(q) || m.email?.toLowerCase().includes(q) || m.subject?.toLowerCase().includes(q) || m.message?.toLowerCase().includes(q);
+                      if (!matches) return false;
+                      if (messageFilter === 'unread') return !m.read;
+                      if (messageFilter === 'replied') return m.replied;
+                      if (messageFilter === 'starred') return m.starred;
+                      return true;
+                    })
+                    .map((m) => (
+                      <div
+                        key={m.id}
+                        className="glass-panel"
+                        style={{
+                          padding: '24px',
+                          borderRadius: '16px',
+                          border: m.read ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(212, 175, 55, 0.4)',
+                          background: m.read ? 'rgba(11, 18, 33, 0.6)' : 'rgba(21, 32, 54, 0.85)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', flexWrap: 'wrap', gap: '12px' }}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>{m.name}</span>
+                              <span className="badge-navy" style={{ fontSize: '0.7rem' }}>{m.email}</span>
+                              {!m.read && <span className="badge-gold">UNREAD</span>}
+                              {m.replied ? (
+                                <span className="badge-navy" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                                  REPLIED
+                                </span>
+                              ) : (
+                                <span className="badge-navy" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                                  PENDING REPLY
+                                </span>
+                              )}
+                              {m.notificationSent && (
+                                <span className="badge-navy" title="Email dispatched to admin via Gmail SMTP" style={{ fontSize: '0.65rem' }}>
+                                  SMTP NOTIFIED
+                                </span>
+                              )}
+                            </div>
+                            <div className="font-editorial" style={{ fontSize: '1.05rem', color: '#d4af37', marginTop: '6px' }}>
+                              {m.subject}
+                            </div>
+                            <div className="font-mono" style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
+                              {new Date(m.date).toLocaleString()}
+                            </div>
                           </div>
-                          <div className="font-editorial" style={{ fontSize: '1.05rem', color: '#d4af37', marginTop: '6px' }}>
-                            {m.subject}
-                          </div>
-                          <div className="font-mono" style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
-                            {new Date(m.date).toLocaleString()}
+
+                          {/* Message Actions */}
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button
+                              onClick={() => toggleMessageStatus(m.id, 'starred', m.starred)}
+                              title={m.starred ? 'Unstar' : 'Star'}
+                              style={{
+                                background: 'transparent',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '8px',
+                                padding: '8px',
+                                color: m.starred ? '#f59e0b' : '#94a3b8',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <Star size={16} fill={m.starred ? '#f59e0b' : 'none'} />
+                            </button>
+
+                            <button
+                              onClick={() => toggleMessageStatus(m.id, 'read', m.read)}
+                              title={m.read ? 'Mark as Unread' : 'Mark as Read'}
+                              style={{
+                                background: 'transparent',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '8px',
+                                padding: '8px',
+                                color: m.read ? '#94a3b8' : '#10b981',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <CheckCircle size={16} />
+                            </button>
+
+                            <button
+                              onClick={() => setReplyingMessage(m)}
+                              className="btn-gold"
+                              style={{ padding: '6px 14px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                            >
+                              <Send size={13} />
+                              <span>{m.replied ? 'Reply Again' : 'Compose Reply'}</span>
+                            </button>
+
+                            <button
+                              onClick={() => deleteMessage(m.id)}
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                                borderRadius: '8px',
+                                padding: '8px',
+                                color: '#ef4444',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <Trash2 size={16} />
+                            </button>
                           </div>
                         </div>
 
-                        {/* Message Actions */}
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button
-                            onClick={() => toggleMessageStatus(m.id, 'starred', m.starred)}
-                            title={m.starred ? 'Unstar' : 'Star'}
-                            style={{
-                              background: 'transparent',
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
-                              borderRadius: '8px',
-                              padding: '8px',
-                              color: m.starred ? '#f59e0b' : '#94a3b8',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <Star size={16} fill={m.starred ? '#f59e0b' : 'none'} />
-                          </button>
+                        {/* Message Content */}
+                        <p style={{ color: '#cbd5e1', fontSize: '0.94rem', lineHeight: 1.7, background: 'rgba(6, 8, 13, 0.6)', padding: '16px', borderRadius: '10px' }}>
+                          {m.message}
+                        </p>
 
-                          <button
-                            onClick={() => toggleMessageStatus(m.id, 'read', m.read)}
-                            title={m.read ? 'Mark as Unread' : 'Mark as Read'}
-                            style={{
-                              background: 'transparent',
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
-                              borderRadius: '8px',
-                              padding: '8px',
-                              color: m.read ? '#94a3b8' : '#10b981',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <CheckCircle size={16} />
-                          </button>
+                        {/* Optional Attached Cloudinary Image */}
+                        {m.imageUrl && (
+                          <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px', borderRadius: '10px', background: 'rgba(212, 175, 55, 0.08)', border: '1px solid rgba(212, 175, 55, 0.25)' }}>
+                            <img
+                              src={m.imageUrl}
+                              alt="Client attachment"
+                              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.4)' }}
+                            />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div className="font-mono" style={{ fontSize: '0.7rem', color: '#d4af37', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                Cloudinary Attached Media
+                              </div>
+                              <div style={{ fontSize: '0.78rem', color: '#cbd5e1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {m.imageUrl}
+                              </div>
+                            </div>
+                            <a
+                              href={m.imageUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn-gold"
+                              style={{ padding: '6px 12px', fontSize: '0.74rem', textDecoration: 'none' }}
+                            >
+                              <span>Inspect</span>
+                              <ExternalLink size={12} />
+                            </a>
+                          </div>
+                        )}
 
-                          <a
-                            href={`mailto:${m.email}?subject=Re: ${encodeURIComponent(m.subject)}`}
-                            className="btn-gold"
-                            style={{ padding: '6px 12px', fontSize: '0.75rem' }}
-                          >
-                            Reply
-                          </a>
-
-                          <button
-                            onClick={() => deleteMessage(m.id)}
-                            style={{
-                              background: 'rgba(239, 68, 68, 0.1)',
-                              border: '1px solid rgba(239, 68, 68, 0.3)',
-                              borderRadius: '8px',
-                              padding: '8px',
-                              color: '#ef4444',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
+                        {/* REPLY CONVERSATION HISTORY */}
+                        {m.replies && m.replies.length > 0 && (
+                          <div style={{ marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '14px' }}>
+                            <div className="font-mono" style={{ fontSize: '0.72rem', color: '#d4af37', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <MailCheck size={14} />
+                              <span>GMAIL SMTP DISPATCH HISTORY ({m.replies.length} REPLIES SENT)</span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                              {m.replies.map((rep, idx) => (
+                                <div
+                                  key={idx}
+                                  style={{
+                                    padding: '12px 16px',
+                                    borderRadius: '10px',
+                                    background: 'rgba(212, 175, 55, 0.05)',
+                                    border: '1px solid rgba(212, 175, 55, 0.15)',
+                                    fontSize: '0.84rem'
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', fontSize: '0.72rem', marginBottom: '6px' }}>
+                                    <span>To: <strong style={{ color: '#f3d078' }}>{rep.recipientEmail || m.email}</strong></span>
+                                    <span>{new Date(rep.sentAt).toLocaleString()}</span>
+                                  </div>
+                                  <div style={{ fontWeight: 600, color: '#f8fafc', marginBottom: '4px' }}>{rep.subject}</div>
+                                  <div style={{ color: '#cbd5e1', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{rep.replyMessage}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-
-                      {/* Message Content */}
-                      <p style={{ color: '#cbd5e1', fontSize: '0.94rem', lineHeight: 1.7, background: 'rgba(6, 8, 13, 0.6)', padding: '16px', borderRadius: '10px' }}>
-                        {m.message}
-                      </p>
-
-                      {/* Optional Attached Cloudinary Image */}
-                      {m.imageUrl && (
-                        <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px', borderRadius: '10px', background: 'rgba(212, 175, 55, 0.08)', border: '1px solid rgba(212, 175, 55, 0.25)' }}>
-                          <img
-                            src={m.imageUrl}
-                            alt="Client attachment"
-                            style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.4)' }}
-                          />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div className="font-mono" style={{ fontSize: '0.7rem', color: '#d4af37', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                              Cloudinary Attached Media
-                            </div>
-                            <div style={{ fontSize: '0.78rem', color: '#cbd5e1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {m.imageUrl}
-                            </div>
-                          </div>
-                          <a
-                            href={m.imageUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="btn-gold"
-                            style={{ padding: '6px 12px', fontSize: '0.74rem', textDecoration: 'none' }}
-                          >
-                            <span>Inspect</span>
-                            <ExternalLink size={12} />
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    ))}
                 </div>
               )}
             </div>
@@ -1432,6 +1701,98 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   />
                 </div>
 
+                {/* SOCIAL LINKS & REPOSITORY REFERENCES */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+                  <div>
+                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
+                      GitHub URL
+                    </label>
+                    <input
+                      type="url"
+                      value={profile.github || ''}
+                      onChange={(e) => setProfile({ ...profile, github: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
+                      LinkedIn URL
+                    </label>
+                    <input
+                      type="url"
+                      value={profile.linkedin || ''}
+                      onChange={(e) => setProfile({ ...profile, linkedin: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
+                      Twitter / X URL
+                    </label>
+                    <input
+                      type="url"
+                      value={profile.twitter || ''}
+                      onChange={(e) => setProfile({ ...profile, twitter: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                  </div>
+                </div>
+
+                {/* CV / EXECUTIVE RESUME DOWNLOAD LINK */}
+                <div style={{ marginBottom: '24px' }}>
+                  <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
+                    CV / Executive Resume URL (PDF or Cloudinary Document)
+                  </label>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <input
+                      type="text"
+                      placeholder="https://res.cloudinary.com/... or /resume.pdf"
+                      value={profile.resumeUrl || ''}
+                      onChange={(e) => setProfile({ ...profile, resumeUrl: e.target.value })}
+                      style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                    {profile.resumeUrl && (
+                      <a
+                        href={profile.resumeUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-gold"
+                        style={{ padding: '8px 14px', fontSize: '0.75rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        <ExternalLink size={14} />
+                        <span>Preview CV</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* EMAIL NOTIFICATION & REPLY PREFERENCES */}
+                <div style={{ marginBottom: '24px', padding: '18px', borderRadius: '12px', background: 'rgba(6, 8, 13, 0.75)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+                  <div className="font-mono" style={{ fontSize: '0.74rem', color: '#d4af37', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>
+                    Email Notification &amp; Dispatch Rules
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.86rem', color: '#f8fafc' }}>
+                      <input
+                        type="checkbox"
+                        checked={profile.emailNotifications !== false}
+                        onChange={(e) => setProfile({ ...profile, emailNotifications: e.target.checked })}
+                        style={{ accentColor: '#d4af37', width: '18px', height: '18px' }}
+                      />
+                      <span>Dispatch instant Gmail SMTP notification to admin when a new inquiry is submitted</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.86rem', color: '#f8fafc' }}>
+                      <input
+                        type="checkbox"
+                        checked={profile.emailRepliesEnabled !== false}
+                        onChange={(e) => setProfile({ ...profile, emailRepliesEnabled: e.target.checked })}
+                        style={{ accentColor: '#d4af37', width: '18px', height: '18px' }}
+                      />
+                      <span>Enable direct Gmail SMTP reply dispatch from Inbox Console</span>
+                    </label>
+                  </div>
+                </div>
+
                 {/* CLOUDINARY PROFILE IMAGE UPLOADS */}
                 <div style={{ marginBottom: '28px', padding: '20px', borderRadius: '14px', background: 'rgba(6, 8, 13, 0.65)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
                   <div className="font-editorial" style={{ fontSize: '1.15rem', color: '#f3d078', marginBottom: '14px' }}>
@@ -1530,6 +1891,457 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   <span>Update Profile Configuration</span>
                 </button>
               </form>
+            </div>
+          )}
+
+          {/* TAB 6: TIMELINES & JOURNEY (EDUCATION / EXPERIENCE) */}
+          {activeTab === 'education' && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '14px' }}>
+                <div>
+                  <h2 className="font-editorial" style={{ fontSize: '1.8rem', color: '#ffffff' }}>
+                    Career Trajectory &amp; Academic Milestones
+                  </h2>
+                  <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                    Manage professional appointments, degrees, dates, and architecture milestones displayed on the public timeline.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEducation([
+                        ...education,
+                        {
+                          degree: 'New Professional Role / Degree',
+                          institution: 'Institution / Enterprise',
+                          period: '2024 — Present',
+                          badge: 'Active Engagement',
+                          description: 'Key deliverables, architectures, and engineering responsibilities.'
+                        }
+                      ]);
+                    }}
+                    className="btn-ghost-luxury"
+                    style={{ padding: '0.6rem 1.2rem', fontSize: '0.82rem' }}
+                  >
+                    <Plus size={16} />
+                    <span>Add Milestone</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveEducation}
+                    className="btn-gold"
+                    style={{ padding: '0.6rem 1.4rem', fontSize: '0.82rem' }}
+                  >
+                    <Save size={16} />
+                    <span>Save Timeline Changes</span>
+                  </button>
+                </div>
+              </div>
+
+              {education.length === 0 ? (
+                <div className="glass-panel" style={{ padding: '60px', textAlign: 'center', borderRadius: '16px' }}>
+                  <GraduationCap size={44} color="#64748b" style={{ margin: '0 auto 16px' }} />
+                  <div style={{ color: '#cbd5e1', fontSize: '1rem' }}>No timeline milestones configured yet.</div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {education.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="glass-panel"
+                      style={{
+                        padding: '24px',
+                        borderRadius: '16px',
+                        border: '1px solid rgba(212, 175, 55, 0.25)',
+                        background: 'rgba(14, 22, 38, 0.65)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                        <span className="font-mono" style={{ fontSize: '0.78rem', color: '#d4af37', textTransform: 'uppercase' }}>
+                          Milestone #{idx + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setEducation(education.filter((_, i) => i !== idx))}
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            borderRadius: '8px',
+                            padding: '6px 12px',
+                            color: '#f87171',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Trash2 size={13} />
+                          <span>Remove</span>
+                        </button>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                        <div>
+                          <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                            Role / Degree Title *
+                          </label>
+                          <input
+                            type="text"
+                            value={item.degree || ''}
+                            onChange={(e) => {
+                              const updated = [...education];
+                              updated[idx].degree = e.target.value;
+                              setEducation(updated);
+                            }}
+                            style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                            Company / University *
+                          </label>
+                          <input
+                            type="text"
+                            value={item.institution || ''}
+                            onChange={(e) => {
+                              const updated = [...education];
+                              updated[idx].institution = e.target.value;
+                              setEducation(updated);
+                            }}
+                            style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                            Period / Years
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="2023 — Present"
+                            value={item.period || ''}
+                            onChange={(e) => {
+                              const updated = [...education];
+                              updated[idx].period = e.target.value;
+                              setEducation(updated);
+                            }}
+                            style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                            Badge / Status
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Full-Time / First Class Honours"
+                            value={item.badge || ''}
+                            onChange={(e) => {
+                              const updated = [...education];
+                              updated[idx].badge = e.target.value;
+                              setEducation(updated);
+                            }}
+                            style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                          Description &amp; Key Architectural Responsibilities
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={item.description || ''}
+                          onChange={(e) => {
+                            const updated = [...education];
+                            updated[idx].description = e.target.value;
+                            setEducation(updated);
+                          }}
+                          style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', lineHeight: 1.6 }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 7: GMAIL SMTP & NOTIFICATION ENGINE */}
+          {activeTab === 'email' && (
+            <div>
+              <div style={{ marginBottom: '28px' }}>
+                <h2 className="font-editorial" style={{ fontSize: '1.8rem', color: '#ffffff' }}>
+                  Gmail SMTP &amp; Dispatch Engine
+                </h2>
+                <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                  Direct SMTP relay integration with Nodemailer, Google App Password, and secure TLS transport.
+                </p>
+              </div>
+
+              {/* SMTP Status Overview Card */}
+              <div
+                className="glass-panel"
+                style={{
+                  padding: '28px',
+                  borderRadius: '18px',
+                  border: '1px solid rgba(212, 175, 55, 0.25)',
+                  background: 'rgba(14, 22, 38, 0.65)',
+                  marginBottom: '28px'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '12px',
+                        background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(15, 23, 42, 0.9))',
+                        border: '1px solid #d4af37',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#d4af37'
+                      }}
+                    >
+                      <MailCheck size={24} />
+                    </div>
+                    <div>
+                      <h3 className="font-editorial" style={{ fontSize: '1.25rem', color: '#ffffff' }}>
+                        Gmail SMTP Relay Status
+                      </h3>
+                      <div className="font-mono" style={{ fontSize: '0.74rem', color: smtpStatus?.connected ? '#10b981' : '#f59e0b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: smtpStatus?.connected ? '#10b981' : '#f59e0b' }} />
+                        {smtpStatus?.connected ? 'Online & Authenticated (Ready for Dispatches)' : 'Verification Required or Standby'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleVerifySmtp}
+                    disabled={testingSmtp}
+                    className="btn-gold"
+                    style={{ padding: '0.65rem 1.4rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <RefreshCw size={14} className={testingSmtp ? 'spin' : ''} />
+                    <span>{testingSmtp ? 'Verifying SMTP Relay...' : 'Verify SMTP Connection'}</span>
+                  </button>
+                </div>
+
+                {/* Technical Configuration Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div>
+                    <div className="font-mono" style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Configured Sender</div>
+                    <div style={{ fontSize: '0.9rem', color: '#f8fafc', fontWeight: 600, marginTop: '4px' }}>
+                      {smtpStatus?.user || 'uthayanvanojan5@gmail.com'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="font-mono" style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>SMTP Host &amp; Port</div>
+                    <div style={{ fontSize: '0.9rem', color: '#f8fafc', fontWeight: 600, marginTop: '4px' }}>
+                      {smtpStatus?.host || 'smtp.gmail.com'}:{smtpStatus?.port || 465}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="font-mono" style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Encryption Layer</div>
+                    <div style={{ fontSize: '0.9rem', color: '#f8fafc', fontWeight: 600, marginTop: '4px' }}>
+                      SSL / TLS (Direct Secure Socket)
+                    </div>
+                  </div>
+                  <div>
+                    <div className="font-mono" style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Google App Password</div>
+                    <div style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 600, marginTop: '4px' }}>
+                      Protected in Environment Variable
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Send Diagnostic Test Email */}
+              <div
+                className="glass-panel"
+                style={{
+                  padding: '28px',
+                  borderRadius: '18px',
+                  border: '1px solid rgba(212, 175, 55, 0.2)',
+                  background: 'rgba(14, 22, 38, 0.65)',
+                  marginBottom: '28px'
+                }}
+              >
+                <h3 className="font-editorial" style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '8px' }}>
+                  Dispatch Diagnostic Test Email
+                </h3>
+                <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '20px' }}>
+                  Test your real Gmail SMTP delivery directly from the server to verify inbox reception and HTML luxury styling.
+                </p>
+
+                <form onSubmit={handleSendTestEmail} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  <input
+                    type="email"
+                    placeholder="Enter destination email (default: admin email)"
+                    value={testEmailAddress}
+                    onChange={(e) => setTestEmailAddress(e.target.value)}
+                    style={{ flex: 1, minWidth: '260px', padding: '12px 16px', borderRadius: '10px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.88rem' }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={testingSmtp}
+                    className="btn-gold"
+                    style={{ padding: '0.75rem 1.8rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <Send size={15} />
+                    <span>{testingSmtp ? 'Transmitting...' : 'Send Test Email'}</span>
+                  </button>
+                </form>
+              </div>
+
+              {/* Production Architecture & Security Note */}
+              <div
+                style={{
+                  padding: '20px 24px',
+                  borderRadius: '14px',
+                  background: 'rgba(212, 175, 55, 0.05)',
+                  border: '1px solid rgba(212, 175, 55, 0.2)'
+                }}
+              >
+                <div className="font-mono" style={{ fontSize: '0.75rem', color: '#d4af37', textTransform: 'uppercase', marginBottom: '6px' }}>
+                  Architecture &amp; Credentials Isolation
+                </div>
+                <p style={{ color: '#cbd5e1', fontSize: '0.84rem', lineHeight: 1.6, margin: 0 }}>
+                  Per non-negotiable security requirements, your Google App Password is never exposed to the frontend or sent across client requests. All transmissions are routed through Nodemailer on the backend using TLS verification. In Vercel production, configure <code style={{ color: '#f3d078' }}>SMTP_PASS</code>, <code style={{ color: '#f3d078' }}>SMTP_USER</code>, and <code style={{ color: '#f3d078' }}>ADMIN_EMAIL</code> in Project Settings &rarr; Environment Variables.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 8: ACCOUNT SECURITY & AUTHENTICATION */}
+          {activeTab === 'security' && (
+            <div>
+              <div style={{ marginBottom: '28px' }}>
+                <h2 className="font-editorial" style={{ fontSize: '1.8rem', color: '#ffffff' }}>
+                  Account Security &amp; Master Authentication
+                </h2>
+                <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                  Manage the cryptographic credentials for the primary executive administrator account.
+                </p>
+              </div>
+
+              {/* Active Admin Summary */}
+              <div
+                className="glass-panel"
+                style={{
+                  padding: '24px',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(212, 175, 55, 0.25)',
+                  background: 'rgba(14, 22, 38, 0.65)',
+                  marginBottom: '28px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px'
+                }}
+              >
+                <div
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #d4af37, #152238)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#06080d'
+                  }}
+                >
+                  <Shield size={24} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>
+                    Active Administrator: <span style={{ color: '#d4af37' }}>vanojanSE</span>
+                  </div>
+                  <div className="font-mono" style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '2px' }}>
+                    Bcrypt 12 Rounds Hashing &bull; Brute Force Rate Limiting Active (5 attempts/15min)
+                  </div>
+                </div>
+              </div>
+
+              {/* Password Change Form */}
+              <div
+                className="glass-panel"
+                style={{
+                  padding: '32px',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(212, 175, 55, 0.2)',
+                  maxWidth: '650px'
+                }}
+              >
+                <h3 className="font-editorial" style={{ fontSize: '1.3rem', color: '#ffffff', marginBottom: '8px' }}>
+                  Update Administrator Passphrase
+                </h3>
+                <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '24px' }}>
+                  Update your secret administrative key. Your new passphrase will be cryptographically hashed with 12 rounds of bcrypt before persistent database storage.
+                </p>
+
+                <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                  <div>
+                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
+                      Current Password *
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={passwordForm.currentPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                      style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
+                      New Secure Password (Minimum 8 characters) *
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      minLength={8}
+                      value={passwordForm.newPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                      style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
+                      Confirm New Password *
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      minLength={8}
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                      style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={changingPassword}
+                    className="btn-gold"
+                    style={{ padding: '0.85rem 2rem', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  >
+                    <Lock size={16} />
+                    <span>{changingPassword ? 'Hashing & Updating...' : 'Update Administrative Passphrase'}</span>
+                  </button>
+                </form>
+              </div>
             </div>
           )}
         </main>
@@ -1746,6 +2558,36 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
             </form>
           </div>
         </div>
+      )}
+
+      {/* PROJECT GALLERY SCREENSHOT MANAGER MODAL */}
+      {galleryProject && (
+        <ProjectGalleryModal
+          project={galleryProject}
+          token={token}
+          onClose={() => setGalleryProject(null)}
+          onProjectUpdated={(updatedProject) => {
+            setProjects((prev) => prev.map((p) => (p.id === updatedProject.id ? updatedProject : p)));
+            setGalleryProject(updatedProject);
+            onDataRefresh?.();
+          }}
+          showToast={showToast}
+        />
+      )}
+
+      {/* GMAIL SMTP DIRECT REPLY MODAL */}
+      {replyingMessage && (
+        <EmailReplyModal
+          message={replyingMessage}
+          token={token}
+          onClose={() => setReplyingMessage(null)}
+          onReplySuccess={(updatedMsg) => {
+            setMessages((prev) => prev.map((m) => (m.id === updatedMsg.id ? updatedMsg : m)));
+            setReplyingMessage(null);
+            onDataRefresh?.();
+          }}
+          showToast={showToast}
+        />
       )}
 
       <style>{`

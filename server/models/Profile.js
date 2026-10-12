@@ -25,6 +25,9 @@ const profileSchema = new mongoose.Schema({
   linkedin: { type: String, default: 'https://linkedin.com' },
   twitter: { type: String, default: 'https://twitter.com' },
   statusText: { type: String, default: 'Open for high-impact engineering & architecture engagements' },
+  resumeUrl: { type: String, default: '' },
+  emailNotifications: { type: Boolean, default: true },
+  emailRepliesEnabled: { type: Boolean, default: true },
   metrics: { type: [metricSchema], default: [] }
 }, {
   timestamps: true,

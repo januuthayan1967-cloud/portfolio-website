@@ -1,33 +1,81 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Github, Sparkles, ArrowUpRight, CheckCircle2, X } from 'lucide-react';
+import {
+  ExternalLink,
+  Github,
+  Sparkles,
+  ArrowUpRight,
+  CheckCircle2,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Images,
+  Eye,
+  Layers
+} from 'lucide-react';
 
 export default function ProjectsSection({ projects = [] }) {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState(null);
+  const [galleryProject, setGalleryProject] = useState(null);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   const categories = ['All', 'Web Apps', 'Mobile', 'Enterprise', 'Systems', 'UI/UX'];
 
   // Map category filters gracefully
   const filteredProjects = projects.filter((p) => {
     if (activeFilter === 'All') return true;
-    if (activeFilter === 'Web Apps') return p.category?.toLowerCase().includes('web');
-    if (activeFilter === 'Mobile') return p.category?.toLowerCase().includes('mobile');
-    if (activeFilter === 'Enterprise') return p.category?.toLowerCase().includes('enterprise');
-    if (activeFilter === 'Systems') return p.category?.toLowerCase().includes('system') || p.category?.toLowerCase().includes('analytics');
+    const cat = (p.category || '').toLowerCase();
+    if (activeFilter === 'Web Apps') return cat.includes('web') || cat.includes('full-stack');
+    if (activeFilter === 'Mobile') return cat.includes('mobile') || cat.includes('hospitality');
+    if (activeFilter === 'Enterprise') return cat.includes('enterprise');
+    if (activeFilter === 'Systems') return cat.includes('system') || cat.includes('analytics');
     if (activeFilter === 'UI/UX') return true;
     return true;
   });
 
-  // Close modal on Escape key
+  // Extract gallery images for a project
+  const getGalleryItems = (project) => {
+    if (!project) return [];
+    if (Array.isArray(project.gallery) && project.gallery.length > 0) {
+      return project.gallery;
+    }
+    return [
+      {
+        url: project.image || '/hero/project-analytics.jpg',
+        caption: project.title,
+        description: project.subtitle || project.description
+      }
+    ];
+  };
+
+  const openGallery = (project, startIndex = 0) => {
+    setGalleryProject(project);
+    setGalleryIndex(startIndex);
+  };
+
+  const closeGallery = () => {
+    setGalleryProject(null);
+    setGalleryIndex(0);
+  };
+
+  // Keyboard navigation for lightbox & details modal
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && selectedProject) {
-        setSelectedProject(null);
+      if (e.key === 'Escape') {
+        if (galleryProject) closeGallery();
+        else if (selectedProject) setSelectedProject(null);
+      } else if (galleryProject) {
+        const items = getGalleryItems(galleryProject);
+        if (e.key === 'ArrowRight') {
+          setGalleryIndex((prev) => (prev + 1) % items.length);
+        } else if (e.key === 'ArrowLeft') {
+          setGalleryIndex((prev) => (prev - 1 + items.length) % items.length);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedProject]);
+  }, [galleryProject, selectedProject]);
 
   return (
     <section
@@ -86,7 +134,9 @@ export default function ProjectsSection({ projects = [] }) {
                       cursor: 'pointer',
                       transition: 'all 0.25s ease',
                       border: isActive ? '1.5px solid var(--gold-light)' : '1px solid rgba(245, 240, 232, 0.1)',
-                      background: isActive ? 'linear-gradient(135deg, rgba(217, 169, 104, 0.25) 0%, rgba(14, 22, 36, 0.9) 100%)' : 'rgba(14, 22, 36, 0.7)',
+                      background: isActive
+                        ? 'linear-gradient(135deg, rgba(217, 169, 104, 0.28) 0%, rgba(14, 22, 36, 0.95) 100%)'
+                        : 'rgba(14, 22, 36, 0.7)',
                       color: isActive ? 'var(--gold-light)' : 'var(--text-muted)',
                       boxShadow: isActive ? '0 0 16px var(--gold-glow)' : 'none'
                     }}
@@ -120,146 +170,170 @@ export default function ProjectsSection({ projects = [] }) {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
             gap: '24px'
           }}
           className="projects-grid"
         >
-          {filteredProjects.map((project) => (
-            <div
-              key={project.id}
-              className="glass-panel"
-              style={{
-                borderRadius: '20px',
-                padding: '16px',
-                border: '1px solid rgba(217, 169, 104, 0.22)',
-                background: 'rgba(14, 22, 36, 0.75)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                transition: 'all 0.35s var(--ease-cinematic)',
-                cursor: 'pointer',
-                position: 'relative'
-              }}
-              onClick={() => setSelectedProject(project)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-6px)';
-                e.currentTarget.style.borderColor = 'var(--gold-light)';
-                e.currentTarget.style.boxShadow = '0 25px 50px rgba(0, 0, 0, 0.6), 0 0 25px var(--gold-glow)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'rgba(217, 169, 104, 0.22)';
-                e.currentTarget.style.boxShadow = '0 20px 40px -15px rgba(0, 0, 0, 0.4)';
-              }}
-            >
-              {/* Image Preview Container */}
+          {filteredProjects.map((project) => {
+            const galleryCount = (project.gallery && project.gallery.length > 0) ? project.gallery.length : 1;
+            return (
               <div
+                key={project.id}
+                className="glass-panel"
                 style={{
-                  position: 'relative',
-                  width: '100%',
-                  height: '200px',
-                  borderRadius: '14px',
-                  overflow: 'hidden',
-                  marginBottom: '16px',
-                  background: '#0B1018'
-                }}
-              >
-                <img
-                  src={project.image || '/hero/project-analytics.jpg'}
-                  alt={project.title}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    transition: 'transform 0.6s var(--ease-cinematic)'
-                  }}
-                  onError={(e) => {
-                    // Fallback to existing preview if custom image not found
-                    e.currentTarget.src = '/hero/project-analytics.jpg';
-                  }}
-                />
-
-                {/* Subtle dark gradient overlay */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'linear-gradient(to top, rgba(11, 16, 24, 0.75) 0%, transparent 60%)',
-                    pointerEvents: 'none'
-                  }}
-                />
-
-                {/* Top-Right Glass External Link Icon */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '12px',
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: 'rgba(14, 22, 36, 0.85)',
-                    backdropFilter: 'blur(8px)',
-                    border: '1px solid rgba(217, 169, 104, 0.4)',
-                    color: 'var(--gold-light)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <ArrowUpRight size={15} />
-                </div>
-              </div>
-
-              {/* Title & Subtitle */}
-              <div style={{ flex: 1 }}>
-                <h3
-                  className="font-heading"
-                  style={{
-                    fontSize: '1.25rem',
-                    fontWeight: 700,
-                    color: 'var(--text-main)',
-                    marginBottom: '4px',
-                    lineHeight: 1.3
-                  }}
-                >
-                  {project.title}
-                </h3>
-
-                <p
-                  className="font-mono"
-                  style={{
-                    fontSize: '0.74rem',
-                    color: 'var(--gold-primary)',
-                    letterSpacing: '0.04em',
-                    marginBottom: '14px'
-                  }}
-                >
-                  {project.subtitle || project.category}
-                </p>
-              </div>
-
-              {/* Bottom: Tech Badges & Circular Gold Action Button */}
-              <div
-                style={{
+                  borderRadius: '18px',
+                  padding: '16px',
+                  border: '1px solid rgba(217, 169, 104, 0.22)',
+                  background: 'rgba(12, 19, 32, 0.82)',
                   display: 'flex',
-                  alignItems: 'center',
+                  flexDirection: 'column',
                   justifyContent: 'space-between',
-                  paddingTop: '12px',
-                  borderTop: '1px solid rgba(245, 240, 232, 0.08)'
+                  transition: 'all 0.35s var(--ease-cinematic)',
+                  position: 'relative'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-6px)';
+                  e.currentTarget.style.borderColor = 'var(--gold-light)';
+                  e.currentTarget.style.boxShadow = '0 25px 50px rgba(0, 0, 0, 0.7), 0 0 25px var(--gold-glow)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.borderColor = 'rgba(217, 169, 104, 0.22)';
+                  e.currentTarget.style.boxShadow = '0 20px 40px -15px rgba(0, 0, 0, 0.4)';
                 }}
               >
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {/* Image Preview Container */}
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '190px',
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    marginBottom: '14px',
+                    background: '#070C15',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => openGallery(project, 0)}
+                >
+                  <img
+                    src={project.image || '/hero/project-analytics.jpg'}
+                    alt={project.title}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      transition: 'transform 0.6s var(--ease-cinematic)'
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.src = '/hero/project-analytics.jpg';
+                    }}
+                  />
+
+                  {/* Cinematic gradient overlay */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'linear-gradient(to top, rgba(7, 12, 21, 0.82) 0%, transparent 60%)',
+                      pointerEvents: 'none'
+                    }}
+                  />
+
+                  {/* Top-Right External Link Button */}
+                  {project.liveUrl && (
+                    <a
+                      href={project.liveUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Launch live demo"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'rgba(7, 12, 21, 0.85)',
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid rgba(217, 169, 104, 0.4)',
+                        color: 'var(--gold-light)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textDecoration: 'none',
+                        zIndex: 2
+                      }}
+                    >
+                      <ArrowUpRight size={14} />
+                    </a>
+                  )}
+
+                  {/* Gallery Badge on Image */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '10px',
+                      left: '10px',
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      background: 'rgba(7, 12, 21, 0.85)',
+                      backdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(217, 169, 104, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      color: 'var(--gold-light)',
+                      fontSize: '0.68rem',
+                      fontFamily: 'var(--font-mono)'
+                    }}
+                  >
+                    <Images size={12} />
+                    <span>{galleryCount} Screenshots</span>
+                  </div>
+                </div>
+
+                {/* Title & Subtitle */}
+                <div style={{ flex: 1 }}>
+                  <h3
+                    className="font-heading"
+                    style={{
+                      fontSize: '1.2rem',
+                      fontWeight: 700,
+                      color: 'var(--text-main)',
+                      marginBottom: '4px',
+                      lineHeight: 1.3
+                    }}
+                  >
+                    {project.title}
+                  </h3>
+
+                  <p
+                    className="font-mono"
+                    style={{
+                      fontSize: '0.72rem',
+                      color: 'var(--gold-primary)',
+                      letterSpacing: '0.04em',
+                      marginBottom: '12px'
+                    }}
+                  >
+                    {project.subtitle || project.category}
+                  </p>
+                </div>
+
+                {/* Tech Badges Row */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '14px' }}>
                   {project.techStack?.slice(0, 3).map((tech) => (
                     <span
                       key={tech}
                       style={{
                         padding: '3px 8px',
                         borderRadius: '6px',
-                        background: 'rgba(20, 31, 50, 0.6)',
+                        background: 'rgba(20, 31, 50, 0.65)',
                         border: '1px solid rgba(245, 240, 232, 0.08)',
-                        fontSize: '0.7rem',
+                        fontSize: '0.68rem',
                         fontFamily: 'var(--font-mono)',
                         color: 'var(--text-secondary)'
                       }}
@@ -269,37 +343,343 @@ export default function ProjectsSection({ projects = [] }) {
                   ))}
                 </div>
 
+                {/* Card Action Footer */}
                 <div
                   style={{
-                    width: '30px',
-                    height: '30px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #F2CA8E 0%, #D9A968 100%)',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#0B1018',
-                    boxShadow: '0 2px 10px rgba(217, 169, 104, 0.4)',
-                    flexShrink: 0
+                    justifyContent: 'space-between',
+                    paddingTop: '12px',
+                    borderTop: '1px solid rgba(245, 240, 232, 0.08)',
+                    gap: '8px'
                   }}
                 >
-                  &rarr;
+                  <div style={{ display: 'flex', gap: '6px', flex: 1 }}>
+                    <button
+                      onClick={() => setSelectedProject(project)}
+                      style={{
+                        flex: 1,
+                        padding: '6px 10px',
+                        borderRadius: '8px',
+                        background: 'rgba(217, 169, 104, 0.12)',
+                        border: '1px solid rgba(217, 169, 104, 0.3)',
+                        color: 'var(--gold-light)',
+                        fontSize: '0.72rem',
+                        fontFamily: 'var(--font-mono)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Eye size={12} />
+                      <span>Details</span>
+                    </button>
+
+                    <button
+                      onClick={() => openGallery(project, 0)}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: '8px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        color: 'var(--text-muted)',
+                        fontSize: '0.72rem',
+                        fontFamily: 'var(--font-mono)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Images size={12} />
+                      <span>Gallery</span>
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => setSelectedProject(project)}
+                    aria-label={`Open ${project.title} details`}
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #F2CA8E 0%, #D9A968 100%)',
+                      border: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#070C15',
+                      boxShadow: '0 2px 10px rgba(217, 169, 104, 0.4)',
+                      flexShrink: 0,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    &rarr;
+                  </button>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* FULL PROJECT DETAILS MODAL */}
+      {/* ========================================================
+          FULL-SCREEN LIGHTBOX GALLERY MODAL (Cloudinary Screenshots)
+         ======================================================== */}
+      {galleryProject && (() => {
+        const galleryItems = getGalleryItems(galleryProject);
+        const currentItem = galleryItems[galleryIndex] || galleryItems[0];
+
+        return (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(3, 7, 14, 0.96)',
+              backdropFilter: 'blur(24px)',
+              zIndex: 1200,
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '24px',
+              color: '#ffffff'
+            }}
+            onClick={closeGallery}
+          >
+            {/* Top Bar */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '16px',
+                zIndex: 10
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div>
+                <span className="badge-gold" style={{ marginRight: '10px' }}>
+                  PROJECT GALLERY &bull; {galleryIndex + 1} / {galleryItems.length}
+                </span>
+                <span className="font-heading" style={{ fontSize: '1.25rem', fontWeight: 700, color: '#ffffff' }}>
+                  {galleryProject.title}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <button
+                  onClick={() => {
+                    closeGallery();
+                    setSelectedProject(galleryProject);
+                  }}
+                  className="btn-ghost-luxury"
+                  style={{ padding: '6px 14px', fontSize: '0.78rem' }}
+                >
+                  <Eye size={14} />
+                  <span>View Details</span>
+                </button>
+
+                <button
+                  onClick={closeGallery}
+                  aria-label="Close Lightbox"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '50%',
+                    width: '38px',
+                    height: '38px',
+                    color: '#ffffff',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Central Stage with Image and Navigation Arrows */}
+            <div
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+                minHeight: 0
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Prev Button */}
+              {galleryItems.length > 1 && (
+                <button
+                  onClick={() => setGalleryIndex((prev) => (prev - 1 + galleryItems.length) % galleryItems.length)}
+                  aria-label="Previous image"
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 20,
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '50%',
+                    background: 'rgba(12, 19, 32, 0.85)',
+                    border: '1px solid rgba(217, 169, 104, 0.4)',
+                    color: 'var(--gold-light)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.6)'
+                  }}
+                >
+                  <ChevronLeft size={24} />
+                </button>
+              )}
+
+              {/* Main Image Display */}
+              <div
+                style={{
+                  maxWidth: '92%',
+                  maxHeight: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <img
+                  src={currentItem.url}
+                  alt={currentItem.caption || galleryProject.title}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: 'calc(80vh - 120px)',
+                    objectFit: 'contain',
+                    borderRadius: '14px',
+                    border: '1px solid rgba(217, 169, 104, 0.3)',
+                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(217, 169, 104, 0.2)'
+                  }}
+                />
+
+                {/* Caption / Description Bar */}
+                {(currentItem.caption || currentItem.description) && (
+                  <div
+                    style={{
+                      marginTop: '12px',
+                      padding: '8px 20px',
+                      borderRadius: '9999px',
+                      background: 'rgba(12, 19, 32, 0.85)',
+                      border: '1px solid rgba(217, 169, 104, 0.25)',
+                      textAlign: 'center',
+                      maxWidth: '700px'
+                    }}
+                  >
+                    {currentItem.caption && (
+                      <span className="font-heading" style={{ color: 'var(--gold-light)', fontSize: '0.9rem', fontWeight: 600, marginRight: '8px' }}>
+                        {currentItem.caption}
+                      </span>
+                    )}
+                    {currentItem.description && (
+                      <span style={{ color: '#94a3b8', fontSize: '0.82rem' }}>
+                        {currentItem.description}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Next Button */}
+              {galleryItems.length > 1 && (
+                <button
+                  onClick={() => setGalleryIndex((prev) => (prev + 1) % galleryItems.length)}
+                  aria-label="Next image"
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 20,
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '50%',
+                    background: 'rgba(12, 19, 32, 0.85)',
+                    border: '1px solid rgba(217, 169, 104, 0.4)',
+                    color: 'var(--gold-light)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.6)'
+                  }}
+                >
+                  <ChevronRight size={24} />
+                </button>
+              )}
+            </div>
+
+            {/* Bottom Thumbnails Filmstrip */}
+            {galleryItems.length > 1 && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  paddingTop: '16px',
+                  overflowX: 'auto',
+                  zIndex: 10
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {galleryItems.map((item, idx) => {
+                  const isCurrent = idx === galleryIndex;
+                  return (
+                    <button
+                      key={item.id || idx}
+                      onClick={() => setGalleryIndex(idx)}
+                      style={{
+                        width: '64px',
+                        height: '46px',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        border: isCurrent ? '2px solid var(--gold-light)' : '1px solid rgba(255, 255, 255, 0.15)',
+                        opacity: isCurrent ? 1 : 0.6,
+                        padding: 0,
+                        background: 'transparent',
+                        cursor: 'pointer',
+                        transform: isCurrent ? 'scale(1.08)' : 'scale(1)',
+                        transition: 'all 0.2s ease',
+                        boxShadow: isCurrent ? '0 0 15px var(--gold-glow)' : 'none'
+                      }}
+                    >
+                      <img
+                        src={item.url}
+                        alt={`Thumbnail ${idx + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ========================================================
+          FULL PROJECT DETAILS MODAL
+         ======================================================== */}
       {selectedProject && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(11, 16, 24, 0.92)',
+            background: 'rgba(5, 9, 16, 0.94)',
             backdropFilter: 'blur(20px)',
-            zIndex: 100,
+            zIndex: 1100,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -308,13 +688,14 @@ export default function ProjectsSection({ projects = [] }) {
           onClick={() => setSelectedProject(null)}
         >
           <div
+            className="glass-panel"
             style={{
               position: 'relative',
               width: '100%',
               maxWidth: '820px',
               maxHeight: '90vh',
               overflowY: 'auto',
-              background: 'var(--surface-card)',
+              background: '#0d1526',
               border: '1px solid var(--border-gold)',
               borderRadius: '24px',
               padding: '36px',
@@ -324,6 +705,7 @@ export default function ProjectsSection({ projects = [] }) {
           >
             <button
               onClick={() => setSelectedProject(null)}
+              aria-label="Close details"
               style={{
                 position: 'absolute',
                 top: '20px',
@@ -356,12 +738,43 @@ export default function ProjectsSection({ projects = [] }) {
               {selectedProject.subtitle}
             </p>
 
-            <div style={{ borderRadius: '16px', overflow: 'hidden', marginBottom: '24px', border: '1px solid var(--border-subtle)' }}>
+            {/* Clickable Image to Launch Lightbox */}
+            <div
+              style={{
+                borderRadius: '16px',
+                overflow: 'hidden',
+                marginBottom: '24px',
+                border: '1px solid var(--border-gold)',
+                position: 'relative',
+                cursor: 'pointer'
+              }}
+              onClick={() => openGallery(selectedProject, 0)}
+            >
               <img
                 src={selectedProject.image || '/hero/project-analytics.jpg'}
                 alt={selectedProject.title}
-                style={{ width: '100%', maxHeight: '350px', objectFit: 'cover' }}
+                style={{ width: '100%', maxHeight: '360px', objectFit: 'cover' }}
               />
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '14px',
+                  right: '14px',
+                  padding: '8px 16px',
+                  borderRadius: '9999px',
+                  background: 'rgba(7, 12, 21, 0.85)',
+                  border: '1px solid var(--gold-light)',
+                  color: 'var(--gold-light)',
+                  fontSize: '0.78rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.6)'
+                }}
+              >
+                <Images size={14} />
+                <span>Open Fullscreen Gallery</span>
+              </div>
             </div>
 
             <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', lineHeight: 1.7, marginBottom: '24px' }}>
@@ -369,7 +782,7 @@ export default function ProjectsSection({ projects = [] }) {
             </p>
 
             {/* Architecture Highlights */}
-            {selectedProject.highlights && (
+            {selectedProject.highlights && selectedProject.highlights.length > 0 && (
               <div style={{ marginBottom: '24px' }}>
                 <h4 className="font-heading" style={{ fontSize: '1.05rem', color: 'var(--text-main)', marginBottom: '12px' }}>
                   Architecture &amp; Key Highlights
@@ -411,7 +824,7 @@ export default function ProjectsSection({ projects = [] }) {
             </div>
 
             {/* Modal Actions */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', paddingTop: '16px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
               {selectedProject.liveUrl && (
                 <a
                   href={selectedProject.liveUrl}
@@ -436,6 +849,14 @@ export default function ProjectsSection({ projects = [] }) {
                   <span>Inspect Source Code</span>
                 </a>
               )}
+              <button
+                onClick={() => openGallery(selectedProject, 0)}
+                className="btn-ghost-luxury"
+                style={{ padding: '0.75rem 1.6rem', fontSize: '0.85rem' }}
+              >
+                <Images size={15} />
+                <span>Open Screenshot Gallery</span>
+              </button>
             </div>
           </div>
         </div>

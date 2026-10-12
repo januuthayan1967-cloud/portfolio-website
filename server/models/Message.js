@@ -49,6 +49,29 @@ const messageSchema = new mongoose.Schema({
   starred: {
     type: Boolean,
     default: false
+  },
+  replied: {
+    type: Boolean,
+    default: false
+  },
+  notificationSent: {
+    type: Boolean,
+    default: false
+  },
+  notificationError: {
+    type: String,
+    default: ''
+  },
+  replies: {
+    type: [{
+      id: { type: String, default: () => `rep-${Date.now()}` },
+      subject: { type: String, default: '' },
+      message: { type: String, required: true },
+      sentAt: { type: Date, default: Date.now },
+      status: { type: String, default: 'sent' },
+      error: { type: String, default: '' }
+    }],
+    default: []
   }
 }, {
   timestamps: true,

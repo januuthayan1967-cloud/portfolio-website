@@ -78,6 +78,15 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [loadPortfolioData]);
 
+  // Support direct URL triggers (?resetToken=XYZ, ?openAdmin=true/inbox, /admin)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('resetToken') || params.get('openAdmin') || window.location.pathname.startsWith('/admin')) {
+      setAdminOpen(true);
+    }
+  }, []);
+
+
   const handleLoginSuccess = (token) => {
     setAdminToken(token);
   };
@@ -184,6 +193,8 @@ export default function App() {
           <AdminLogin
             onLoginSuccess={handleLoginSuccess}
             onClose={() => setAdminOpen(false)}
+            initialResetToken={new URLSearchParams(window.location.search).get('resetToken') || ''}
+            initialView={new URLSearchParams(window.location.search).get('resetToken') ? 'reset' : 'login'}
           />
         )
       )}

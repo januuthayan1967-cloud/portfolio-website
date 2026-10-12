@@ -346,10 +346,10 @@
     }
   ],
   "analytics": {
-    "totalVisits": 2011,
+    "totalVisits": 2018,
     "uniqueVisitors": 1220,
-    "pageViews": 4746,
-    "directInquiries": 35,
+    "pageViews": 4753,
+    "directInquiries": 36,
     "projectViews": 2190,
     "avgSessionSeconds": 245,
     "history": [
@@ -391,8 +391,8 @@
     ]
   },
   "admin": {
-    "username": "admin",
-    "passwordHash": "vanojan2026",
-    "securityPin": "2026"
+    "username": "vanojanSE",
+    "email": "uthayanvanojan5@gmail.com",
+    "passwordHash": "$2b$12$RSsmXlTD6WxcmFmhqYidRueP7FNr8nJZQVdBjsxeBQoNI1kav.OQ."
   }
 }

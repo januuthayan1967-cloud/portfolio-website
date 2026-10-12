@@ -331,6 +331,16 @@ export default function ContactSection({ profile }) {
             }}
           >
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Anti-spam hidden honeypot */}
+              <input
+                type="text"
+                name="hp_website"
+                value={formData.hp_website || ''}
+                onChange={(e) => setFormData({ ...formData, hp_website: e.target.value })}
+                style={{ display: 'none', position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+                tabIndex={-1}
+                autoComplete="off"
+              />
               
               {/* Row 1: Name and Email */}
               <div

@@ -6,7 +6,8 @@ export default function AboutSection({ profile }) {
   const {
     name = "Uthayagunasingam Vanojan",
     aboutImage = "/hero/image1.jpeg",
-    bio = "I am Uthayagunasingam Vanojan, a Full-Stack Software Engineer and Solutions Architect passionate about building scalable systems, elegant user experiences and impactful digital solutions."
+    bio = "I am Uthayagunasingam Vanojan, a Full-Stack Software Engineer and Solutions Architect passionate about building scalable systems, elegant user experiences and impactful digital solutions.",
+    resumeUrl
   } = profile || {};
 
   const [showJourneyModal, setShowJourneyModal] = useState(false);
@@ -139,7 +140,10 @@ export default function AboutSection({ profile }) {
             {/* Action Buttons: Download CV & Let's Connect */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
               <a
-                href="#contact"
+                href={resumeUrl || "#contact"}
+                download={resumeUrl ? "Vanojan_CV.pdf" : undefined}
+                target={resumeUrl ? "_blank" : undefined}
+                rel="noopener noreferrer"
                 className="btn-gold"
                 style={{ padding: '0.85rem 2rem', fontSize: '0.88rem' }}
               >

@@ -25,6 +25,15 @@ import {
 } from './config/cloudinary.js';
 import { uploadSingleImage } from './middleware/upload.js';
 import { signJwt, verifyJwt } from './utils/jwt.js';
+import bcrypt from 'bcryptjs';
+import {
+  sendPasswordResetEmail,
+  sendContactNotificationToAdmin,
+  sendAdminReplyToVisitor,
+  sendTestEmail,
+  verifySmtpConnection,
+  getSmtpConfig
+} from './services/email.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,6 +42,37 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// In-memory rate limiting structures
+const rateLimitStores = {
+  login: new Map(),
+  forgotPassword: new Map(),
+  contact: new Map()
+};
+
+function checkRateLimit(type, key, maxAttempts, windowMs) {
+  const now = Date.now();
+  const store = rateLimitStores[type];
+  if (!store) return { allowed: true };
+
+  const record = store.get(key) || { count: 0, resetAt: now + windowMs };
+  if (now > record.resetAt) {
+    record.count = 1;
+    record.resetAt = now + windowMs;
+    store.set(key, record);
+    return { allowed: true, remaining: maxAttempts - 1 };
+  }
+
+  if (record.count >= maxAttempts) {
+    const retryAfterSec = Math.ceil((record.resetAt - now) / 1000);
+    return { allowed: false, retryAfterSec };
+  }
+
+  record.count += 1;
+  store.set(key, record);
+  return { allowed: true, remaining: maxAttempts - record.count };
+}
+
 
 // Serve public static assets (including hero photos and project images)
 app.use(express.static(path.join(__dirname, '../public')));
@@ -156,25 +196,84 @@ app.get('/api/portfolio', async (req, res) => {
   });
 });
 
-// 2. Submit new message from contact form
+// 2. Submit new message from contact form (with validation, anti-spam, & Gmail SMTP notification)
 app.post('/api/messages', async (req, res) => {
+  // Anti-spam honeypot protection: if hidden field is filled, silently ignore
+  if (req.body.hp_website || req.body._hp) {
+    return res.status(200).json({ success: true, message: 'Inquiry processed successfully.' });
+  }
+
+  // Rate Limiting (10 messages per 10 minutes per IP)
+  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+  const rateLimit = checkRateLimit('contact', clientIp, 10, 10 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return res.status(429).json({
+      error: `Too many submissions. Please wait ${rateLimit.retryAfterSec} seconds before sending another message.`
+    });
+  }
+
   const { name, email, subject, message, imageUrl, imagePublicId } = req.body;
   if (!name || !email || !message) {
-    return res.status(400).json({ error: 'Name, email, and message are required.' });
+    return res.status(400).json({ error: 'Full name, email address, and message are required.' });
+  }
+
+  const cleanName = String(name).trim();
+  const cleanEmail = String(email).trim().toLowerCase();
+  const cleanSubject = String(subject || 'General Inquiry').trim();
+  const cleanMessage = String(message).trim();
+
+  // Rigorous validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(cleanEmail)) {
+    return res.status(400).json({ error: 'Please provide a valid email address.' });
+  }
+
+  if (cleanName.length < 2 || cleanName.length > 100) {
+    return res.status(400).json({ error: 'Name must be between 2 and 100 characters.' });
+  }
+
+  if (cleanMessage.length < 5) {
+    return res.status(400).json({ error: 'Message must be at least 5 characters long.' });
+  }
+
+  if (cleanMessage.length > 4000) {
+    return res.status(400).json({ error: 'Message cannot exceed 4000 characters.' });
   }
 
   const newMsg = {
     id: `msg-${Date.now()}`,
-    name: name.trim(),
-    email: email.trim(),
-    subject: (subject || 'General Inquiry').trim(),
-    message: message.trim(),
+    name: cleanName,
+    email: cleanEmail,
+    subject: cleanSubject,
+    message: cleanMessage,
     imageUrl: imageUrl || '',
     imagePublicId: imagePublicId || '',
     date: new Date().toISOString(),
     read: false,
-    starred: false
+    starred: false,
+    replied: false,
+    notificationSent: false,
+    notificationError: '',
+    replies: []
   };
+
+  // Attempt Gmail SMTP notification to Administrator
+  try {
+    const notifyRes = await sendContactNotificationToAdmin({
+      name: cleanName,
+      email: cleanEmail,
+      subject: cleanSubject,
+      message: cleanMessage,
+      id: newMsg.id
+    });
+    if (notifyRes?.sent) {
+      newMsg.notificationSent = true;
+    }
+  } catch (emailErr) {
+    console.warn('[Gmail SMTP Warning] Failed to send contact notification email:', emailErr.message);
+    newMsg.notificationSent = false;
+    newMsg.notificationError = emailErr.message;
+  }
 
   let savedToMongo = false;
 
@@ -196,7 +295,9 @@ app.post('/api/messages', async (req, res) => {
   // Always keep local db.json in sync as persistent backup
   try {
     const db = getDb();
+    if (!Array.isArray(db.messages)) db.messages = [];
     db.messages.unshift(newMsg);
+    db.analytics = db.analytics || {};
     db.analytics.directInquiries = (db.analytics.directInquiries || 0) + 1;
     saveDb(db);
   } catch (e) {
@@ -207,9 +308,11 @@ app.post('/api/messages', async (req, res) => {
     success: true,
     message: 'Message delivered successfully.',
     data: newMsg,
-    persistedToMongo: savedToMongo
+    persistedToMongo: savedToMongo,
+    notificationSent: newMsg.notificationSent
   });
 });
+
 
 // 3. Analytics ping
 app.post('/api/analytics/ping', async (req, res) => {
@@ -244,40 +347,274 @@ app.post('/api/analytics/ping', async (req, res) => {
 
 // AUTHENTICATION ROUTES
 
-// Admin Login
+// Admin Login (Secure Bcrypt & Rate-Limited)
 app.post('/api/admin/login', async (req, res) => {
-  const { username, password } = req.body;
+  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+  
+  // Rate limit: 5 attempts per 15 minutes
+  const rateLimit = checkRateLimit('login', clientIp, 5, 15 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return res.status(429).json({
+      error: `Too many failed login attempts. Account temporarily locked for security. Please try again in ${rateLimit.retryAfterSec} seconds.`
+    });
+  }
+
+  const { username, password, rememberMe } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  const cleanUsername = String(username).trim();
   let adminUser = null;
 
   if (isDbConnected()) {
     try {
-      adminUser = await Admin.findOne({ username }).lean();
+      // Find admin matching target username or vanojanSE
+      adminUser = await Admin.findOne({
+        $or: [
+          { username: cleanUsername },
+          { username: new RegExp(`^${cleanUsername}$`, 'i') }
+        ]
+      }).lean();
     } catch (err) {
       console.warn('[MongoDB Query] Admin check error:', err.message);
     }
   }
 
   const db = getDb();
-  const validUsername = adminUser?.username || db.admin.username;
-  const validPasswordHash = adminUser?.passwordHash || db.admin.passwordHash;
+  const fallbackAdmin = db.admin || { username: 'vanojanSE', passwordHash: '' };
 
-  if (
-    username === validUsername &&
-    (password === validPasswordHash || password === 'admin123' || password === 'vanojan2026')
-  ) {
-    const token = signJwt({
-      username: validUsername,
+  const targetAdmin = adminUser || (cleanUsername.toLowerCase() === fallbackAdmin.username.toLowerCase() ? fallbackAdmin : null);
+
+  if (!targetAdmin) {
+    return res.status(401).json({ error: 'Invalid administrative credentials.' });
+  }
+
+  let isMatch = false;
+  // 1. Verify using bcrypt if passwordHash starts with $2
+  if (targetAdmin.passwordHash && targetAdmin.passwordHash.startsWith('$2')) {
+    isMatch = await bcrypt.compare(password, targetAdmin.passwordHash);
+  } else if (targetAdmin.passwordHash) {
+    // Legacy migration support if hash was stored as plain/legacy string
+    if (password === targetAdmin.passwordHash) {
+      isMatch = true;
+      // Auto-migrate to secure bcrypt
+      try {
+        const newSalt = await bcrypt.genSalt(12);
+        const newHash = await bcrypt.hash(password, newSalt);
+        if (isDbConnected()) {
+          await Admin.updateOne({ username: targetAdmin.username }, { $set: { passwordHash: newHash } });
+        }
+        db.admin.passwordHash = newHash;
+        saveDb(db);
+      } catch (mErr) {}
+    }
+  }
+
+  if (!isMatch) {
+    return res.status(401).json({ error: 'Invalid administrative credentials.' });
+  }
+
+  // Clear rate limiter upon successful login
+  rateLimitStores.login.delete(clientIp);
+
+  const token = signJwt(
+    {
+      username: targetAdmin.username,
+      email: targetAdmin.email || 'uthayanvanojan5@gmail.com',
       role: 'admin'
-    });
-    return res.json({
-      success: true,
-      token,
-      user: { username: validUsername, role: 'admin' }
+    },
+    rememberMe ? '30d' : '24h'
+  );
+
+  return res.json({
+    success: true,
+    token,
+    user: {
+      username: targetAdmin.username,
+      email: targetAdmin.email || 'uthayanvanojan5@gmail.com',
+      role: 'admin'
+    }
+  });
+});
+
+// Admin Forgot Password Request (Dispatches Gmail SMTP reset token)
+app.post('/api/admin/forgot-password', async (req, res) => {
+  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+  
+  // Rate limit: 3 requests per 15 minutes
+  const rateLimit = checkRateLimit('forgotPassword', clientIp, 3, 15 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return res.status(429).json({
+      error: `Too many password reset requests. Please wait ${rateLimit.retryAfterSec} seconds before trying again.`
     });
   }
 
-  res.status(401).json({ error: 'Invalid admin credentials. Default is admin / vanojan2026' });
+  const { email } = req.body;
+  const cleanEmail = String(email || '').trim().toLowerCase();
+
+  // Generate cryptographically secure 32-byte reset token
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+  const tokenExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes validity
+
+  let adminFound = null;
+
+  if (isDbConnected()) {
+    try {
+      // Find admin
+      adminFound = await Admin.findOne({
+        $or: [
+          { email: cleanEmail },
+          { username: 'vanojanSE' },
+          { username: 'admin' }
+        ]
+      });
+
+      if (adminFound) {
+        adminFound.resetPasswordTokenHash = tokenHash;
+        adminFound.resetPasswordExpires = tokenExpires;
+        await adminFound.save();
+      }
+    } catch (err) {
+      console.warn('[MongoDB Query] Forgot password error:', err.message);
+    }
+  }
+
+  // Dispatch email notification via Gmail SMTP
+  const targetRecipient = adminFound?.email || cleanEmail || 'uthayanvanojan5@gmail.com';
+  let emailDeliveryResult = null;
+  try {
+    emailDeliveryResult = await sendPasswordResetEmail({
+      resetToken,
+      toEmail: targetRecipient
+    });
+  } catch (smtpErr) {
+    console.warn('[Gmail SMTP Error] Forgot password email dispatch failed:', smtpErr.message);
+  }
+
+  // Always return a generic success message to prevent account enumeration
+  res.json({
+    success: true,
+    message: 'If an authorized administrator account exists for this address, a secure password reset link has been dispatched.',
+    delivered: Boolean(emailDeliveryResult?.sent)
+  });
 });
+
+// Admin Reset Password Validation & Execution
+app.post('/api/admin/reset-password', async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return res.status(400).json({ error: 'Reset token and new password are required.' });
+  }
+
+  if (String(newPassword).length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters long.' });
+  }
+
+  const tokenHash = crypto.createHash('sha256').update(String(token).trim()).digest('hex');
+
+  let admin = null;
+
+  if (isDbConnected()) {
+    try {
+      admin = await Admin.findOne({
+        resetPasswordTokenHash: tokenHash,
+        resetPasswordExpires: { $gt: new Date() }
+      });
+    } catch (err) {
+      console.warn('[MongoDB Query] Reset password lookup error:', err.message);
+    }
+  }
+
+  if (!admin) {
+    return res.status(400).json({
+      error: 'Password reset link is invalid or has expired. Please request a new link.'
+    });
+  }
+
+  try {
+    // Generate new bcrypt hash with 12 rounds
+    const salt = await bcrypt.genSalt(12);
+    const newHash = await bcrypt.hash(newPassword, salt);
+
+    admin.passwordHash = newHash;
+    admin.resetPasswordTokenHash = null;
+    admin.resetPasswordExpires = null;
+    admin.failedLoginAttempts = 0;
+    admin.lockUntil = null;
+    await admin.save();
+
+    // Sync db.json backup
+    try {
+      const db = getDb();
+      if (!db.admin) db.admin = {};
+      db.admin.username = admin.username;
+      db.admin.passwordHash = newHash;
+      saveDb(db);
+    } catch (bErr) {}
+
+    res.json({
+      success: true,
+      message: 'Your administrator password has been updated successfully. Please log in with your new credentials.'
+    });
+  } catch (err) {
+    console.error('[Reset Password Error]:', err);
+    res.status(500).json({ error: 'Failed to update password. Please try again.' });
+  }
+});
+
+// Authenticated Password Change
+app.post('/api/admin/change-password', adminOnlyMiddleware, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Current password and new password are required.' });
+  }
+
+  if (String(newPassword).length < 8) {
+    return res.status(400).json({ error: 'New password must be at least 8 characters long.' });
+  }
+
+  let admin = null;
+  if (isDbConnected()) {
+    try {
+      admin = await Admin.findOne({ username: req.user.username });
+    } catch (e) {}
+  }
+
+  const db = getDb();
+  const currentHash = admin?.passwordHash || db.admin?.passwordHash;
+
+  let isMatch = false;
+  if (currentHash && currentHash.startsWith('$2')) {
+    isMatch = await bcrypt.compare(currentPassword, currentHash);
+  } else if (currentHash && currentPassword === currentHash) {
+    isMatch = true;
+  }
+
+  if (!isMatch) {
+    return res.status(401).json({ error: 'Current password is incorrect.' });
+  }
+
+  const salt = await bcrypt.genSalt(12);
+  const newHash = await bcrypt.hash(newPassword, salt);
+
+  if (admin) {
+    admin.passwordHash = newHash;
+    await admin.save();
+  }
+
+  try {
+    db.admin = db.admin || {};
+    db.admin.passwordHash = newHash;
+    saveDb(db);
+  } catch (e) {}
+
+  res.json({ success: true, message: 'Password changed successfully.' });
+});
+
 
 // User Registration
 app.post('/api/auth/register', async (req, res) => {
@@ -711,8 +1048,375 @@ app.delete('/api/admin/messages/:id', adminOnlyMiddleware, async (req, res) => {
   res.json({ success: true, id });
 });
 
+// Admin Email Reply System (Dispatches authenticated reply via Gmail SMTP)
+app.post('/api/admin/messages/:id/reply', adminOnlyMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { subject, reply } = req.body;
+
+  if (!reply || !String(reply).trim()) {
+    return res.status(400).json({ error: 'Reply message body cannot be empty.' });
+  }
+
+  let originalMessage = null;
+
+  if (isDbConnected()) {
+    try {
+      originalMessage = await Message.findOne({ id });
+    } catch (err) {
+      console.warn('[MongoDB Query] Find message error:', err.message);
+    }
+  }
+
+  const db = getDb();
+  if (!originalMessage) {
+    originalMessage = (db.messages || []).find(m => m.id === id);
+  }
+
+  if (!originalMessage) {
+    return res.status(404).json({ error: 'Original message inquiry not found.' });
+  }
+
+  // Never trust recipient provided by frontend; use stored database email
+  const recipientEmail = originalMessage.email;
+  const recipientName = originalMessage.name;
+  const cleanSubject = subject ? String(subject).trim() : `Re: Response to inquiry — ${originalMessage.subject || 'Portfolio Inquiry'}`;
+  const cleanReply = String(reply).trim();
+
+  const newReplyRecord = {
+    id: `rep-${Date.now()}`,
+    subject: cleanSubject,
+    message: cleanReply,
+    sentAt: new Date().toISOString(),
+    status: 'pending',
+    error: ''
+  };
+
+  try {
+    const sendResult = await sendAdminReplyToVisitor({
+      recipientEmail,
+      recipientName,
+      replySubject: cleanSubject,
+      replyBody: cleanReply,
+      originalMessage: originalMessage.message
+    });
+
+    newReplyRecord.status = 'sent';
+    newReplyRecord.messageId = sendResult?.messageId || '';
+
+    // Update MongoDB
+    if (isDbConnected()) {
+      try {
+        await Message.findOneAndUpdate(
+          { id },
+          {
+            $set: { replied: true },
+            $push: { replies: newReplyRecord }
+          }
+        );
+      } catch (dbErr) {
+        console.warn('[MongoDB Atlas] Could not update reply in DB:', dbErr.message);
+      }
+    }
+
+    // Sync backup db.json
+    try {
+      const localMsg = (db.messages || []).find(m => m.id === id);
+      if (localMsg) {
+        localMsg.replied = true;
+        if (!Array.isArray(localMsg.replies)) localMsg.replies = [];
+        localMsg.replies.push(newReplyRecord);
+        saveDb(db);
+      }
+    } catch (e) {}
+
+    res.json({
+      success: true,
+      message: `Reply successfully delivered to ${recipientEmail}`,
+      reply: newReplyRecord
+    });
+  } catch (smtpErr) {
+    console.error('[Gmail SMTP Error] Admin reply failed:', smtpErr);
+    newReplyRecord.status = 'failed';
+    newReplyRecord.error = smtpErr.message;
+
+    return res.status(502).json({
+      error: `Failed to dispatch reply via Gmail SMTP: ${smtpErr.message}. Original message has not been marked as replied.`
+    });
+  }
+});
+
+// EMAIL SETTINGS & DIAGNOSTIC ENDPOINTS
+app.get('/api/admin/email/status', adminOnlyMiddleware, async (req, res) => {
+  try {
+    const status = await verifySmtpConnection();
+    res.json({ success: true, ...status });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/email/test', adminOnlyMiddleware, async (req, res) => {
+  try {
+    const target = req.body.targetEmail || null;
+    const result = await sendTestEmail(target);
+    res.json({
+      success: true,
+      message: `Diagnostic test email dispatched successfully to ${result.recipient}`,
+      data: result
+    });
+  } catch (err) {
+    res.status(500).json({ error: `Diagnostic email dispatch failed: ${err.message}` });
+  }
+});
+
+// CLOUDINARY PROJECT GALLERY MANAGEMENT ROUTES
+// 1. Upload or Attach image to project gallery
+app.post('/api/admin/projects/:id/gallery', adminOnlyMiddleware, uploadSingleImage(['file', 'image']), async (req, res) => {
+  const { id } = req.params;
+  let public_id = req.body.public_id;
+  let url = req.body.url;
+  const caption = req.body.caption || '';
+  const description = req.body.description || '';
+  const isCover = req.body.isCover === 'true' || req.body.isCover === true;
+
+  // If a file was directly uploaded in this multipart request, send to Cloudinary
+  if (req.file) {
+    if (!isCloudinaryConfigured()) {
+      return res.status(503).json({ error: 'Cloudinary storage is not configured.' });
+    }
+    try {
+      const uploadRes = await uploadStream(req.file.buffer, {
+        folder: `vanojan_portfolio/projects/${id}`,
+        tags: ['project_gallery', id]
+      });
+      url = uploadRes.secure_url;
+      public_id = uploadRes.public_id;
+    } catch (cErr) {
+      return res.status(500).json({ error: `Cloudinary gallery upload failed: ${cErr.message}` });
+    }
+  }
+
+  if (!url) {
+    return res.status(400).json({ error: 'Image file or existing image URL is required.' });
+  }
+
+  const newGalleryItem = {
+    id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+    public_id: public_id || '',
+    url,
+    caption: String(caption).trim(),
+    description: String(description).trim(),
+    isCover,
+    order: 0,
+    createdAt: new Date().toISOString()
+  };
+
+  let updatedProj = null;
+
+  if (isDbConnected()) {
+    try {
+      const projDoc = await Project.findOne({ id });
+      if (projDoc) {
+        if (!Array.isArray(projDoc.gallery)) projDoc.gallery = [];
+        newGalleryItem.order = projDoc.gallery.length;
+        if (isCover) {
+          projDoc.gallery.forEach(item => { item.isCover = false; });
+          projDoc.image = url;
+          if (public_id) projDoc.imagePublicId = public_id;
+        }
+        projDoc.gallery.push(newGalleryItem);
+        await projDoc.save();
+        updatedProj = projDoc.toObject();
+      }
+    } catch (err) {
+      console.warn('[MongoDB Atlas] Project gallery push error:', err.message);
+    }
+  }
+
+  // Backup sync
+  const db = getDb();
+  const localIndex = (db.projects || []).findIndex(p => p.id === id);
+  if (localIndex !== -1) {
+    const p = db.projects[localIndex];
+    if (!Array.isArray(p.gallery)) p.gallery = [];
+    newGalleryItem.order = p.gallery.length;
+    if (isCover) {
+      p.gallery.forEach(item => { item.isCover = false; });
+      p.image = url;
+      if (public_id) p.imagePublicId = public_id;
+    }
+    p.gallery.push(newGalleryItem);
+    saveDb(db);
+    if (!updatedProj) updatedProj = p;
+  }
+
+  if (!updatedProj) {
+    return res.status(404).json({ error: 'Project not found.' });
+  }
+
+  res.status(201).json({
+    success: true,
+    item: newGalleryItem,
+    project: updatedProj
+  });
+});
+
+// 2. Delete image from project gallery
+app.delete('/api/admin/projects/:id/gallery/:imageId', adminOnlyMiddleware, async (req, res) => {
+  const { id, imageId } = req.params;
+
+  let itemToDelete = null;
+
+  if (isDbConnected()) {
+    try {
+      const proj = await Project.findOne({ id });
+      if (proj && Array.isArray(proj.gallery)) {
+        itemToDelete = proj.gallery.find(item => item.id === imageId || item.public_id === imageId);
+        proj.gallery = proj.gallery.filter(item => item.id !== imageId && item.public_id !== imageId);
+        await proj.save();
+      }
+    } catch (err) {
+      console.warn('[MongoDB Atlas] Gallery delete error:', err.message);
+    }
+  }
+
+  // Sync db.json
+  const db = getDb();
+  const localProj = (db.projects || []).find(p => p.id === id);
+  if (localProj && Array.isArray(localProj.gallery)) {
+    if (!itemToDelete) {
+      itemToDelete = localProj.gallery.find(item => item.id === imageId || item.public_id === imageId);
+    }
+    localProj.gallery = localProj.gallery.filter(item => item.id !== imageId && item.public_id !== imageId);
+    saveDb(db);
+  }
+
+  // If item had a Cloudinary public ID, remove from Cloudinary
+  if (itemToDelete && itemToDelete.public_id && isCloudinaryConfigured()) {
+    try {
+      await deleteCloudinaryImage(itemToDelete.public_id);
+      if (isDbConnected()) {
+        await Media.deleteOne({ public_id: itemToDelete.public_id });
+      }
+    } catch (cErr) {
+      console.warn('[Cloudinary Delete Warning]:', cErr.message);
+    }
+  }
+
+  res.json({ success: true, message: 'Gallery image removed successfully.', imageId });
+});
+
+// 3. Reorder or Update Gallery item attributes (captions, set as cover)
+app.patch('/api/admin/projects/:id/gallery', adminOnlyMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { items, setCoverId, updateItem } = req.body;
+
+  let updatedProj = null;
+
+  if (isDbConnected()) {
+    try {
+      const proj = await Project.findOne({ id });
+      if (proj) {
+        if (!Array.isArray(proj.gallery)) proj.gallery = [];
+
+        // Case A: Full list reordering
+        if (Array.isArray(items)) {
+          proj.gallery = items;
+        }
+
+        // Case B: Set cover image
+        if (setCoverId) {
+          proj.gallery.forEach(item => {
+            if (item.id === setCoverId || item.public_id === setCoverId) {
+              item.isCover = true;
+              proj.image = item.url;
+              if (item.public_id) proj.imagePublicId = item.public_id;
+            } else {
+              item.isCover = false;
+            }
+          });
+        }
+
+        // Case C: Update single item caption / description
+        if (updateItem && updateItem.id) {
+          const target = proj.gallery.find(item => item.id === updateItem.id);
+          if (target) {
+            if (updateItem.caption !== undefined) target.caption = updateItem.caption;
+            if (updateItem.description !== undefined) target.description = updateItem.description;
+          }
+        }
+
+        await proj.save();
+        updatedProj = proj.toObject();
+      }
+    } catch (err) {
+      console.warn('[MongoDB Atlas] Gallery patch error:', err.message);
+    }
+  }
+
+  // Backup sync
+  const db = getDb();
+  const p = (db.projects || []).find(item => item.id === id);
+  if (p) {
+    if (!Array.isArray(p.gallery)) p.gallery = [];
+    if (Array.isArray(items)) p.gallery = items;
+    if (setCoverId) {
+      p.gallery.forEach(item => {
+        if (item.id === setCoverId || item.public_id === setCoverId) {
+          item.isCover = true;
+          p.image = item.url;
+          if (item.public_id) p.imagePublicId = item.public_id;
+        } else {
+          item.isCover = false;
+        }
+      });
+    }
+    if (updateItem && updateItem.id) {
+      const target = p.gallery.find(item => item.id === updateItem.id);
+      if (target) {
+        if (updateItem.caption !== undefined) target.caption = updateItem.caption;
+        if (updateItem.description !== undefined) target.description = updateItem.description;
+      }
+    }
+    saveDb(db);
+    if (!updatedProj) updatedProj = p;
+  }
+
+  res.json({ success: true, project: updatedProj });
+});
+
+// Admin Education / Timeline CRUD
+app.put('/api/admin/education', adminOnlyMiddleware, async (req, res) => {
+  if (!Array.isArray(req.body.education)) {
+    return res.status(400).json({ error: 'Invalid education format' });
+  }
+
+  if (isDbConnected()) {
+    try {
+      await Education.deleteMany({});
+      const eduToInsert = req.body.education.map((e, idx) => ({
+        ...e,
+        order: idx
+      }));
+      await Education.insertMany(eduToInsert);
+    } catch (err) {
+      console.warn('[MongoDB Query] Education update error:', err.message);
+    }
+  }
+
+  // Backup sync
+  try {
+    const db = getDb();
+    db.education = req.body.education;
+    saveDb(db);
+  } catch (e) {}
+
+  res.json({ success: true, education: req.body.education });
+});
+
 // Admin Projects CRUD
 app.post('/api/admin/projects', adminOnlyMiddleware, async (req, res) => {
+
   const project = {
     id: req.body.id || `project-${Date.now()}`,
     title: req.body.title || 'Untitled Project',
