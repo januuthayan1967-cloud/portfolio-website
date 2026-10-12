@@ -126,7 +126,7 @@ async function runTestSuite() {
     console.log('\n--- 5. Admin Authentication ---');
     const loginRes = await makeRequest('POST', '/api/admin/login', {}, {
       username: 'vanojanSE',
-      password: 'vanojan2026'
+      password: process.env.TEST_ADMIN_PASSWORD || 'vanojan2026'
     });
     assert(loginRes.status === 200, 'POST /api/admin/login returns 200 OK');
     assert(!!loginRes.data.token, 'Admin login returned bearer token');

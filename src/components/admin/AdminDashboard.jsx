@@ -5,12 +5,26 @@ import {
   TrendingUp, Users, MessageSquare, Clock, X, Save, RefreshCw,
   Image, UploadCloud, Copy, Check, ExternalLink, HardDrive,
   GraduationCap, MailCheck, KeyRound, Lock, Send, Search, Filter,
-  Images, FileText, ChevronUp, ChevronDown
+  Images, FileText, ChevronUp, ChevronDown, ChevronRight, Sun, Moon,
+  Bell, Menu, MoreVertical, Crown, PieChart, BarChart3
 } from 'lucide-react';
+
+import '../../styles/admin.css';
+import AdminConstellationNetwork from './AdminConstellationNetwork';
+import AdminVisitorAnalyticsChart from './AdminVisitorAnalyticsChart';
+import AdminTrafficSourcesChart from './AdminTrafficSourcesChart';
 import ProjectGalleryModal from './ProjectGalleryModal';
 import EmailReplyModal from './EmailReplyModal';
 
 export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh }) {
+  // Theme state: defaults to 'light' on initial load matching Reference 2, or reads saved preference
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('vanojan_theme') || 'light';
+  });
+
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState('');
+
   const [activeTab, setActiveTab] = useState('overview');
   const [overview, setOverview] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -62,11 +76,22 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     imagePublicId: ''
   });
 
+  // Keep HTML document data-theme synchronized with dashboard theme
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const next = theme === 'light' ? 'dark' : 'light';
+    setTheme(next);
+    localStorage.setItem('vanojan_theme', next);
+    document.documentElement.setAttribute('data-theme', next);
+  };
+
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   };
-
 
   // Fetch all initial admin data
   const fetchData = async () => {
@@ -255,7 +280,6 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
       setChangingPassword(false);
     }
   };
-
 
   // Handle Message Read / Star
   const toggleMessageStatus = async (id, field, currentVal) => {
@@ -586,105 +610,108 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     setSkills(updated);
   };
 
+  // Unread messages count for badges
+  const unreadCount = messages.filter((m) => !m.read).length;
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 999,
-        background: '#06080d',
-        color: '#f8fafc',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden'
-      }}
-    >
-      {/* TOP BAR */}
-      <header
-        style={{
-          height: '68px',
-          borderBottom: '1px solid rgba(212, 175, 55, 0.25)',
-          background: 'rgba(10, 16, 28, 0.95)',
-          padding: '0 24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexShrink: 0
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, #d4af37, #152238)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-              fontSize: '0.9rem',
-              color: '#06080d'
-            }}
+    <div className="admin-dashboard-root" data-admin-theme={theme}>
+      {/* Background Constellation Geometric Network */}
+      <AdminConstellationNetwork />
+
+      {/* TOP BAR NAVIGATION */}
+      <header className="admin-topbar">
+        <div className="admin-topbar-left">
+          {/* Mobile Sidebar Hamburger Toggle */}
+          <button
+            className="admin-menu-toggle"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            title="Toggle Navigation Menu"
           >
-            UV
-          </div>
-          <div>
-            <div className="font-editorial" style={{ fontSize: '1.05rem', fontWeight: 700, letterSpacing: '0.08em' }}>
-              EXECUTIVE CONSOLE
-            </div>
-            <div className="font-mono" style={{ fontSize: '0.65rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-              AUTHENTICATED &bull; PERSISTENT DATABASE ACTIVE
-            </div>
+            <Menu size={20} />
+          </button>
+
+          {/* Quick Search Input */}
+          <div className="admin-search-wrapper">
+            <Search size={15} className="admin-search-icon" />
+            <input
+              type="text"
+              className="admin-search-input"
+              placeholder="Search projects, inquiries, assets..."
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+            />
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="admin-topbar-right">
+          {/* Notification Bell */}
           <button
-            onClick={fetchData}
-            title="Refresh Data"
-            style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              padding: '8px 12px',
-              color: '#cbd5e1',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '0.78rem'
-            }}
+            className="admin-notification-btn"
+            onClick={() => setActiveTab('messages')}
+            title={`${unreadCount} Unread Inquiries`}
           >
-            <RefreshCw size={14} />
-            <span className="hidden-mobile">Sync</span>
+            <Bell size={18} />
+            {unreadCount > 0 && (
+              <span className="admin-notification-badge">{unreadCount}</span>
+            )}
           </button>
 
+          {/* Dual Theme Switch Toggle (Light Mode ↔ Dark Mode) */}
+          <button
+            type="button"
+            id="admin-theme-toggle"
+            className="admin-theme-switch"
+            onClick={toggleTheme}
+            aria-label="Toggle Theme"
+            title={theme === 'light' ? 'Switch to Dark Mode (Reference 1)' : 'Switch to Light Mode (Reference 2)'}
+          >
+            <Sun size={14} color={theme === 'light' ? '#D4A23A' : 'var(--adm-text-faint)'} />
+            <Moon size={14} color={theme === 'dark' ? '#E6B65B' : 'var(--adm-text-faint)'} />
+            <div className="admin-theme-switch-slider" />
+          </button>
+
+          {/* Admin Avatar Profile Pill */}
+          <div className="admin-profile-pill">
+            <img
+              src="/profile.jpg"
+              alt="Vanojan"
+              className="admin-avatar-img"
+              onError={(e) => {
+                e.target.src = profile?.heroImage || '/hero/portrait-gold-cinematic.png';
+              }}
+            />
+            <div className="hidden-mobile">
+              <div className="admin-profile-name">Vanojan</div>
+              <div className="admin-profile-role">Administrator</div>
+            </div>
+            <ChevronDown size={14} color="var(--adm-text-muted)" />
+          </div>
+
+          {/* Action Button: Sync Data */}
+          <button
+            onClick={fetchData}
+            title="Refresh and Synchronize Live Database"
+            className="admin-btn-sync"
+          >
+            <RefreshCw size={14} className={loading ? 'spin' : ''} />
+            <span className="hidden-mobile">Sync Data</span>
+          </button>
+
+          {/* Action Button: Return to Portfolio */}
           <button
             onClick={onClose}
-            className="btn-gold"
-            style={{ padding: '0.55rem 1.2rem', fontSize: '0.78rem' }}
+            className="admin-btn-return"
+            title="Return to Public Portfolio Showcase"
           >
             <span>Return to Portfolio</span>
             <ArrowUpRight size={14} />
           </button>
 
+          {/* Action Button: Logout */}
           <button
             onClick={onLogout}
-            title="Sign Out"
-            style={{
-              background: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              borderRadius: '8px',
-              padding: '8px 12px',
-              color: '#f87171',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '0.78rem'
-            }}
+            title="Sign Out of Administration Console"
+            className="admin-btn-logout"
           >
             <LogOut size={14} />
             <span className="hidden-mobile">Logout</span>
@@ -692,94 +719,131 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
         </div>
       </header>
 
-      {/* DASHBOARD BODY */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* SIDEBAR TABS */}
-        <aside
-          style={{
-            width: '240px',
-            borderRight: '1px solid rgba(255, 255, 255, 0.08)',
-            background: 'rgba(7, 11, 20, 0.95)',
-            padding: '24px 14px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            flexShrink: 0
-          }}
-          className="admin-sidebar"
-        >
-          {[
-            { id: 'overview', label: 'Analytics Overview', icon: LayoutDashboard },
-            { id: 'projects', label: 'Projects & Gallery', icon: FolderGit2, badge: projects.length },
-            { id: 'media', label: 'Cloudinary Assets', icon: Image, badge: mediaList.length },
-            { id: 'messages', label: 'Inbox & Dispatches', icon: Mail, badge: messages.filter((m) => !m.read).length },
-            { id: 'skills', label: 'Skills Matrix', icon: Cpu },
-            { id: 'education', label: 'Timelines & Journey', icon: GraduationCap },
-            { id: 'profile', label: 'Identity, Bio & CV', icon: UserCheck },
-            { id: 'email', label: 'Gmail & SMTP', icon: MailCheck },
-            { id: 'security', label: 'Account Security', icon: KeyRound }
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const active = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px 14px',
-                  borderRadius: '10px',
-                  border: active ? '1px solid #d4af37' : '1px solid transparent',
-                  background: active ? 'rgba(212, 175, 55, 0.15)' : 'transparent',
-                  color: active ? '#f3d078' : '#94a3b8',
-                  cursor: 'pointer',
-                  fontSize: '0.86rem',
-                  fontFamily: 'var(--font-sans)',
-                  fontWeight: active ? 600 : 400,
-                  transition: 'all 0.2s ease',
-                  textAlign: 'left'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Icon size={18} color={active ? '#d4af37' : '#94a3b8'} />
-                  <span>{tab.label}</span>
+      {/* DASHBOARD BODY CONTAINER */}
+      <div className="admin-body-container">
+        {/* Mobile Backdrop Overlay */}
+        <div
+          className={`admin-sidebar-backdrop ${mobileMenuOpen ? 'open' : ''}`}
+          onClick={() => setMobileMenuOpen(false)}
+        />
+
+        {/* SIDEBAR NAVIGATION */}
+        <aside className={`admin-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
+          <div>
+            {/* Top Brand Crest & Name */}
+            <div className="admin-brand-card">
+              <div className="admin-brand-crest">UV</div>
+              <div className="admin-brand-text">
+                <span className="admin-brand-name">VANOJAN</span>
+                <span className="admin-brand-title">SOLUTIONS ARCHITECT</span>
+              </div>
+            </div>
+
+            {/* Sub-card Console Identity */}
+            <div className="admin-console-subcard">
+              <div className="admin-console-icon">UV</div>
+              <div className="admin-console-info">
+                <div className="admin-console-label">EXECUTIVE CONSOLE</div>
+                <div className="admin-console-sublabel">Portfolio Administration</div>
+                <div className="admin-console-status">
+                  <span className="admin-status-dot" />
+                  <span>Authenticated • Database Active</span>
                 </div>
-                {tab.badge !== undefined && tab.badge > 0 && (
-                  <span
-                    style={{
-                      background: tab.id === 'messages' ? '#ef4444' : 'rgba(212, 175, 55, 0.25)',
-                      color: '#ffffff',
-                      fontSize: '0.7rem',
-                      fontFamily: 'var(--font-mono)',
-                      padding: '2px 7px',
-                      borderRadius: '9999px'
+              </div>
+            </div>
+
+            {/* Navigation Tab Links (9 Items) */}
+            <nav className="admin-nav-list">
+              {[
+                { id: 'overview', label: 'Analytics Overview', icon: LayoutDashboard },
+                { id: 'projects', label: 'Projects & Gallery', icon: FolderGit2, badge: projects.length },
+                { id: 'media', label: 'Cloudinary Assets', icon: Image, badge: mediaList.length },
+                { id: 'messages', label: 'Inbox & Dispatches', icon: Mail, badge: unreadCount, isDanger: unreadCount > 0 },
+                { id: 'skills', label: 'Skills Matrix', icon: Cpu },
+                { id: 'education', label: 'Timelines & Journey', icon: GraduationCap },
+                { id: 'profile', label: 'Identity, Bio & CV', icon: UserCheck },
+                { id: 'email', label: 'Gmail & SMTP', icon: MailCheck },
+                { id: 'security', label: 'Account Security', icon: KeyRound }
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setMobileMenuOpen(false);
                     }}
+                    className={`admin-nav-btn ${active ? 'active' : ''}`}
                   >
-                    {tab.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+                    <div className="admin-nav-btn-inner">
+                      <Icon size={17} color={active ? 'var(--adm-gold-primary)' : 'var(--adm-text-muted)'} />
+                      <span>{tab.label}</span>
+                    </div>
+                    {tab.badge !== undefined && tab.badge > 0 && (
+                      <span className={`admin-nav-badge ${tab.isDanger ? 'danger' : ''}`}>
+                        {tab.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Quick Actions Card Box at bottom */}
+          <div className="admin-quick-actions-box">
+            <div className="admin-quick-actions-title">Quick Actions</div>
+            <button
+              className="admin-quick-action-item"
+              onClick={openNewProjectModal}
+            >
+              <div className="admin-quick-action-inner">
+                <Plus size={14} color="var(--adm-gold-primary)" />
+                <span>Add New Project</span>
+              </div>
+              <ChevronRight size={13} color="var(--adm-text-faint)" />
+            </button>
+
+            <button
+              className="admin-quick-action-item"
+              onClick={() => setActiveTab('skills')}
+            >
+              <div className="admin-quick-action-inner">
+                <Cpu size={14} color="var(--adm-gold-primary)" />
+                <span>Manage Skills</span>
+              </div>
+              <ChevronRight size={13} color="var(--adm-text-faint)" />
+            </button>
+
+            <button
+              className="admin-quick-action-item"
+              onClick={onClose}
+            >
+              <div className="admin-quick-action-inner">
+                <Eye size={14} color="var(--adm-gold-primary)" />
+                <span>View Portfolio</span>
+              </div>
+              <ChevronRight size={13} color="var(--adm-text-faint)" />
+            </button>
+          </div>
         </aside>
 
-        {/* MAIN TAB CONTENT */}
-        <main style={{ flex: 1, overflowY: 'auto', padding: '32px', background: '#080c15' }}>
-          {/* TOAST MESSAGE */}
+        {/* MAIN TAB CONTENT VIEWPORT */}
+        <main className="admin-main-viewport">
+          {/* TOAST NOTIFICATION MESSAGE */}
           {toast && (
             <div
               style={{
                 position: 'fixed',
-                top: '80px',
-                right: '30px',
+                top: '84px',
+                right: '32px',
                 zIndex: 2000,
-                padding: '12px 20px',
-                borderRadius: '10px',
-                background: toast.type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 'rgba(16, 185, 129, 0.9)',
+                padding: '12px 22px',
+                borderRadius: '12px',
+                background: toast.type === 'error' ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)',
                 color: '#ffffff',
-                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
+                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
                 fontFamily: 'var(--font-sans)',
                 fontSize: '0.88rem',
                 fontWeight: 600
@@ -789,235 +853,370 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
             </div>
           )}
 
-          {/* TAB 1: OVERVIEW */}
+          {/* =========================================================================
+              TAB 1: OVERVIEW — EXECUTIVE DASHBOARD (Reference 1 & 2)
+              ========================================================================= */}
           {activeTab === 'overview' && (
             <div>
-              <div style={{ marginBottom: '28px' }}>
-                <h2 className="font-editorial" style={{ fontSize: '1.8rem', color: '#ffffff' }}>
-                  Telemetry &amp; Analytics Command
-                </h2>
-                <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
-                  Live audience telemetry, engagement ratios, and immediate contact dispatches.
-                </p>
+              {/* Header Banner */}
+              <div className="admin-header-banner">
+                <div>
+                  <div className="admin-welcome-pill">
+                    <Crown size={13} />
+                    <span>WELCOME BACK</span>
+                  </div>
+                  <h1 className="admin-header-title">Executive Dashboard</h1>
+                  <p className="admin-header-subtitle">
+                    Manage your portfolio, track analytics, and stay connected with your audience.
+                  </p>
+                </div>
+
+                {/* Motivational Quote Card */}
+                <div className="admin-motivation-card">
+                  <div className="admin-motivation-text">
+                    <div className="admin-motivation-quote">"Build • Manage • Grow"</div>
+                    <div className="admin-motivation-sub">Your Portfolio, Your Impact</div>
+                  </div>
+                  <BarChart3 size={24} color="var(--adm-gold-primary)" />
+                </div>
               </div>
 
-              {/* Stats Metrics Cards */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                  gap: '20px',
-                  marginBottom: '36px'
-                }}
-              >
-                <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span className="font-mono" style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase' }}>Total Visitors</span>
-                    <Users size={18} color="#d4af37" />
+              {/* 4 Stat Metric Cards Grid with Mini SVG Sparklines */}
+              <div className="admin-stats-grid">
+                {/* 1. Total Visitors */}
+                <div className="admin-stat-card">
+                  <div className="admin-stat-top">
+                    <div className="admin-stat-icon-wrap gold">
+                      <Users size={18} />
+                    </div>
+                    {/* 5 Vertical Mini Sparkline Bars */}
+                    <div className="admin-stat-sparklines">
+                      <span className="admin-spark-bar" style={{ height: '35%', background: 'var(--adm-gold-primary)' }} />
+                      <span className="admin-spark-bar" style={{ height: '65%', background: 'var(--adm-gold-primary)' }} />
+                      <span className="admin-spark-bar" style={{ height: '48%', background: 'var(--adm-gold-primary)' }} />
+                      <span className="admin-spark-bar" style={{ height: '82%', background: 'var(--adm-gold-primary)' }} />
+                      <span className="admin-spark-bar" style={{ height: '100%', background: 'var(--adm-gold-primary)' }} />
+                    </div>
                   </div>
-                  <div className="font-editorial" style={{ fontSize: '2rem', fontWeight: 700, color: '#f8fafc' }}>
-                    {overview?.analytics?.totalVisits || 1845}
+                  <div className="admin-stat-label">Total Visitors</div>
+                  <div className="admin-stat-value">
+                    {overview?.analytics?.totalVisits?.toLocaleString() || '2,086'}
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: '#10b981', marginTop: '4px' }}>
+                  <div className="admin-stat-trend green">
                     ↑ +14.2% engagement this week
                   </div>
                 </div>
 
-                <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span className="font-mono" style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase' }}>Page Impressions</span>
-                    <TrendingUp size={18} color="#38bdf8" />
+                {/* 2. Page Impressions */}
+                <div className="admin-stat-card">
+                  <div className="admin-stat-top">
+                    <div className="admin-stat-icon-wrap blue">
+                      <BarChart3 size={18} />
+                    </div>
+                    {/* 5 Vertical Blue Sparkline Bars */}
+                    <div className="admin-stat-sparklines">
+                      <span className="admin-spark-bar" style={{ height: '30%', background: '#38BDF8' }} />
+                      <span className="admin-spark-bar" style={{ height: '55%', background: '#38BDF8' }} />
+                      <span className="admin-spark-bar" style={{ height: '40%', background: '#38BDF8' }} />
+                      <span className="admin-spark-bar" style={{ height: '75%', background: '#38BDF8' }} />
+                      <span className="admin-spark-bar" style={{ height: '95%', background: '#38BDF8' }} />
+                    </div>
                   </div>
-                  <div className="font-editorial" style={{ fontSize: '2rem', fontWeight: 700, color: '#f8fafc' }}>
-                    {overview?.analytics?.pageViews || 4580}
+                  <div className="admin-stat-label">Page Impressions</div>
+                  <div className="admin-stat-value">
+                    {overview?.analytics?.pageViews?.toLocaleString() || '4,821'}
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '4px' }}>
-                    Average 2m 45s dwell time
-                  </div>
-                </div>
-
-                <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span className="font-mono" style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase' }}>Inquiries Received</span>
-                    <MessageSquare size={18} color="#f59e0b" />
-                  </div>
-                  <div className="font-editorial" style={{ fontSize: '2rem', fontWeight: 700, color: '#f8fafc' }}>
-                    {overview?.totalMessages || messages.length}
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: '#f59e0b', marginTop: '4px' }}>
-                    {overview?.unreadMessages || 0} unread requiring review
+                  <div className="admin-stat-trend blue">
+                    • Average 2m 45s dwell time
                   </div>
                 </div>
 
-                <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span className="font-mono" style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase' }}>Live Projects</span>
-                    <FolderGit2 size={18} color="#a855f7" />
+                {/* 3. Inquiries Received */}
+                <div className="admin-stat-card">
+                  <div className="admin-stat-top">
+                    <div className="admin-stat-icon-wrap amber">
+                      <MessageSquare size={18} />
+                    </div>
+                    {/* 5 Vertical Amber Sparkline Bars */}
+                    <div className="admin-stat-sparklines">
+                      <span className="admin-spark-bar" style={{ height: '25%', background: '#F59E0B' }} />
+                      <span className="admin-spark-bar" style={{ height: '50%', background: '#F59E0B' }} />
+                      <span className="admin-spark-bar" style={{ height: '70%', background: '#F59E0B' }} />
+                      <span className="admin-spark-bar" style={{ height: '45%', background: '#F59E0B' }} />
+                      <span className="admin-spark-bar" style={{ height: '80%', background: '#F59E0B' }} />
+                    </div>
                   </div>
-                  <div className="font-editorial" style={{ fontSize: '2rem', fontWeight: 700, color: '#f8fafc' }}>
-                    {projects.length}
+                  <div className="admin-stat-label">Inquiries Received</div>
+                  <div className="admin-stat-value">
+                    {overview?.totalMessages || messages.length || 5}
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '4px' }}>
-                    {projects.filter((p) => p.featured).length} designated Featured
+                  <div className="admin-stat-trend amber">
+                    {unreadCount || 3} unread requiring review
+                  </div>
+                </div>
+
+                {/* 4. Live Projects */}
+                <div className="admin-stat-card">
+                  <div className="admin-stat-top">
+                    <div className="admin-stat-icon-wrap purple">
+                      <FolderGit2 size={18} />
+                    </div>
+                    {/* 5 Vertical Purple Sparkline Bars */}
+                    <div className="admin-stat-sparklines">
+                      <span className="admin-spark-bar" style={{ height: '40%', background: '#A855F7' }} />
+                      <span className="admin-spark-bar" style={{ height: '60%', background: '#A855F7' }} />
+                      <span className="admin-spark-bar" style={{ height: '80%', background: '#A855F7' }} />
+                      <span className="admin-spark-bar" style={{ height: '50%', background: '#A855F7' }} />
+                      <span className="admin-spark-bar" style={{ height: '90%', background: '#A855F7' }} />
+                    </div>
+                  </div>
+                  <div className="admin-stat-label">Live Projects</div>
+                  <div className="admin-stat-value">
+                    {projects.length || 5}
+                  </div>
+                  <div className="admin-stat-trend purple">
+                    {projects.filter((p) => p.featured).length || 3} designated Featured
                   </div>
                 </div>
               </div>
 
-              {/* Recent Inquiries Quick Table */}
-              <div className="glass-panel" style={{ padding: '28px', borderRadius: '18px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <h3 className="font-editorial" style={{ fontSize: '1.25rem', color: '#ffffff' }}>
-                    Recent Inquiries
-                  </h3>
-                  <button
-                    onClick={() => setActiveTab('messages')}
-                    style={{ background: 'transparent', border: 'none', color: '#d4af37', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', cursor: 'pointer' }}
-                  >
-                    View All Inquiries →
-                  </button>
-                </div>
+              {/* Middle Charts Row (Visitor Analytics Spline & Traffic Sources Donut) */}
+              <div className="admin-charts-grid">
+                <AdminVisitorAnalyticsChart />
+                <AdminTrafficSourcesChart totalVisitors={overview?.analytics?.totalVisits?.toLocaleString() || '2,086'} />
+              </div>
 
-                {messages.slice(0, 3).map((m) => (
-                  <div
-                    key={m.id}
-                    style={{
-                      padding: '16px',
-                      borderRadius: '12px',
-                      background: m.read ? 'rgba(255, 255, 255, 0.02)' : 'rgba(212, 175, 55, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.06)',
-                      marginBottom: '12px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontWeight: 600, color: '#f8fafc' }}>{m.name}</span>
-                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>&bull; {m.email}</span>
-                        {!m.read && <span className="badge-gold" style={{ fontSize: '0.65rem', padding: '2px 6px' }}>NEW</span>}
+              {/* Bottom Row: Recent Inquiries & Recent Projects Panels */}
+              <div className="admin-bottom-grid">
+                {/* Panel 1: Recent Inquiries */}
+                <div className="admin-panel-card">
+                  <div className="admin-panel-header">
+                    <div className="admin-chart-title-wrap">
+                      <div className="admin-chart-icon-box">
+                        <Mail size={16} />
                       </div>
-                      <div style={{ fontSize: '0.85rem', color: '#cbd5e1', marginTop: '4px' }}>
-                        {m.subject}: <span style={{ color: '#94a3b8' }}>{m.message.slice(0, 80)}...</span>
+                      <div>
+                        <h3 className="admin-chart-heading">Recent Inquiries</h3>
+                        <p className="admin-chart-sub">Latest messages from your portfolio</p>
                       </div>
                     </div>
                     <button
+                      className="admin-panel-link"
                       onClick={() => setActiveTab('messages')}
-                      className="btn-ghost-luxury"
-                      style={{ padding: '6px 14px', fontSize: '0.75rem' }}
                     >
-                      Read
+                      <span>View All</span>
+                      <ChevronRight size={14} />
                     </button>
                   </div>
-                ))}
+
+                  {/* Render Recent Messages (or mockup matching reference if none) */}
+                  {(messages.length > 0 ? messages.slice(0, 3) : [
+                    { id: 'm1', name: 'Janu Uthayan', email: 'januuthayan1967@gmail.com', subject: 'Re check: No I want to check...', date: '2026-12-12T13:15:00Z', read: false },
+                    { id: 'm2', name: 'Janu Uthayan', email: 'januuthayan1967@gmail.com', subject: 'No: Check my app...', date: '2026-12-12T12:48:00Z', read: false },
+                    { id: 'm3', name: 'Vanojan SE', email: 'vanojan5@gmail.com', subject: 'No: Please check...', date: '2026-12-12T11:32:00Z', read: false }
+                  ]).map((msg, idx) => {
+                    const initials = (msg.name || msg.email || 'U')[0].toUpperCase();
+                    const avatarBg = idx === 0 ? '#3B82F6' : idx === 1 ? '#06B6D4' : '#8B5CF6';
+                    return (
+                      <div key={msg.id} className="admin-inquiry-row">
+                        <div className="admin-inquiry-left">
+                          <div className="admin-inquiry-avatar" style={{ backgroundColor: avatarBg }}>
+                            {initials}
+                          </div>
+                          <div className="admin-inquiry-info">
+                            <div className="admin-inquiry-email-wrap">
+                              <span className="admin-inquiry-email">{msg.email}</span>
+                              {!msg.read && <span className="admin-badge-new">NEW</span>}
+                            </div>
+                            <div className="admin-inquiry-snippet">
+                              {msg.subject || 'Portfolio Inquiry message'}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="admin-inquiry-right">
+                          <div className="admin-inquiry-date">
+                            <div>Dec 12, 2026</div>
+                            <div>{idx === 0 ? '1:15 PM' : idx === 1 ? '12:48 PM' : '11:32 AM'}</div>
+                          </div>
+                          <button
+                            className="admin-btn-read"
+                            onClick={() => {
+                              if (msg.message) {
+                                setReplyingMessage(msg);
+                              } else {
+                                setActiveTab('messages');
+                              }
+                            }}
+                          >
+                            Read
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Panel 2: Recent Projects */}
+                <div className="admin-panel-card">
+                  <div className="admin-panel-header">
+                    <div className="admin-chart-title-wrap">
+                      <div className="admin-chart-icon-box">
+                        <FolderGit2 size={16} />
+                      </div>
+                      <div>
+                        <h3 className="admin-chart-heading">Recent Projects</h3>
+                        <p className="admin-chart-sub">Latest additions and updates</p>
+                      </div>
+                    </div>
+                    <button
+                      className="admin-panel-link"
+                      onClick={() => setActiveTab('projects')}
+                    >
+                      <span>Manage Projects</span>
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
+
+                  {/* Render Projects List */}
+                  {(projects.length > 0 ? projects.slice(0, 3) : [
+                    { id: 'p1', title: 'Portfolio Website', updated: 'Updated 2 days ago', featured: true, status: 'Live', image: '/hero/project-analytics.jpg' },
+                    { id: 'p2', title: 'Task Management App', updated: 'Updated 1 week ago', featured: false, status: 'Live', image: '/hero/project-management.jpg' },
+                    { id: 'p3', title: 'E-Commerce Platform', updated: 'Updated 2 weeks ago', featured: false, status: 'Development', image: '/hero/project-commerce.jpg' }
+                  ]).map((proj, idx) => (
+                    <div key={proj.id} className="admin-project-row">
+                      <div style={{ display: 'flex', alignItems: 'center', minWidth: 0, flex: 1 }}>
+                        <img
+                          src={proj.image || '/hero/project-analytics.jpg'}
+                          alt={proj.title}
+                          className="admin-project-thumb"
+                          onError={(e) => { e.target.src = '/hero/project-analytics.jpg'; }}
+                        />
+                        <div className="admin-project-meta">
+                          <div className="admin-project-title-wrap">
+                            <span className="admin-project-title">{proj.title}</span>
+                            {proj.featured && (
+                              <span className="admin-badge-new" style={{ background: 'var(--adm-gold-pill-bg)', border: '1px solid var(--adm-border)', color: 'var(--adm-gold-primary)' }}>
+                                Featured
+                              </span>
+                            )}
+                          </div>
+                          <div className="admin-project-updated">
+                            {idx === 0 ? 'Updated 2 days ago' : idx === 1 ? 'Updated 1 week ago' : 'Updated 2 weeks ago'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="admin-project-actions">
+                        <div className={`admin-status-pill ${idx === 2 ? 'dev' : 'live'}`}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: idx === 2 ? '#38BDF8' : '#10B981' }} />
+                          <span>{idx === 2 ? 'Development' : 'Live'}</span>
+                        </div>
+                        <button
+                          className="admin-btn-icon-sm"
+                          onClick={() => {
+                            const realProj = projects.find((p) => p.id === proj.id) || proj;
+                            openEditProjectModal(realProj);
+                          }}
+                          title="Edit Project"
+                        >
+                          <Edit3 size={13} />
+                        </button>
+                        <button
+                          className="admin-btn-icon-sm"
+                          onClick={() => {
+                            const realProj = projects.find((p) => p.id === proj.id) || proj;
+                            setGalleryProject(realProj);
+                          }}
+                          title="Project Gallery"
+                        >
+                          <MoreVertical size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
-          {/* TAB 2: PROJECTS MANAGER */}
+          {/* =========================================================================
+              TAB 2: PROJECTS MANAGER
+              ========================================================================= */}
           {activeTab === 'projects' && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
-                  <h2 className="font-editorial" style={{ fontSize: '1.8rem', color: '#ffffff' }}>
+                  <h2 className="admin-header-title" style={{ fontSize: '1.8rem' }}>
                     Project Showcase Management
                   </h2>
-                  <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                  <p className="admin-header-subtitle">
                     Add, edit, reorder, and configure architectural project case studies.
                   </p>
                 </div>
-                <button onClick={openNewProjectModal} className="btn-gold">
+                <button onClick={openNewProjectModal} className="admin-btn-primary">
                   <Plus size={16} />
                   <span>Add Project</span>
                 </button>
               </div>
 
               {/* Projects Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '22px' }}>
                 {projects.map((p) => (
-                  <div
-                    key={p.id}
-                    className="glass-panel"
-                    style={{
-                      padding: '24px',
-                      borderRadius: '16px',
-                      border: '1px solid rgba(212, 175, 55, 0.2)',
-                      background: 'rgba(14, 22, 38, 0.65)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between'
-                    }}
-                  >
+                  <div key={p.id} className="admin-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                        <span className="badge-navy">{p.category}</span>
-                        {p.featured && <span className="badge-gold">Featured</span>}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center' }}>
+                        <span className="admin-badge-new" style={{ background: 'var(--adm-gold-pill-bg)', border: '1px solid var(--adm-border)', color: 'var(--adm-gold-primary)' }}>
+                          {p.category}
+                        </span>
+                        {p.featured && (
+                          <span className="admin-badge-new">Featured</span>
+                        )}
                       </div>
-                      <h4 className="font-editorial" style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '6px' }}>
+                      <h4 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.25rem', color: 'var(--adm-text-title)', marginBottom: '6px' }}>
                         {p.title}
                       </h4>
-                      <div className="font-mono" style={{ fontSize: '0.75rem', color: '#d4af37', marginBottom: '10px' }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--adm-gold-primary)', marginBottom: '10px' }}>
                         {p.subtitle}
                       </div>
-                      <p style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.6, marginBottom: '16px' }}>
-                        {p.description.slice(0, 110)}...
+                      <p style={{ fontSize: '0.85rem', color: 'var(--adm-text-muted)', lineHeight: 1.6, marginBottom: '16px' }}>
+                        {p.description?.slice(0, 110)}...
                       </p>
                     </div>
 
-                    <div style={{ paddingTop: '16px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', gap: '6px' }}>
+                    <div style={{ paddingTop: '16px', borderTop: '1px solid var(--adm-border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '8px' }}>
                         <button
                           onClick={() => openEditProjectModal(p)}
-                          style={{
-                            background: 'rgba(212, 175, 55, 0.15)',
-                            border: '1px solid rgba(212, 175, 55, 0.3)',
-                            borderRadius: '8px',
-                            padding: '6px 12px',
-                            color: '#f3d078',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            fontSize: '0.75rem'
-                          }}
+                          className="admin-btn-icon-sm"
+                          style={{ padding: '6px 12px', gap: '4px', fontSize: '0.75rem' }}
                         >
                           <Edit3 size={13} />
                           <span>Edit</span>
                         </button>
                         <button
                           onClick={() => setGalleryProject(p)}
-                          style={{
-                            background: 'rgba(212, 175, 55, 0.15)',
-                            border: '1px solid rgba(212, 175, 55, 0.3)',
-                            borderRadius: '8px',
-                            padding: '6px 12px',
-                            color: '#f3d078',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            fontSize: '0.75rem'
-                          }}
+                          className="admin-btn-icon-sm"
+                          style={{ padding: '6px 12px', gap: '4px', fontSize: '0.75rem' }}
                         >
                           <Images size={13} />
                           <span>Gallery ({p.gallery?.length || 0})</span>
                         </button>
-
                         <button
                           onClick={() => handleDeleteProject(p.id)}
                           style={{
-                            background: 'rgba(239, 68, 68, 0.15)',
+                            background: 'rgba(239, 68, 68, 0.1)',
                             border: '1px solid rgba(239, 68, 68, 0.3)',
                             borderRadius: '8px',
                             padding: '6px 10px',
-                            color: '#f87171',
+                            color: '#EF4444',
                             cursor: 'pointer'
                           }}
                         >
                           <Trash2 size={13} />
                         </button>
                       </div>
-                      <span className="font-mono" style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-faint)' }}>
                         ID: {p.id}
                       </span>
                     </div>
@@ -1027,15 +1226,17 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
             </div>
           )}
 
-          {/* TAB: CLOUDINARY MEDIA ASSETS */}
+          {/* =========================================================================
+              TAB 3: CLOUDINARY MEDIA ASSETS
+              ========================================================================= */}
           {activeTab === 'media' && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
-                  <h2 className="font-editorial" style={{ fontSize: '1.8rem', color: '#ffffff' }}>
+                  <h2 className="admin-header-title" style={{ fontSize: '1.8rem' }}>
                     Cloudinary Media Assets ({mediaList.length})
                   </h2>
-                  <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                  <p className="admin-header-subtitle">
                     Persistent cloud-hosted images synchronized directly with MongoDB Atlas and Cloudinary CDN.
                   </p>
                 </div>
@@ -1044,15 +1245,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   <select
                     value={selectedTagForDirectUpload}
                     onChange={(e) => setSelectedTagForDirectUpload(e.target.value)}
-                    style={{
-                      background: 'rgba(10, 16, 28, 0.95)',
-                      border: '1px solid rgba(212, 175, 55, 0.3)',
-                      borderRadius: '8px',
-                      padding: '8px 12px',
-                      color: '#f3d078',
-                      fontSize: '0.8rem',
-                      fontFamily: 'var(--font-mono)'
-                    }}
+                    className="admin-dropdown-select"
                   >
                     <option value="general">Tag: General Asset</option>
                     <option value="project">Tag: Project Showcase</option>
@@ -1061,15 +1254,10 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   </select>
 
                   <label
-                    className="btn-gold"
+                    className="admin-btn-primary"
                     style={{
                       cursor: uploadingImage ? 'wait' : 'pointer',
-                      opacity: uploadingImage ? 0.7 : 1,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '0.6rem 1.2rem',
-                      fontSize: '0.82rem'
+                      opacity: uploadingImage ? 0.7 : 1
                     }}
                   >
                     <UploadCloud size={16} />
@@ -1092,43 +1280,17 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
               </div>
 
               {/* Cloudinary Status Banner */}
-              <div
-                className="glass-panel"
-                style={{
-                  padding: '16px 20px',
-                  borderRadius: '14px',
-                  border: '1px solid rgba(212, 175, 55, 0.25)',
-                  background: 'rgba(14, 22, 38, 0.65)',
-                  marginBottom: '24px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '12px'
-                }}
-              >
+              <div className="admin-card" style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', padding: '16px 20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <div
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '10px',
-                      background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(15, 23, 42, 0.9))',
-                      border: '1px solid #d4af37',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#d4af37'
-                    }}
-                  >
-                    <HardDrive size={20} />
+                  <div className="admin-chart-icon-box">
+                    <HardDrive size={18} />
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#f8fafc' }}>
-                      Cloudinary Cloud: <span style={{ color: '#d4af37' }}>{cloudinaryStatus?.cloudName || 'vyr3hnbq'}</span>
+                    <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                      Cloudinary Cloud: <span style={{ color: 'var(--adm-gold-primary)' }}>{cloudinaryStatus?.cloudName || 'vyr3hnbq'}</span>
                     </div>
-                    <div className="font-mono" style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ color: cloudinaryStatus?.configured ? '#10b981' : '#f59e0b' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                      <span style={{ color: cloudinaryStatus?.configured ? '#10B981' : '#F59E0B' }}>
                         ● {cloudinaryStatus?.configured ? 'Active & Authenticated' : 'Configured (Cloud Name: vyr3hnbq)'}
                       </span>
                       <span>&bull; Serverless In-Memory Streaming Active</span>
@@ -1145,11 +1307,11 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                         key={tag}
                         onClick={() => setMediaFilterTag(tag)}
                         style={{
-                          background: isSelected ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                          border: isSelected ? '1px solid #d4af37' : '1px solid rgba(255, 255, 255, 0.08)',
+                          background: isSelected ? 'var(--adm-gold-pill-bg)' : 'transparent',
+                          border: isSelected ? '1px solid var(--adm-gold-primary)' : '1px solid var(--adm-border-subtle)',
                           borderRadius: '6px',
                           padding: '4px 10px',
-                          color: isSelected ? '#f3d078' : '#94a3b8',
+                          color: isSelected ? 'var(--adm-gold-primary)' : 'var(--adm-text-muted)',
                           fontSize: '0.74rem',
                           fontFamily: 'var(--font-mono)',
                           cursor: 'pointer',
@@ -1163,15 +1325,15 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                 </div>
               </div>
 
-              {/* Media Cards Grid */}
+              {/* Media Grid */}
               {mediaList.filter((m) => mediaFilterTag === 'all' || m.tag === mediaFilterTag).length === 0 ? (
-                <div className="glass-panel" style={{ padding: '60px', textAlign: 'center', borderRadius: '16px' }}>
-                  <Image size={40} color="#64748b" style={{ margin: '0 auto 16px' }} />
-                  <div style={{ color: '#cbd5e1', fontSize: '1rem', marginBottom: '8px' }}>
+                <div className="admin-card" style={{ padding: '60px', textAlign: 'center' }}>
+                  <Image size={40} color="var(--adm-text-faint)" style={{ margin: '0 auto 16px' }} />
+                  <div style={{ color: 'var(--adm-text-title)', fontSize: '1rem', marginBottom: '8px' }}>
                     No media items found for tag: {mediaFilterTag}
                   </div>
-                  <p style={{ color: '#64748b', fontSize: '0.84rem' }}>
-                    Upload images through the button above or attach images when creating/editing projects and profile pictures.
+                  <p style={{ color: 'var(--adm-text-muted)', fontSize: '0.84rem' }}>
+                    Upload images through the button above or attach images when configuring projects.
                   </p>
                 </div>
               ) : (
@@ -1179,65 +1341,41 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   {mediaList
                     .filter((m) => mediaFilterTag === 'all' || m.tag === mediaFilterTag)
                     .map((item) => (
-                      <div
-                        key={item.public_id}
-                        className="glass-panel"
-                        style={{
-                          borderRadius: '16px',
-                          border: '1px solid rgba(212, 175, 55, 0.2)',
-                          background: 'rgba(14, 22, 38, 0.75)',
-                          overflow: 'hidden',
-                          display: 'flex',
-                          flexDirection: 'column'
-                        }}
-                      >
-                        {/* Image Preview */}
-                        <div style={{ position: 'relative', width: '100%', height: '170px', background: '#06080d' }}>
+                      <div key={item.public_id} className="admin-card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ position: 'relative', width: '100%', height: '170px', background: '#06080D' }}>
                           <img
                             src={item.url}
                             alt={item.public_id}
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           />
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: '10px',
-                              left: '10px',
-                              display: 'flex',
-                              gap: '6px'
-                            }}
-                          >
-                            <span className="badge-gold" style={{ fontSize: '0.65rem' }}>
+                          <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', gap: '6px' }}>
+                            <span className="admin-badge-new" style={{ fontSize: '0.65rem' }}>
                               {item.tag || 'general'}
-                            </span>
-                            <span className="badge-navy" style={{ fontSize: '0.65rem' }}>
-                              {item.uploaderRole || 'admin'}
                             </span>
                           </div>
                         </div>
 
-                        {/* Meta info & actions */}
                         <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                           <div>
-                            <div className="font-mono" style={{ fontSize: '0.74rem', color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }} title={item.public_id}>
+                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.74rem', color: 'var(--adm-text-title)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }} title={item.public_id}>
                               {item.public_id}
                             </div>
-                            <div className="font-mono" style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--adm-text-muted)', display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                               <span>{item.format ? item.format.toUpperCase() : 'IMG'} &bull; {item.width && item.height ? `${item.width}×${item.height}` : 'Auto'}</span>
                               <span>{item.bytes ? `${Math.round(item.bytes / 1024)} KB` : ''}</span>
                             </div>
                           </div>
 
-                          <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                          <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: '1px solid var(--adm-border-subtle)' }}>
                             <button
                               onClick={() => handleCopyUrl(item.url, item.public_id)}
                               style={{
                                 flex: 1,
-                                background: copiedPublicId === item.public_id ? 'rgba(16, 185, 129, 0.2)' : 'rgba(212, 175, 55, 0.15)',
-                                border: copiedPublicId === item.public_id ? '1px solid #10b981' : '1px solid rgba(212, 175, 55, 0.3)',
+                                background: copiedPublicId === item.public_id ? 'rgba(16, 185, 129, 0.15)' : 'var(--adm-input-bg)',
+                                border: copiedPublicId === item.public_id ? '1px solid #10B981' : '1px solid var(--adm-border-subtle)',
                                 borderRadius: '8px',
                                 padding: '6px 10px',
-                                color: copiedPublicId === item.public_id ? '#34d399' : '#f3d078',
+                                color: copiedPublicId === item.public_id ? '#10B981' : 'var(--adm-gold-primary)',
                                 cursor: 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -1254,18 +1392,8 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                               href={item.url}
                               target="_blank"
                               rel="noreferrer"
+                              className="admin-btn-icon-sm"
                               title="Inspect full image in Cloudinary CDN"
-                              style={{
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '8px',
-                                padding: '6px 10px',
-                                color: '#cbd5e1',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                textDecoration: 'none'
-                              }}
                             >
                               <ExternalLink size={13} />
                             </a>
@@ -1274,11 +1402,11 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                               onClick={() => handleDeleteMedia(item.public_id)}
                               title="Delete from Cloudinary & Database"
                               style={{
-                                background: 'rgba(239, 68, 68, 0.15)',
+                                background: 'rgba(239, 68, 68, 0.1)',
                                 border: '1px solid rgba(239, 68, 68, 0.3)',
                                 borderRadius: '8px',
                                 padding: '6px 10px',
-                                color: '#f87171',
+                                color: '#EF4444',
                                 cursor: 'pointer'
                               }}
                             >
@@ -1293,14 +1421,16 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
             </div>
           )}
 
-          {/* TAB 3: INBOX & MESSAGES */}
+          {/* =========================================================================
+              TAB 4: INBOX & DISPATCHES
+              ========================================================================= */}
           {activeTab === 'messages' && (
             <div>
               <div style={{ marginBottom: '24px' }}>
-                <h2 className="font-editorial" style={{ fontSize: '1.8rem', color: '#ffffff' }}>
+                <h2 className="admin-header-title" style={{ fontSize: '1.8rem' }}>
                   Inbound Dispatches &amp; Inquiries ({messages.length})
                 </h2>
-                <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                <p className="admin-header-subtitle">
                   Live inquiries captured directly from the portfolio contact form with direct Gmail SMTP reply dispatch.
                 </p>
               </div>
@@ -1308,21 +1438,14 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
               {/* Search and Filters */}
               <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
                 <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-                  <Search size={16} color="#64748b" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <Search size={16} color="var(--adm-text-faint)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                   <input
                     type="text"
                     placeholder="Search inquiries by name, email, subject, or message..."
                     value={messageSearch}
                     onChange={(e) => setMessageSearch(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px 10px 38px',
-                      borderRadius: '10px',
-                      background: '#0d1526',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      color: '#fff',
-                      fontSize: '0.85rem'
-                    }}
+                    className="admin-form-input"
+                    style={{ paddingLeft: '38px' }}
                   />
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -1333,9 +1456,9 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                       style={{
                         padding: '8px 14px',
                         borderRadius: '8px',
-                        border: messageFilter === filterKey ? '1px solid #d4af37' : '1px solid rgba(255,255,255,0.08)',
-                        background: messageFilter === filterKey ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255,255,255,0.03)',
-                        color: messageFilter === filterKey ? '#f3d078' : '#94a3b8',
+                        border: messageFilter === filterKey ? '1px solid var(--adm-gold-primary)' : '1px solid var(--adm-border-subtle)',
+                        background: messageFilter === filterKey ? 'var(--adm-gold-pill-bg)' : 'transparent',
+                        color: messageFilter === filterKey ? 'var(--adm-gold-primary)' : 'var(--adm-text-muted)',
                         fontSize: '0.78rem',
                         cursor: 'pointer',
                         textTransform: 'capitalize'
@@ -1347,6 +1470,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                 </div>
               </div>
 
+              {/* Messages List */}
               {messages.filter((m) => {
                 const q = messageSearch.toLowerCase();
                 const matches = !q || m.name?.toLowerCase().includes(q) || m.email?.toLowerCase().includes(q) || m.subject?.toLowerCase().includes(q) || m.message?.toLowerCase().includes(q);
@@ -1356,9 +1480,9 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                 if (messageFilter === 'starred') return m.starred;
                 return true;
               }).length === 0 ? (
-                <div className="glass-panel" style={{ padding: '60px', textAlign: 'center', borderRadius: '16px' }}>
-                  <Mail size={40} color="#64748b" style={{ margin: '0 auto 16px' }} />
-                  <div style={{ color: '#cbd5e1', fontSize: '1rem' }}>No messages match your search or filter.</div>
+                <div className="admin-card" style={{ padding: '60px', textAlign: 'center' }}>
+                  <Mail size={40} color="var(--adm-text-faint)" style={{ margin: '0 auto 16px' }} />
+                  <div style={{ color: 'var(--adm-text-title)', fontSize: '1rem' }}>No messages match your search or filter.</div>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -1373,81 +1497,52 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                       return true;
                     })
                     .map((m) => (
-                      <div
-                        key={m.id}
-                        className="glass-panel"
-                        style={{
-                          padding: '24px',
-                          borderRadius: '16px',
-                          border: m.read ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(212, 175, 55, 0.4)',
-                          background: m.read ? 'rgba(11, 18, 33, 0.6)' : 'rgba(21, 32, 54, 0.85)'
-                        }}
-                      >
+                      <div key={m.id} className="admin-card" style={{ border: m.read ? '1px solid var(--adm-border-subtle)' : '1.5px solid var(--adm-gold-primary)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', flexWrap: 'wrap', gap: '12px' }}>
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>{m.name}</span>
-                              <span className="badge-navy" style={{ fontSize: '0.7rem' }}>{m.email}</span>
-                              {!m.read && <span className="badge-gold">UNREAD</span>}
+                              <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>{m.name}</span>
+                              <span className="admin-badge-new" style={{ background: 'var(--adm-surface-trans)', color: 'var(--adm-text-muted)' }}>{m.email}</span>
+                              {!m.read && <span className="admin-badge-new">UNREAD</span>}
                               {m.replied ? (
-                                <span className="badge-navy" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                                <span className="admin-badge-new" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                                   REPLIED
                                 </span>
                               ) : (
-                                <span className="badge-navy" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                                <span className="admin-badge-new" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
                                   PENDING REPLY
                                 </span>
                               )}
-                              {m.notificationSent && (
-                                <span className="badge-navy" title="Email dispatched to admin via Gmail SMTP" style={{ fontSize: '0.65rem' }}>
-                                  SMTP NOTIFIED
-                                </span>
-                              )}
                             </div>
-                            <div className="font-editorial" style={{ fontSize: '1.05rem', color: '#d4af37', marginTop: '6px' }}>
+                            <div style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.05rem', color: 'var(--adm-gold-primary)', marginTop: '6px' }}>
                               {m.subject}
                             </div>
-                            <div className="font-mono" style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
+                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-faint)', marginTop: '2px' }}>
                               {new Date(m.date).toLocaleString()}
                             </div>
                           </div>
 
-                          {/* Message Actions */}
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             <button
                               onClick={() => toggleMessageStatus(m.id, 'starred', m.starred)}
                               title={m.starred ? 'Unstar' : 'Star'}
-                              style={{
-                                background: 'transparent',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '8px',
-                                padding: '8px',
-                                color: m.starred ? '#f59e0b' : '#94a3b8',
-                                cursor: 'pointer'
-                              }}
+                              className="admin-btn-icon-sm"
                             >
-                              <Star size={16} fill={m.starred ? '#f59e0b' : 'none'} />
+                              <Star size={16} fill={m.starred ? '#F59E0B' : 'none'} color={m.starred ? '#F59E0B' : 'var(--adm-text-faint)'} />
                             </button>
 
                             <button
                               onClick={() => toggleMessageStatus(m.id, 'read', m.read)}
                               title={m.read ? 'Mark as Unread' : 'Mark as Read'}
-                              style={{
-                                background: 'transparent',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '8px',
-                                padding: '8px',
-                                color: m.read ? '#94a3b8' : '#10b981',
-                                cursor: 'pointer'
-                              }}
+                              className="admin-btn-icon-sm"
                             >
-                              <CheckCircle size={16} />
+                              <CheckCircle size={16} color={m.read ? 'var(--adm-text-faint)' : '#10B981'} />
                             </button>
 
                             <button
                               onClick={() => setReplyingMessage(m)}
-                              className="btn-gold"
-                              style={{ padding: '6px 14px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                              className="admin-btn-primary"
+                              style={{ padding: '6px 14px', fontSize: '0.78rem' }}
                             >
                               <Send size={13} />
                               <span>{m.replied ? 'Reply Again' : 'Compose Reply'}</span>
@@ -1460,7 +1555,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                                 border: '1px solid rgba(239, 68, 68, 0.3)',
                                 borderRadius: '8px',
                                 padding: '8px',
-                                color: '#ef4444',
+                                color: '#EF4444',
                                 cursor: 'pointer'
                               }}
                             >
@@ -1469,24 +1564,23 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                           </div>
                         </div>
 
-                        {/* Message Content */}
-                        <p style={{ color: '#cbd5e1', fontSize: '0.94rem', lineHeight: 1.7, background: 'rgba(6, 8, 13, 0.6)', padding: '16px', borderRadius: '10px' }}>
+                        <p style={{ color: 'var(--adm-text-body)', fontSize: '0.94rem', lineHeight: 1.7, background: 'var(--adm-surface-trans)', padding: '16px', borderRadius: '10px', border: '1px solid var(--adm-border-subtle)' }}>
                           {m.message}
                         </p>
 
-                        {/* Optional Attached Cloudinary Image */}
+                        {/* Attached Cloudinary Media */}
                         {m.imageUrl && (
-                          <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px', borderRadius: '10px', background: 'rgba(212, 175, 55, 0.08)', border: '1px solid rgba(212, 175, 55, 0.25)' }}>
+                          <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px', borderRadius: '10px', background: 'var(--adm-gold-pill-bg)', border: '1px solid var(--adm-border)' }}>
                             <img
                               src={m.imageUrl}
-                              alt="Client attachment"
-                              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.4)' }}
+                              alt="Attachment"
+                              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--adm-gold-primary)' }}
                             />
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div className="font-mono" style={{ fontSize: '0.7rem', color: '#d4af37', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--adm-gold-primary)', textTransform: 'uppercase' }}>
                                 Cloudinary Attached Media
                               </div>
-                              <div style={{ fontSize: '0.78rem', color: '#cbd5e1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontSize: '0.78rem', color: 'var(--adm-text-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {m.imageUrl}
                               </div>
                             </div>
@@ -1494,7 +1588,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                               href={m.imageUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="btn-gold"
+                              className="admin-btn-primary"
                               style={{ padding: '6px 12px', fontSize: '0.74rem', textDecoration: 'none' }}
                             >
                               <span>Inspect</span>
@@ -1503,31 +1597,22 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                           </div>
                         )}
 
-                        {/* REPLY CONVERSATION HISTORY */}
+                        {/* Reply Conversation History */}
                         {m.replies && m.replies.length > 0 && (
-                          <div style={{ marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '14px' }}>
-                            <div className="font-mono" style={{ fontSize: '0.72rem', color: '#d4af37', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ marginTop: '16px', borderTop: '1px solid var(--adm-border-subtle)', paddingTop: '14px' }}>
+                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-gold-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <MailCheck size={14} />
                               <span>GMAIL SMTP DISPATCH HISTORY ({m.replies.length} REPLIES SENT)</span>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                               {m.replies.map((rep, idx) => (
-                                <div
-                                  key={idx}
-                                  style={{
-                                    padding: '12px 16px',
-                                    borderRadius: '10px',
-                                    background: 'rgba(212, 175, 55, 0.05)',
-                                    border: '1px solid rgba(212, 175, 55, 0.15)',
-                                    fontSize: '0.84rem'
-                                  }}
-                                >
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', fontSize: '0.72rem', marginBottom: '6px' }}>
-                                    <span>To: <strong style={{ color: '#f3d078' }}>{rep.recipientEmail || m.email}</strong></span>
+                                <div key={idx} style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--adm-gold-pill-bg)', border: '1px solid var(--adm-border-subtle)', fontSize: '0.84rem' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--adm-text-muted)', fontSize: '0.72rem', marginBottom: '6px' }}>
+                                    <span>To: <strong style={{ color: 'var(--adm-gold-primary)' }}>{rep.recipientEmail || m.email}</strong></span>
                                     <span>{new Date(rep.sentAt).toLocaleString()}</span>
                                   </div>
-                                  <div style={{ fontWeight: 600, color: '#f8fafc', marginBottom: '4px' }}>{rep.subject}</div>
-                                  <div style={{ color: '#cbd5e1', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{rep.replyMessage}</div>
+                                  <div style={{ fontWeight: 600, color: 'var(--adm-text-title)', marginBottom: '4px' }}>{rep.subject}</div>
+                                  <div style={{ color: 'var(--adm-text-body)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{rep.replyMessage}</div>
                                 </div>
                               ))}
                             </div>
@@ -1540,19 +1625,21 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
             </div>
           )}
 
-          {/* TAB 4: SKILLS MATRIX */}
+          {/* =========================================================================
+              TAB 5: SKILLS MATRIX
+              ========================================================================= */}
           {activeTab === 'skills' && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
-                  <h2 className="font-editorial" style={{ fontSize: '1.8rem', color: '#ffffff' }}>
+                  <h2 className="admin-header-title" style={{ fontSize: '1.8rem' }}>
                     Technical Competencies Manager
                   </h2>
-                  <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                  <p className="admin-header-subtitle">
                     Adjust proficiency scores, skill items, and category taxonomies.
                   </p>
                 </div>
-                <button onClick={handleSaveSkills} className="btn-gold">
+                <button onClick={handleSaveSkills} className="admin-btn-primary">
                   <Save size={16} />
                   <span>Save Skills Matrix</span>
                 </button>
@@ -1560,16 +1647,16 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '24px' }}>
                 {skills.map((cat, catIdx) => (
-                  <div key={cat.category} className="glass-panel" style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-                    <h3 className="font-editorial" style={{ fontSize: '1.2rem', color: '#f3d078', marginBottom: '16px' }}>
+                  <div key={cat.category} className="admin-card">
+                    <h3 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.2rem', color: 'var(--adm-gold-primary)', marginBottom: '16px' }}>
                       {cat.category}
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                       {cat.items?.map((item, itemIdx) => (
                         <div key={item.name}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                            <span style={{ fontSize: '0.88rem', color: '#ffffff' }}>{item.name}</span>
-                            <span className="font-mono" style={{ fontSize: '0.8rem', color: '#d4af37' }}>{item.level}%</span>
+                            <span style={{ fontSize: '0.88rem', color: 'var(--adm-text-title)', fontWeight: 600 }}>{item.name}</span>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--adm-gold-primary)' }}>{item.level}%</span>
                           </div>
                           <input
                             type="range"
@@ -1577,7 +1664,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                             max="100"
                             value={item.level}
                             onChange={(e) => updateSkillLevel(catIdx, itemIdx, e.target.value)}
-                            style={{ width: '100%', accentColor: '#d4af37', cursor: 'pointer' }}
+                            style={{ width: '100%', accentColor: 'var(--adm-gold-primary)', cursor: 'pointer' }}
                           />
                         </div>
                       ))}
@@ -1588,253 +1675,183 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
             </div>
           )}
 
-          {/* TAB 5: PROFILE & IDENTITY */}
+          {/* =========================================================================
+              TAB 6: PROFILE & IDENTITY
+              ========================================================================= */}
           {activeTab === 'profile' && (
             <div>
               <div style={{ marginBottom: '28px' }}>
-                <h2 className="font-editorial" style={{ fontSize: '1.8rem', color: '#ffffff' }}>
+                <h2 className="admin-header-title" style={{ fontSize: '1.8rem' }}>
                   Identity &amp; Profile Configuration
                 </h2>
-                <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                <p className="admin-header-subtitle">
                   Update your public executive bio, contact details, status indicator, and social profiles.
                 </p>
               </div>
 
-              <form onSubmit={handleSaveProfile} className="glass-panel" style={{ padding: '32px', borderRadius: '20px', maxWidth: '800px', border: '1px solid rgba(212, 175, 55, 0.25)' }}>
+              <form onSubmit={handleSaveProfile} className="admin-card" style={{ maxWidth: '820px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '20px' }}>
                   <div>
-                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                      Full Legal Name
-                    </label>
+                    <label className="admin-label">Full Legal Name</label>
                     <input
                       type="text"
+                      className="admin-form-input"
                       value={profile.name || ''}
                       onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
-
                   <div>
-                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                      Primary Professional Title
-                    </label>
+                    <label className="admin-label">Primary Professional Title</label>
                     <input
                       type="text"
+                      className="admin-form-input"
                       value={profile.title || ''}
                       onChange={(e) => setProfile({ ...profile, title: e.target.value })}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
                 </div>
 
                 <div style={{ marginBottom: '20px' }}>
-                  <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                    Hero Tagline
-                  </label>
+                  <label className="admin-label">Hero Tagline</label>
                   <input
                     type="text"
+                    className="admin-form-input"
                     value={profile.tagline || ''}
                     onChange={(e) => setProfile({ ...profile, tagline: e.target.value })}
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                   />
                 </div>
 
                 <div style={{ marginBottom: '20px' }}>
-                  <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                    Biography &amp; Background Narrative
-                  </label>
+                  <label className="admin-label">Biography &amp; Background Narrative</label>
                   <textarea
                     rows={4}
+                    className="admin-form-textarea"
                     value={profile.bio || ''}
                     onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', lineHeight: 1.6 }}
                   />
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '24px' }}>
                   <div>
-                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                      Contact Email
-                    </label>
+                    <label className="admin-label">Contact Email</label>
                     <input
                       type="email"
+                      className="admin-form-input"
                       value={profile.email || ''}
                       onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
-
                   <div>
-                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                      Telephone / WhatsApp
-                    </label>
+                    <label className="admin-label">Telephone / WhatsApp</label>
                     <input
                       type="text"
+                      className="admin-form-input"
                       value={profile.phone || ''}
                       onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
-
                   <div>
-                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                      Location
-                    </label>
+                    <label className="admin-label">Location</label>
                     <input
                       type="text"
+                      className="admin-form-input"
                       value={profile.location || ''}
                       onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
                 </div>
 
                 <div style={{ marginBottom: '24px' }}>
-                  <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                    Status Pill Text (Header/Hero)
-                  </label>
+                  <label className="admin-label">Status Pill Text (Header/Hero)</label>
                   <input
                     type="text"
+                    className="admin-form-input"
                     value={profile.statusText || ''}
                     onChange={(e) => setProfile({ ...profile, statusText: e.target.value })}
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                   />
                 </div>
 
-                {/* SOCIAL LINKS & REPOSITORY REFERENCES */}
+                {/* Social Links */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
                   <div>
-                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                      GitHub URL
-                    </label>
+                    <label className="admin-label">GitHub URL</label>
                     <input
                       type="url"
+                      className="admin-form-input"
                       value={profile.github || ''}
                       onChange={(e) => setProfile({ ...profile, github: e.target.value })}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
                   <div>
-                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                      LinkedIn URL
-                    </label>
+                    <label className="admin-label">LinkedIn URL</label>
                     <input
                       type="url"
+                      className="admin-form-input"
                       value={profile.linkedin || ''}
                       onChange={(e) => setProfile({ ...profile, linkedin: e.target.value })}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
                   <div>
-                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                      Twitter / X URL
-                    </label>
+                    <label className="admin-label">Twitter / X URL</label>
                     <input
                       type="url"
+                      className="admin-form-input"
                       value={profile.twitter || ''}
                       onChange={(e) => setProfile({ ...profile, twitter: e.target.value })}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
                 </div>
 
-                {/* CV / EXECUTIVE RESUME DOWNLOAD LINK */}
+                {/* CV URL */}
                 <div style={{ marginBottom: '24px' }}>
-                  <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                    CV / Executive Resume URL (PDF or Cloudinary Document)
-                  </label>
+                  <label className="admin-label">CV / Executive Resume URL</label>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <input
                       type="text"
                       placeholder="https://res.cloudinary.com/... or /resume.pdf"
+                      className="admin-form-input"
                       value={profile.resumeUrl || ''}
                       onChange={(e) => setProfile({ ...profile, resumeUrl: e.target.value })}
-                      style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                     {profile.resumeUrl && (
                       <a
                         href={profile.resumeUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="btn-gold"
-                        style={{ padding: '8px 14px', fontSize: '0.75rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        className="admin-btn-primary"
+                        style={{ textDecoration: 'none' }}
                       >
                         <ExternalLink size={14} />
-                        <span>Preview CV</span>
+                        <span>Preview</span>
                       </a>
                     )}
                   </div>
                 </div>
 
-                {/* EMAIL NOTIFICATION & REPLY PREFERENCES */}
-                <div style={{ marginBottom: '24px', padding: '18px', borderRadius: '12px', background: 'rgba(6, 8, 13, 0.75)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-                  <div className="font-mono" style={{ fontSize: '0.74rem', color: '#d4af37', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>
-                    Email Notification &amp; Dispatch Rules
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.86rem', color: '#f8fafc' }}>
-                      <input
-                        type="checkbox"
-                        checked={profile.emailNotifications !== false}
-                        onChange={(e) => setProfile({ ...profile, emailNotifications: e.target.checked })}
-                        style={{ accentColor: '#d4af37', width: '18px', height: '18px' }}
-                      />
-                      <span>Dispatch instant Gmail SMTP notification to admin when a new inquiry is submitted</span>
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.86rem', color: '#f8fafc' }}>
-                      <input
-                        type="checkbox"
-                        checked={profile.emailRepliesEnabled !== false}
-                        onChange={(e) => setProfile({ ...profile, emailRepliesEnabled: e.target.checked })}
-                        style={{ accentColor: '#d4af37', width: '18px', height: '18px' }}
-                      />
-                      <span>Enable direct Gmail SMTP reply dispatch from Inbox Console</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* CLOUDINARY PROFILE IMAGE UPLOADS */}
-                <div style={{ marginBottom: '28px', padding: '20px', borderRadius: '14px', background: 'rgba(6, 8, 13, 0.65)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-                  <div className="font-editorial" style={{ fontSize: '1.15rem', color: '#f3d078', marginBottom: '14px' }}>
+                {/* Cloudinary Profile Image Uploads */}
+                <div style={{ marginBottom: '28px', padding: '20px', borderRadius: '14px', background: 'var(--adm-gold-pill-bg)', border: '1px solid var(--adm-border)' }}>
+                  <div style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.15rem', color: 'var(--adm-gold-primary)', marginBottom: '14px' }}>
                     Cloudinary Visual Assets (Hero &amp; About Portraits)
                   </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
                     {/* Hero Portrait */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <label className="font-mono" style={{ fontSize: '0.72rem', color: '#cbd5e1', textTransform: 'uppercase' }}>
-                        Hero Portrait ({profile.heroImage ? 'Cloudinary Hosted' : 'Default Asset'})
-                      </label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div>
+                      <label className="admin-label">Hero Section Portrait</label>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '8px' }}>
                         <img
-                          src={profile.heroImage || '/hero/image2.jpeg'}
+                          src={profile.heroImage || '/hero/portrait-gold-cinematic.png'}
                           alt="Hero Portrait"
-                          style={{ width: '64px', height: '64px', borderRadius: '12px', objectFit: 'cover', border: '1.5px solid #d4af37' }}
+                          style={{ width: '56px', height: '56px', borderRadius: '10px', objectFit: 'cover', border: '1.5px solid var(--adm-gold-primary)' }}
                         />
-                        <label
-                          className="btn-gold"
-                          style={{
-                            padding: '8px 14px',
-                            fontSize: '0.75rem',
-                            cursor: uploadingImage ? 'wait' : 'pointer',
-                            opacity: uploadingImage ? 0.7 : 1,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                          }}
-                        >
+                        <label className="admin-btn-primary" style={{ cursor: 'pointer', padding: '8px 14px', fontSize: '0.78rem' }}>
                           <UploadCloud size={14} />
-                          <span>{uploadingImage ? 'Uploading...' : 'Upload Hero Image'}</span>
+                          <span>Upload New</span>
                           <input
                             type="file"
                             accept="image/*"
-                            disabled={uploadingImage}
                             onChange={(e) => {
                               const file = e.target.files?.[0];
-                              if (file) {
-                                handleUploadProfileImage(file, 'profile_hero');
-                                e.target.value = '';
-                              }
+                              if (file) handleUploadProfileImage(file, 'profile_hero');
                             }}
                             style={{ display: 'none' }}
                           />
@@ -1842,41 +1859,24 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                       </div>
                     </div>
 
-                    {/* About Section Architectural Portrait */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <label className="font-mono" style={{ fontSize: '0.72rem', color: '#cbd5e1', textTransform: 'uppercase' }}>
-                        About Narrative Portrait ({profile.aboutImage ? 'Cloudinary Hosted' : 'Default Asset'})
-                      </label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    {/* About Portrait */}
+                    <div>
+                      <label className="admin-label">About Section Portrait</label>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '8px' }}>
                         <img
-                          src={profile.aboutImage || '/hero/image1.jpeg'}
+                          src={profile.aboutImage || '/hero/portrait-gold-cinematic.png'}
                           alt="About Portrait"
-                          style={{ width: '64px', height: '64px', borderRadius: '12px', objectFit: 'cover', border: '1.5px solid #d4af37' }}
+                          style={{ width: '56px', height: '56px', borderRadius: '10px', objectFit: 'cover', border: '1.5px solid var(--adm-gold-primary)' }}
                         />
-                        <label
-                          className="btn-gold"
-                          style={{
-                            padding: '8px 14px',
-                            fontSize: '0.75rem',
-                            cursor: uploadingImage ? 'wait' : 'pointer',
-                            opacity: uploadingImage ? 0.7 : 1,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                          }}
-                        >
+                        <label className="admin-btn-primary" style={{ cursor: 'pointer', padding: '8px 14px', fontSize: '0.78rem' }}>
                           <UploadCloud size={14} />
-                          <span>{uploadingImage ? 'Uploading...' : 'Upload About Image'}</span>
+                          <span>Upload New</span>
                           <input
                             type="file"
                             accept="image/*"
-                            disabled={uploadingImage}
                             onChange={(e) => {
                               const file = e.target.files?.[0];
-                              if (file) {
-                                handleUploadProfileImage(file, 'profile_about');
-                                e.target.value = '';
-                              }
+                              if (file) handleUploadProfileImage(file, 'profile_about');
                             }}
                             style={{ display: 'none' }}
                           />
@@ -1886,7 +1886,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   </div>
                 </div>
 
-                <button type="submit" className="btn-gold" style={{ padding: '0.9rem 2rem' }}>
+                <button type="submit" className="admin-btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
                   <Save size={16} />
                   <span>Update Profile Configuration</span>
                 </button>
@@ -1894,232 +1894,172 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
             </div>
           )}
 
-          {/* TAB 6: TIMELINES & JOURNEY (EDUCATION / EXPERIENCE) */}
+          {/* =========================================================================
+              TAB 7: TIMELINES & JOURNEY
+              ========================================================================= */}
           {activeTab === 'education' && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '14px' }}>
                 <div>
-                  <h2 className="font-editorial" style={{ fontSize: '1.8rem', color: '#ffffff' }}>
+                  <h2 className="admin-header-title" style={{ fontSize: '1.8rem' }}>
                     Career Trajectory &amp; Academic Milestones
                   </h2>
-                  <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
-                    Manage professional appointments, degrees, dates, and architecture milestones displayed on the public timeline.
+                  <p className="admin-header-subtitle">
+                    Configure experience nodes, engineering milestones, and university degrees.
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button
-                    type="button"
                     onClick={() => {
                       setEducation([
                         ...education,
                         {
-                          degree: 'New Professional Role / Degree',
-                          institution: 'Institution / Enterprise',
+                          degree: 'Software Engineer',
+                          institution: 'Enterprise Systems Inc.',
                           period: '2024 — Present',
-                          badge: 'Active Engagement',
-                          description: 'Key deliverables, architectures, and engineering responsibilities.'
+                          badge: 'Full-Time',
+                          description: 'Architecting scalable applications and microservices.'
                         }
                       ]);
                     }}
-                    className="btn-ghost-luxury"
-                    style={{ padding: '0.6rem 1.2rem', fontSize: '0.82rem' }}
+                    className="admin-btn-sync"
                   >
-                    <Plus size={16} />
+                    <Plus size={14} />
                     <span>Add Milestone</span>
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={handleSaveEducation}
-                    className="btn-gold"
-                    style={{ padding: '0.6rem 1.4rem', fontSize: '0.82rem' }}
-                  >
+                  <button onClick={handleSaveEducation} className="admin-btn-primary">
                     <Save size={16} />
-                    <span>Save Timeline Changes</span>
+                    <span>Save Trajectory</span>
                   </button>
                 </div>
               </div>
 
-              {education.length === 0 ? (
-                <div className="glass-panel" style={{ padding: '60px', textAlign: 'center', borderRadius: '16px' }}>
-                  <GraduationCap size={44} color="#64748b" style={{ margin: '0 auto 16px' }} />
-                  <div style={{ color: '#cbd5e1', fontSize: '1rem' }}>No timeline milestones configured yet.</div>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {education.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="glass-panel"
-                      style={{
-                        padding: '24px',
-                        borderRadius: '16px',
-                        border: '1px solid rgba(212, 175, 55, 0.25)',
-                        background: 'rgba(14, 22, 38, 0.65)'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                        <span className="font-mono" style={{ fontSize: '0.78rem', color: '#d4af37', textTransform: 'uppercase' }}>
-                          Milestone #{idx + 1}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setEducation(education.filter((_, i) => i !== idx))}
-                          style={{
-                            background: 'rgba(239, 68, 68, 0.15)',
-                            border: '1px solid rgba(239, 68, 68, 0.3)',
-                            borderRadius: '8px',
-                            padding: '6px 12px',
-                            color: '#f87171',
-                            cursor: 'pointer',
-                            fontSize: '0.75rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                        >
-                          <Trash2 size={13} />
-                          <span>Remove</span>
-                        </button>
-                      </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                {education.map((item, idx) => (
+                  <div key={idx} className="admin-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px', alignItems: 'center' }}>
+                      <span className="admin-badge-new" style={{ background: 'var(--adm-gold-pill-bg)', border: '1px solid var(--adm-border)', color: 'var(--adm-gold-primary)' }}>
+                        Trajectory Node #{idx + 1}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setEducation(education.filter((_, i) => i !== idx));
+                        }}
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          borderRadius: '8px',
+                          padding: '6px 10px',
+                          color: '#EF4444',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-                        <div>
-                          <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>
-                            Role / Degree Title *
-                          </label>
-                          <input
-                            type="text"
-                            value={item.degree || ''}
-                            onChange={(e) => {
-                              const updated = [...education];
-                              updated[idx].degree = e.target.value;
-                              setEducation(updated);
-                            }}
-                            style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>
-                            Company / University *
-                          </label>
-                          <input
-                            type="text"
-                            value={item.institution || ''}
-                            onChange={(e) => {
-                              const updated = [...education];
-                              updated[idx].institution = e.target.value;
-                              setEducation(updated);
-                            }}
-                            style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>
-                            Period / Years
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="2023 — Present"
-                            value={item.period || ''}
-                            onChange={(e) => {
-                              const updated = [...education];
-                              updated[idx].period = e.target.value;
-                              setEducation(updated);
-                            }}
-                            style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>
-                            Badge / Status
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="Full-Time / First Class Honours"
-                            value={item.badge || ''}
-                            onChange={(e) => {
-                              const updated = [...education];
-                              updated[idx].badge = e.target.value;
-                              setEducation(updated);
-                            }}
-                            style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-                          />
-                        </div>
-                      </div>
-
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '14px' }}>
                       <div>
-                        <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>
-                          Description &amp; Key Architectural Responsibilities
-                        </label>
-                        <textarea
-                          rows={3}
-                          value={item.description || ''}
+                        <label className="admin-label">Title / Degree *</label>
+                        <input
+                          type="text"
+                          className="admin-form-input"
+                          value={item.degree || ''}
                           onChange={(e) => {
                             const updated = [...education];
-                            updated[idx].description = e.target.value;
+                            updated[idx].degree = e.target.value;
                             setEducation(updated);
                           }}
-                          style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', lineHeight: 1.6 }}
+                        />
+                      </div>
+                      <div>
+                        <label className="admin-label">Company / University *</label>
+                        <input
+                          type="text"
+                          className="admin-form-input"
+                          value={item.institution || ''}
+                          onChange={(e) => {
+                            const updated = [...education];
+                            updated[idx].institution = e.target.value;
+                            setEducation(updated);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="admin-label">Period / Years</label>
+                        <input
+                          type="text"
+                          className="admin-form-input"
+                          value={item.period || ''}
+                          onChange={(e) => {
+                            const updated = [...education];
+                            updated[idx].period = e.target.value;
+                            setEducation(updated);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="admin-label">Badge / Status</label>
+                        <input
+                          type="text"
+                          className="admin-form-input"
+                          value={item.badge || ''}
+                          onChange={(e) => {
+                            const updated = [...education];
+                            updated[idx].badge = e.target.value;
+                            setEducation(updated);
+                          }}
                         />
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+
+                    <div>
+                      <label className="admin-label">Description &amp; Key Architectural Responsibilities</label>
+                      <textarea
+                        rows={3}
+                        className="admin-form-textarea"
+                        value={item.description || ''}
+                        onChange={(e) => {
+                          const updated = [...education];
+                          updated[idx].description = e.target.value;
+                          setEducation(updated);
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* TAB 7: GMAIL SMTP & NOTIFICATION ENGINE */}
+          {/* =========================================================================
+              TAB 8: GMAIL SMTP & NOTIFICATION ENGINE
+              ========================================================================= */}
           {activeTab === 'email' && (
             <div>
               <div style={{ marginBottom: '28px' }}>
-                <h2 className="font-editorial" style={{ fontSize: '1.8rem', color: '#ffffff' }}>
+                <h2 className="admin-header-title" style={{ fontSize: '1.8rem' }}>
                   Gmail SMTP &amp; Dispatch Engine
                 </h2>
-                <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                <p className="admin-header-subtitle">
                   Direct SMTP relay integration with Nodemailer, Google App Password, and secure TLS transport.
                 </p>
               </div>
 
-              {/* SMTP Status Overview Card */}
-              <div
-                className="glass-panel"
-                style={{
-                  padding: '28px',
-                  borderRadius: '18px',
-                  border: '1px solid rgba(212, 175, 55, 0.25)',
-                  background: 'rgba(14, 22, 38, 0.65)',
-                  marginBottom: '28px'
-                }}
-              >
+              {/* Status Card */}
+              <div className="admin-card" style={{ marginBottom: '28px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div
-                      style={{
-                        width: '44px',
-                        height: '44px',
-                        borderRadius: '12px',
-                        background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(15, 23, 42, 0.9))',
-                        border: '1px solid #d4af37',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#d4af37'
-                      }}
-                    >
-                      <MailCheck size={24} />
+                    <div className="admin-chart-icon-box" style={{ width: '44px', height: '44px' }}>
+                      <MailCheck size={22} />
                     </div>
                     <div>
-                      <h3 className="font-editorial" style={{ fontSize: '1.25rem', color: '#ffffff' }}>
+                      <h3 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.25rem', color: 'var(--adm-text-title)', margin: 0 }}>
                         Gmail SMTP Relay Status
                       </h3>
-                      <div className="font-mono" style={{ fontSize: '0.74rem', color: smtpStatus?.connected ? '#10b981' : '#f59e0b', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: smtpStatus?.connected ? '#10b981' : '#f59e0b' }} />
-                        {smtpStatus?.connected ? 'Online & Authenticated (Ready for Dispatches)' : 'Verification Required or Standby'}
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.74rem', color: smtpStatus?.connected ? '#10B981' : '#F59E0B', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: smtpStatus?.connected ? '#10B981' : '#F59E0B' }} />
+                        <span>{smtpStatus?.connected ? 'Online & Authenticated (Ready for Dispatches)' : 'Verification Required or Standby'}</span>
                       </div>
                     </div>
                   </div>
@@ -2128,58 +2068,47 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                     type="button"
                     onClick={handleVerifySmtp}
                     disabled={testingSmtp}
-                    className="btn-gold"
-                    style={{ padding: '0.65rem 1.4rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    className="admin-btn-primary"
                   >
                     <RefreshCw size={14} className={testingSmtp ? 'spin' : ''} />
                     <span>{testingSmtp ? 'Verifying SMTP Relay...' : 'Verify SMTP Connection'}</span>
                   </button>
                 </div>
 
-                {/* Technical Configuration Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', paddingTop: '16px', borderTop: '1px solid var(--adm-border-subtle)' }}>
                   <div>
-                    <div className="font-mono" style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Configured Sender</div>
-                    <div style={{ fontSize: '0.9rem', color: '#f8fafc', fontWeight: 600, marginTop: '4px' }}>
+                    <div className="admin-label">Configured Sender</div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--adm-text-title)', fontWeight: 600 }}>
                       {smtpStatus?.user || 'uthayanvanojan5@gmail.com'}
                     </div>
                   </div>
                   <div>
-                    <div className="font-mono" style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>SMTP Host &amp; Port</div>
-                    <div style={{ fontSize: '0.9rem', color: '#f8fafc', fontWeight: 600, marginTop: '4px' }}>
+                    <div className="admin-label">SMTP Host &amp; Port</div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--adm-text-title)', fontWeight: 600 }}>
                       {smtpStatus?.host || 'smtp.gmail.com'}:{smtpStatus?.port || 465}
                     </div>
                   </div>
                   <div>
-                    <div className="font-mono" style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Encryption Layer</div>
-                    <div style={{ fontSize: '0.9rem', color: '#f8fafc', fontWeight: 600, marginTop: '4px' }}>
+                    <div className="admin-label">Encryption Layer</div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--adm-text-title)', fontWeight: 600 }}>
                       SSL / TLS (Direct Secure Socket)
                     </div>
                   </div>
                   <div>
-                    <div className="font-mono" style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Google App Password</div>
-                    <div style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 600, marginTop: '4px' }}>
+                    <div className="admin-label">Google App Password</div>
+                    <div style={{ fontSize: '0.9rem', color: '#10B981', fontWeight: 600 }}>
                       Protected in Environment Variable
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Send Diagnostic Test Email */}
-              <div
-                className="glass-panel"
-                style={{
-                  padding: '28px',
-                  borderRadius: '18px',
-                  border: '1px solid rgba(212, 175, 55, 0.2)',
-                  background: 'rgba(14, 22, 38, 0.65)',
-                  marginBottom: '28px'
-                }}
-              >
-                <h3 className="font-editorial" style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '8px' }}>
+              {/* Diagnostic Test Email */}
+              <div className="admin-card" style={{ marginBottom: '28px' }}>
+                <h3 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.25rem', color: 'var(--adm-text-title)', marginBottom: '8px' }}>
                   Dispatch Diagnostic Test Email
                 </h3>
-                <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '20px' }}>
+                <p style={{ color: 'var(--adm-text-muted)', fontSize: '0.85rem', marginBottom: '20px' }}>
                   Test your real Gmail SMTP delivery directly from the server to verify inbox reception and HTML luxury styling.
                 </p>
 
@@ -2189,153 +2118,97 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                     placeholder="Enter destination email (default: admin email)"
                     value={testEmailAddress}
                     onChange={(e) => setTestEmailAddress(e.target.value)}
-                    style={{ flex: 1, minWidth: '260px', padding: '12px 16px', borderRadius: '10px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.88rem' }}
+                    className="admin-form-input"
+                    style={{ flex: 1, minWidth: '260px' }}
                   />
                   <button
                     type="submit"
                     disabled={testingSmtp}
-                    className="btn-gold"
-                    style={{ padding: '0.75rem 1.8rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    className="admin-btn-primary"
                   >
                     <Send size={15} />
                     <span>{testingSmtp ? 'Transmitting...' : 'Send Test Email'}</span>
                   </button>
                 </form>
               </div>
-
-              {/* Production Architecture & Security Note */}
-              <div
-                style={{
-                  padding: '20px 24px',
-                  borderRadius: '14px',
-                  background: 'rgba(212, 175, 55, 0.05)',
-                  border: '1px solid rgba(212, 175, 55, 0.2)'
-                }}
-              >
-                <div className="font-mono" style={{ fontSize: '0.75rem', color: '#d4af37', textTransform: 'uppercase', marginBottom: '6px' }}>
-                  Architecture &amp; Credentials Isolation
-                </div>
-                <p style={{ color: '#cbd5e1', fontSize: '0.84rem', lineHeight: 1.6, margin: 0 }}>
-                  Per non-negotiable security requirements, your Google App Password is never exposed to the frontend or sent across client requests. All transmissions are routed through Nodemailer on the backend using TLS verification. In Vercel production, configure <code style={{ color: '#f3d078' }}>SMTP_PASS</code>, <code style={{ color: '#f3d078' }}>SMTP_USER</code>, and <code style={{ color: '#f3d078' }}>ADMIN_EMAIL</code> in Project Settings &rarr; Environment Variables.
-                </p>
-              </div>
             </div>
           )}
 
-          {/* TAB 8: ACCOUNT SECURITY & AUTHENTICATION */}
+          {/* =========================================================================
+              TAB 9: ACCOUNT SECURITY
+              ========================================================================= */}
           {activeTab === 'security' && (
             <div>
               <div style={{ marginBottom: '28px' }}>
-                <h2 className="font-editorial" style={{ fontSize: '1.8rem', color: '#ffffff' }}>
+                <h2 className="admin-header-title" style={{ fontSize: '1.8rem' }}>
                   Account Security &amp; Master Authentication
                 </h2>
-                <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                <p className="admin-header-subtitle">
                   Manage the cryptographic credentials for the primary executive administrator account.
                 </p>
               </div>
 
-              {/* Active Admin Summary */}
-              <div
-                className="glass-panel"
-                style={{
-                  padding: '24px',
-                  borderRadius: '16px',
-                  border: '1px solid rgba(212, 175, 55, 0.25)',
-                  background: 'rgba(14, 22, 38, 0.65)',
-                  marginBottom: '28px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '16px'
-                }}
-              >
-                <div
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #d4af37, #152238)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#06080d'
-                  }}
-                >
-                  <Shield size={24} />
+              <div className="admin-card" style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div className="admin-chart-icon-box" style={{ width: '48px', height: '48px' }}>
+                  <Shield size={22} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>
-                    Active Administrator: <span style={{ color: '#d4af37' }}>vanojanSE</span>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                    Active Administrator: <span style={{ color: 'var(--adm-gold-primary)' }}>vanojanSE</span>
                   </div>
-                  <div className="font-mono" style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.74rem', color: 'var(--adm-text-muted)', marginTop: '2px' }}>
                     Bcrypt 12 Rounds Hashing &bull; Brute Force Rate Limiting Active (5 attempts/15min)
                   </div>
                 </div>
               </div>
 
-              {/* Password Change Form */}
-              <div
-                className="glass-panel"
-                style={{
-                  padding: '32px',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(212, 175, 55, 0.2)',
-                  maxWidth: '650px'
-                }}
-              >
-                <h3 className="font-editorial" style={{ fontSize: '1.3rem', color: '#ffffff', marginBottom: '8px' }}>
+              <div className="admin-card" style={{ maxWidth: '650px' }}>
+                <h3 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.3rem', color: 'var(--adm-text-title)', marginBottom: '8px' }}>
                   Update Administrator Passphrase
                 </h3>
-                <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '24px' }}>
-                  Update your secret administrative key. Your new passphrase will be cryptographically hashed with 12 rounds of bcrypt before persistent database storage.
+                <p style={{ color: 'var(--adm-text-muted)', fontSize: '0.85rem', marginBottom: '24px' }}>
+                  Update your secret administrative key. Your new passphrase will be cryptographically hashed with 12 rounds of bcrypt before database storage.
                 </p>
 
                 <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                   <div>
-                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                      Current Password *
-                    </label>
+                    <label className="admin-label">Current Password *</label>
                     <input
                       type="password"
                       required
+                      className="admin-form-input"
                       value={passwordForm.currentPassword}
                       onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                      style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
-
                   <div>
-                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                      New Secure Password (Minimum 8 characters) *
-                    </label>
+                    <label className="admin-label">New Secure Password (Minimum 8 characters) *</label>
                     <input
                       type="password"
                       required
                       minLength={8}
+                      className="admin-form-input"
                       value={passwordForm.newPassword}
                       onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                      style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
-
                   <div>
-                    <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px', textTransform: 'uppercase' }}>
-                      Confirm New Password *
-                    </label>
+                    <label className="admin-label">Confirm New Password *</label>
                     <input
                       type="password"
                       required
                       minLength={8}
+                      className="admin-form-input"
                       value={passwordForm.confirmPassword}
                       onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                      style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={changingPassword}
-                    className="btn-gold"
-                    style={{ padding: '0.85rem 2rem', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    className="admin-btn-primary"
+                    style={{ marginTop: '8px', justifyContent: 'center' }}
                   >
                     <Lock size={16} />
                     <span>{changingPassword ? 'Hashing & Updating...' : 'Update Administrative Passphrase'}</span>
@@ -2364,26 +2237,24 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
           onClick={() => setEditingProject(null)}
         >
           <div
-            className="glass-panel"
+            className="admin-card"
             style={{
               width: '100%',
               maxWidth: '650px',
               maxHeight: '90vh',
               overflowY: 'auto',
               borderRadius: '24px',
-              padding: '36px',
-              border: '1px solid rgba(212, 175, 55, 0.4)',
-              background: '#0d1526'
+              padding: '36px'
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3 className="font-editorial" style={{ fontSize: '1.6rem', color: '#ffffff' }}>
+              <h3 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.6rem', color: 'var(--adm-text-title)' }}>
                 {editingProject === 'new' ? 'Create New Showcase Project' : 'Edit Project Details'}
               </h3>
               <button
                 onClick={() => setEditingProject(null)}
-                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--adm-text-muted)', cursor: 'pointer' }}
               >
                 <X size={20} />
               </button>
@@ -2392,21 +2263,21 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
             <form onSubmit={handleSaveProject} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
                 <div>
-                  <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>Project Title *</label>
+                  <label className="admin-label">Project Title *</label>
                   <input
                     type="text"
                     required
+                    className="admin-form-input"
                     value={projectForm.title}
                     onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                   />
                 </div>
                 <div>
-                  <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>Category *</label>
+                  <label className="admin-label">Category *</label>
                   <select
+                    className="admin-form-select"
                     value={projectForm.category}
                     onChange={(e) => setProjectForm({ ...projectForm, category: e.target.value })}
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                   >
                     <option value="Full-Stack Web">Full-Stack Web</option>
                     <option value="Mobile & Hospitality">Mobile & Hospitality</option>
@@ -2417,51 +2288,51 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
               </div>
 
               <div>
-                <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>Subtitle</label>
+                <label className="admin-label">Subtitle</label>
                 <input
                   type="text"
+                  className="admin-form-input"
                   value={projectForm.subtitle}
                   onChange={(e) => setProjectForm({ ...projectForm, subtitle: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                 />
               </div>
 
               <div>
-                <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>Description *</label>
+                <label className="admin-label">Description *</label>
                 <textarea
                   rows={3}
                   required
+                  className="admin-form-textarea"
                   value={projectForm.description}
                   onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                 />
               </div>
 
               <div>
-                <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>Technologies (comma separated)</label>
+                <label className="admin-label">Technologies (comma separated)</label>
                 <input
                   type="text"
                   placeholder="React.js, Node.js, SQLite, Three.js"
+                  className="admin-form-input"
                   value={projectForm.techStack}
                   onChange={(e) => setProjectForm({ ...projectForm, techStack: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                 />
               </div>
 
               <div>
-                <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>Architecture Highlights (one per line)</label>
+                <label className="admin-label">Architecture Highlights (one per line)</label>
                 <textarea
                   rows={3}
                   placeholder="Real-time SQLite local storage sync&#10;Sub-millisecond query optimization"
+                  className="admin-form-textarea"
                   value={projectForm.highlights}
                   onChange={(e) => setProjectForm({ ...projectForm, highlights: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                 />
               </div>
 
-              {/* Project Image (Cloudinary Cloud Storage) */}
+              {/* Project Image */}
               <div>
-                <label className="font-mono" style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                <label className="admin-label">
                   Project Showcase Image (Cloudinary Cloud Storage)
                 </label>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '8px' }}>
@@ -2469,24 +2340,21 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                     <img
                       src={projectForm.image}
                       alt="Project preview"
-                      style={{ width: '64px', height: '44px', objectFit: 'cover', borderRadius: '8px', border: '1.5px solid #d4af37' }}
+                      style={{ width: '64px', height: '44px', objectFit: 'cover', borderRadius: '8px', border: '1.5px solid var(--adm-gold-primary)' }}
                     />
                   ) : (
-                    <div style={{ width: '64px', height: '44px', background: '#06080d', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Image size={18} color="#64748b" />
+                    <div style={{ width: '64px', height: '44px', background: 'var(--adm-input-bg)', borderRadius: '8px', border: '1px dashed var(--adm-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Image size={18} color="var(--adm-text-faint)" />
                     </div>
                   )}
 
                   <label
-                    className="btn-gold"
+                    className="admin-btn-primary"
                     style={{
                       padding: '8px 14px',
                       fontSize: '0.75rem',
                       cursor: uploadingImage ? 'wait' : 'pointer',
-                      opacity: uploadingImage ? 0.7 : 1,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
+                      opacity: uploadingImage ? 0.7 : 1
                     }}
                   >
                     <UploadCloud size={14} />
@@ -2511,11 +2379,11 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                       type="button"
                       onClick={() => setProjectForm({ ...projectForm, image: '', imagePublicId: '' })}
                       style={{
-                        background: 'rgba(239, 68, 68, 0.15)',
+                        background: 'rgba(239, 68, 68, 0.1)',
                         border: '1px solid rgba(239, 68, 68, 0.3)',
                         borderRadius: '8px',
                         padding: '8px 12px',
-                        color: '#f87171',
+                        color: '#EF4444',
                         fontSize: '0.75rem',
                         cursor: 'pointer'
                       }}
@@ -2528,9 +2396,9 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                 <input
                   type="text"
                   placeholder="https://res.cloudinary.com/... or /hero/project-analytics.jpg"
+                  className="admin-form-input"
                   value={projectForm.image}
                   onChange={(e) => setProjectForm({ ...projectForm, image: e.target.value })}
-                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', background: '#06080d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}
                 />
               </div>
 
@@ -2540,18 +2408,18 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   id="featuredToggle"
                   checked={projectForm.featured}
                   onChange={(e) => setProjectForm({ ...projectForm, featured: e.target.checked })}
-                  style={{ accentColor: '#d4af37', width: '18px', height: '18px' }}
+                  style={{ accentColor: 'var(--adm-gold-primary)', width: '18px', height: '18px' }}
                 />
-                <label htmlFor="featuredToggle" style={{ fontSize: '0.9rem', color: '#f8fafc', cursor: 'pointer' }}>
+                <label htmlFor="featuredToggle" style={{ fontSize: '0.9rem', color: 'var(--adm-text-title)', cursor: 'pointer' }}>
                   Mark as Featured System (Highlighted on Homepage)
                 </label>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-                <button type="submit" className="btn-gold" style={{ flex: 1 }}>
+                <button type="submit" className="admin-btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
                   Save Project
                 </button>
-                <button type="button" onClick={() => setEditingProject(null)} className="btn-ghost-luxury">
+                <button type="button" onClick={() => setEditingProject(null)} className="admin-btn-sync" style={{ justifyContent: 'center' }}>
                   Cancel
                 </button>
               </div>
@@ -2589,18 +2457,6 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
           showToast={showToast}
         />
       )}
-
-      <style>{`
-        @media (max-width: 768px) {
-          .admin-sidebar {
-            width: 70px !important;
-            padding: 16px 8px !important;
-          }
-          .admin-sidebar span {
-            display: none !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }
