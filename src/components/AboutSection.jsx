@@ -55,37 +55,24 @@ export default function AboutSection({ profile }) {
         {/* SECTION HEADER EYEBROW (Matches Reference Image 1) */}
         <div style={{ marginBottom: '36px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+            <span className="badge-gold">
+              02 - ABOUT
+            </span>
             <span
+              className="font-mono"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 padding: '4px 14px',
                 borderRadius: '9999px',
-                background: 'rgba(214, 165, 72, 0.12)',
-                border: '1px solid rgba(242, 200, 121, 0.4)',
-                color: 'var(--gold-bright, #FFD978)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                letterSpacing: '0.08em'
-              }}
-            >
-              02 - ABOUT
-            </span>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '4px 12px',
-                borderRadius: '9999px',
-                background: 'rgba(14, 22, 36, 0.6)',
-                border: '1px solid var(--border-subtle)',
-                fontFamily: 'var(--font-mono)',
+                background: 'var(--surface-card)',
+                border: '1px solid var(--border-gold)',
                 fontSize: '0.72rem',
-                color: 'var(--text-muted)',
+                color: 'var(--text-secondary)',
                 letterSpacing: '0.14em',
                 textTransform: 'uppercase',
-                fontWeight: 600
+                fontWeight: 600,
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
               }}
             >
               PASSION &bull; PRECISION &bull; PROGRESS
