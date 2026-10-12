@@ -77,8 +77,9 @@
 .cinematic-portrait .portrait-gallery-container{margin-top:14px!important;gap:17px!important}
 .cinematic-portrait .gallery-thumb-btn{width:clamp(68px,7.5vw,116px)!important;height:66px!important;border-radius:5px!important}
 .cinematic-portrait .gallery-thumb-btn img{object-position:center 43%!important}
-.cinematic-hud{position:relative;padding-top:42px;z-index:25}
-.cinematic-hud .holographic-globe-hud{width:184px!important;max-width:none;margin-left:-20px;border-radius:10px!important;transform:rotate(5deg);background:linear-gradient(130deg,#07152299,#08101be6)!important}
+.cinematic-hud .holographic-globe-hud{width:184px!important;max-width:none;margin-left:-20px;border-radius:14px!important;transform:rotate(5deg);background:linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 32%, rgba(0, 0, 0, 0.06) 62%, rgba(255, 255, 255, 0.3) 100%), linear-gradient(142deg, #FFE17D 0%, #F5C542 18%, #D4AF37 42%, #BD8E1C 68%, #E5BE53 86%, #FDE380 100%)!important;border:2px solid #FFF5D6!important;box-shadow:0 20px 48px rgba(184, 134, 11, 0.45), 0 0 35px rgba(255, 215, 0, 0.35), inset 0 2px 3px rgba(255, 255, 255, 0.85), inset 0 -2.5px 5px rgba(138, 86, 0, 0.45)!important;position:relative}
+.cinematic-hud .holographic-globe-hud::before{content:"";position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:18px;height:7px;background:radial-gradient(ellipse at center,#FFFFFF 0%,rgba(255,240,180,0.9) 40%,transparent 80%);filter:drop-shadow(0 0 8px rgba(255,255,255,0.95)) drop-shadow(0 0 16px rgba(255,215,0,0.8));pointer-events:none;z-index:30}
+.cinematic-hud .holographic-globe-hud::after{content:"";position:absolute;bottom:-3px;left:50%;transform:translateX(-50%);width:18px;height:7px;background:radial-gradient(ellipse at center,#FFFFFF 0%,rgba(255,240,180,0.9) 40%,transparent 80%);filter:drop-shadow(0 0 8px rgba(255,255,255,0.95)) drop-shadow(0 0 16px rgba(255,215,0,0.8));pointer-events:none;z-index:30}
 .cinematic-hud .holographic-globe-hud canvas{width:160px!important;height:130px!important}
 .cinematic-hud .capability-selector{margin-top:15px;gap:5px!important;border-radius:10px!important;padding:5px!important;background:#030a12b3!important}
 .cinematic-hud .capability-btn{min-height:47px!important;gap:18px!important}

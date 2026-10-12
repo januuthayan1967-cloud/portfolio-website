@@ -733,3 +733,170 @@ body {
   opacity: 0.9;
   letter-spacing: 0.04em;
 }
+
+/* ==========================================================================
+   PREMIUM GOLDEN BORDER & TRAVELING SHINING EFFECT (ALL CARDS)
+   ========================================================================== */
+
+/* Universal target of all portfolio cards */
+.glass-panel,
+.glass-panel-gold,
+.about-stat-card,
+.pillar-card,
+.skill-card-luxury,
+.portrait-identity-panel,
+.professional-designation-panel,
+.capability-selector,
+.cinematic-identity,
+.cinematic-metric,
+.engineering-badge {
+  position: relative;
+  border: 1px solid rgba(212, 175, 55, 0.38) !important;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.35s ease,
+              box-shadow 0.35s ease;
+}
+
+/* Animated traveling golden light reflection along the border edges */
+.glass-panel::before,
+.glass-panel-gold::before,
+.about-stat-card::before,
+.pillar-card::before,
+.skill-card-luxury::before,
+.portrait-identity-panel::before,
+.professional-designation-panel::before,
+.capability-selector::before,
+.cinematic-identity::before,
+.cinematic-metric::before,
+.engineering-badge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(
+    125deg,
+    rgba(212, 175, 55, 0.18) 0%,
+    rgba(247, 231, 206, 0.88) 22%,
+    rgba(255, 215, 0, 0.96) 32%,
+    rgba(232, 199, 106, 0.38) 48%,
+    rgba(247, 231, 206, 0.92) 72%,
+    rgba(212, 175, 55, 0.18) 100%
+  );
+  background-size: 300% 300%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: goldenBorderTravel 7.5s ease-in-out infinite alternate;
+  opacity: 0.72;
+  transition: opacity 0.35s ease, filter 0.35s ease;
+  z-index: 1;
+}
+
+@keyframes goldenBorderTravel {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: 0% 100%;
+  }
+}
+
+/* Soft golden glow and enhanced edge reflection on hover */
+.glass-panel:hover::before,
+.glass-panel-gold:hover::before,
+.about-stat-card:hover::before,
+.pillar-card:hover::before,
+.skill-card-luxury:hover::before,
+.portrait-identity-panel:hover::before,
+.professional-designation-panel:hover::before,
+.capability-selector:hover::before,
+.cinematic-identity:hover::before,
+.cinematic-metric:hover::before,
+.engineering-badge:hover::before {
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5));
+}
+
+.glass-panel:hover,
+.about-stat-card:hover,
+.pillar-card:hover,
+.skill-card-luxury:hover,
+.portrait-identity-panel:hover,
+.professional-designation-panel:hover,
+.capability-selector:hover {
+  border-color: #FFD700 !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65), 0 0 28px rgba(212, 175, 55, 0.28) !important;
+}
+
+/* ==========================================================================
+   LIGHT MODE CARD REFINEMENTS
+   ========================================================================== */
+[data-theme="light"] .glass-panel,
+[data-theme="light"] .glass-panel-gold,
+[data-theme="light"] .about-stat-card,
+[data-theme="light"] .pillar-card,
+[data-theme="light"] .skill-card-luxury,
+[data-theme="light"] .portrait-identity-panel,
+[data-theme="light"] .professional-designation-panel,
+[data-theme="light"] .capability-selector,
+[data-theme="light"] .cinematic-identity,
+[data-theme="light"] .cinematic-metric,
+[data-theme="light"] .engineering-badge {
+  border-color: rgba(201, 162, 39, 0.48) !important;
+}
+
+[data-theme="light"] .glass-panel::before,
+[data-theme="light"] .glass-panel-gold::before,
+[data-theme="light"] .about-stat-card::before,
+[data-theme="light"] .pillar-card::before,
+[data-theme="light"] .skill-card-luxury::before,
+[data-theme="light"] .portrait-identity-panel::before,
+[data-theme="light"] .professional-designation-panel::before,
+[data-theme="light"] .capability-selector::before,
+[data-theme="light"] .cinematic-identity::before,
+[data-theme="light"] .cinematic-metric::before,
+[data-theme="light"] .engineering-badge::before {
+  background: linear-gradient(
+    125deg,
+    rgba(201, 162, 39, 0.22) 0%,
+    rgba(247, 231, 206, 0.95) 24%,
+    rgba(229, 168, 75, 0.95) 42%,
+    rgba(201, 162, 39, 0.3) 64%,
+    rgba(247, 231, 206, 0.95) 82%,
+    rgba(201, 162, 39, 0.22) 100%
+  );
+  background-size: 300% 300%;
+  opacity: 0.78;
+}
+
+[data-theme="light"] .glass-panel:hover,
+[data-theme="light"] .about-stat-card:hover,
+[data-theme="light"] .pillar-card:hover,
+[data-theme="light"] .skill-card-luxury:hover {
+  border-color: #D4AF37 !important;
+  box-shadow: 0 22px 50px rgba(212, 162, 58, 0.22), 0 0 24px rgba(212, 162, 58, 0.16) !important;
+}
+
+/* Accessibility: Respect Reduced Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+  .glass-panel::before,
+  .glass-panel-gold::before,
+  .about-stat-card::before,
+  .pillar-card::before,
+  .skill-card-luxury::before,
+  .portrait-identity-panel::before,
+  .professional-designation-panel::before,
+  .capability-selector::before,
+  .cinematic-identity::before,
+  .cinematic-metric::before,
+  .engineering-badge::before {
+    animation: none !important;
+    background-position: 50% 50% !important;
+  }
+}
+

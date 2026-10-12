@@ -39,29 +39,29 @@ export default function HolographicGlobeHUD({ style = {} }) {
       rotation += 0.012;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 1. Atmosphere Radial Glow Behind Globe
-      const atmoGlow = ctx.createRadialGradient(cx, cy, radius * 0.7, cx, cy, radius * 1.4);
-      atmoGlow.addColorStop(0, 'rgba(14, 165, 233, 0.42)');
-      atmoGlow.addColorStop(0.5, 'rgba(2, 132, 199, 0.18)');
-      atmoGlow.addColorStop(1, 'rgba(2, 132, 199, 0)');
+      // 1. Atmosphere Radial Glow Behind Globe (Radiant Golden Aura)
+      const atmoGlow = ctx.createRadialGradient(cx, cy, radius * 0.7, cx, cy, radius * 1.45);
+      atmoGlow.addColorStop(0, 'rgba(255, 225, 100, 0.75)');
+      atmoGlow.addColorStop(0.45, 'rgba(212, 175, 55, 0.35)');
+      atmoGlow.addColorStop(1, 'rgba(212, 175, 55, 0)');
       ctx.fillStyle = atmoGlow;
       ctx.beginPath();
-      ctx.arc(cx, cy, radius * 1.4, 0, Math.PI * 2);
+      ctx.arc(cx, cy, radius * 1.45, 0, Math.PI * 2);
       ctx.fill();
 
-      // 2. Base Sphere Fill with deep royal sapphire lighting
+      // 2. Base Sphere Fill with deep obsidian metallic polished lighting
       const sphereGrad = ctx.createRadialGradient(
         cx - radius * 0.35,
         cy - radius * 0.35,
-        radius * 0.1,
+        radius * 0.08,
         cx,
         cy,
         radius
       );
-      sphereGrad.addColorStop(0, '#2563EB'); // luminous sapphire blue
-      sphereGrad.addColorStop(0.4, '#0F172A'); // deep navy
-      sphereGrad.addColorStop(0.85, '#070D18'); // deep dark
-      sphereGrad.addColorStop(1, '#38BDF8'); // cyan rim
+      sphereGrad.addColorStop(0, '#423010'); // warm gold specular reflection
+      sphereGrad.addColorStop(0.35, '#161005'); // deep obsidian black
+      sphereGrad.addColorStop(0.85, '#0A0702'); // deep dark shadow
+      sphereGrad.addColorStop(1, '#FFD700'); // brilliant golden rim
 
       ctx.save();
       ctx.beginPath();
@@ -72,8 +72,8 @@ export default function HolographicGlobeHUD({ style = {} }) {
       // Clip to sphere for surface details
       ctx.clip();
 
-      // 3. Rotating Latitude Lines (Parallels)
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.28)';
+      // 3. Rotating Latitude Lines (Parallels in shimmering gold)
+      ctx.strokeStyle = 'rgba(255, 235, 170, 0.42)';
       ctx.lineWidth = 0.85;
       [-0.55, -0.3, 0, 0.3, 0.55].forEach((latRatio) => {
         const y = cy + Math.sin(latRatio * Math.PI) * radius;
@@ -85,19 +85,19 @@ export default function HolographicGlobeHUD({ style = {} }) {
         }
       });
 
-      // 4. Rotating Longitude Lines (Meridians)
+      // 4. Rotating Longitude Lines (Meridians in shimmering gold)
       for (let m = 0; m < 6; m++) {
         const angle = rotation + (m * Math.PI) / 3;
         const cosAngle = Math.cos(angle);
         const sinAngle = Math.sin(angle);
-        ctx.strokeStyle = sinAngle > 0 ? 'rgba(56, 189, 248, 0.35)' : 'rgba(56, 189, 248, 0.1)';
+        ctx.strokeStyle = sinAngle > 0 ? 'rgba(255, 235, 170, 0.48)' : 'rgba(255, 235, 170, 0.15)';
         ctx.lineWidth = sinAngle > 0 ? 1.0 : 0.5;
         ctx.beginPath();
         ctx.ellipse(cx, cy, Math.abs(cosAngle) * radius, radius, 0, 0, Math.PI * 2);
         ctx.stroke();
       }
 
-      // 5. Rotating Surface Constellation / Landmass Dots
+      // 5. Rotating Surface Constellation / Landmass Dots in warm gold
       spherePoints.forEach((pt) => {
         const currLon = pt.lon + rotation;
         const x3d = Math.cos(pt.lat) * Math.sin(currLon);
@@ -109,17 +109,18 @@ export default function HolographicGlobeHUD({ style = {} }) {
           const py = cy + y3d * radius;
           const alpha = Math.max(0.2, (z3d + 0.15) / 1.15);
 
-          ctx.fillStyle = `rgba(186, 230, 253, ${alpha * 0.95})`;
+          ctx.fillStyle = `rgba(255, 245, 200, ${alpha * 0.95})`;
           ctx.beginPath();
           ctx.arc(px, py, pt.size, 0, Math.PI * 2);
           ctx.fill();
         }
       });
 
-      // 6. Cyan Rim Highlight on sphere edge
-      const rimGrad = ctx.createRadialGradient(cx, cy, radius * 0.8, cx, cy, radius);
-      rimGrad.addColorStop(0, 'rgba(56, 189, 248, 0)');
-      rimGrad.addColorStop(1, 'rgba(56, 189, 248, 0.75)');
+      // 6. Brilliant Gold Rim Highlight on sphere edge
+      const rimGrad = ctx.createRadialGradient(cx, cy, radius * 0.78, cx, cy, radius);
+      rimGrad.addColorStop(0, 'rgba(255, 215, 0, 0)');
+      rimGrad.addColorStop(0.7, 'rgba(255, 215, 0, 0.45)');
+      rimGrad.addColorStop(1, 'rgba(255, 230, 130, 0.95)');
       ctx.fillStyle = rimGrad;
       ctx.beginPath();
       ctx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -133,8 +134,8 @@ export default function HolographicGlobeHUD({ style = {} }) {
       ctx.rotate(-0.35); // tilt angle ~20 deg
 
       // Gold orbital ring
-      ctx.strokeStyle = 'rgba(242, 199, 124, 0.65)';
-      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = 'rgba(255, 240, 180, 0.92)';
+      ctx.lineWidth = 1.35;
       ctx.beginPath();
       ctx.ellipse(0, 0, radius * 1.36, radius * 0.44, 0, 0, Math.PI * 2);
       ctx.stroke();
@@ -145,19 +146,19 @@ export default function HolographicGlobeHUD({ style = {} }) {
       const satY = Math.sin(satAngle) * (radius * 0.44);
 
       // Node glow
-      const nodeGlow = ctx.createRadialGradient(satX, satY, 0, satX, satY, 9);
-      nodeGlow.addColorStop(0, 'rgba(255, 255, 255, 0.98)');
-      nodeGlow.addColorStop(0.3, 'rgba(242, 199, 124, 0.8)');
+      const nodeGlow = ctx.createRadialGradient(satX, satY, 0, satX, satY, 10);
+      nodeGlow.addColorStop(0, '#FFFFFF');
+      nodeGlow.addColorStop(0.35, 'rgba(255, 230, 140, 0.9)');
       nodeGlow.addColorStop(1, 'rgba(217, 169, 104, 0)');
       ctx.fillStyle = nodeGlow;
       ctx.beginPath();
-      ctx.arc(satX, satY, 9, 0, Math.PI * 2);
+      ctx.arc(satX, satY, 10, 0, Math.PI * 2);
       ctx.fill();
 
       // Core node dot
       ctx.fillStyle = '#FFFFFF';
       ctx.beginPath();
-      ctx.arc(satX, satY, 2.2, 0, Math.PI * 2);
+      ctx.arc(satX, satY, 2.4, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.restore();
@@ -174,16 +175,14 @@ export default function HolographicGlobeHUD({ style = {} }) {
 
   return (
     <div
-      className="holographic-globe-hud"
+      className="holographic-globe-hud gold-transformation-card"
       style={{
         width: '144px',
-        background: 'rgba(10, 17, 28, 0.86)',
-        backdropFilter: 'blur(18px)',
-        WebkitBackdropFilter: 'blur(18px)',
-        border: '1px solid rgba(217, 169, 104, 0.35)',
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 32%, rgba(0, 0, 0, 0.06) 62%, rgba(255, 255, 255, 0.3) 100%), linear-gradient(142deg, #FFE17D 0%, #F5C542 18%, #D4AF37 42%, #BD8E1C 68%, #E5BE53 86%, #FDE380 100%)',
+        border: '1.5px solid #FFF5D6',
         borderRadius: '16px',
         padding: '12px 12px 14px 12px',
-        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.7), 0 0 28px rgba(2, 132, 199, 0.2)',
+        boxShadow: '0 20px 48px rgba(184, 134, 11, 0.45), 0 0 35px rgba(255, 215, 0, 0.35), inset 0 2px 3px rgba(255, 255, 255, 0.85), inset 0 -2.5px 5px rgba(138, 86, 0, 0.45)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -211,7 +210,7 @@ export default function HolographicGlobeHUD({ style = {} }) {
           width: '100%',
           marginTop: '6px',
           paddingTop: '8px',
-          borderTop: '1px solid rgba(217, 169, 104, 0.18)',
+          borderTop: '1px solid rgba(120, 85, 20, 0.24)',
           display: 'flex',
           alignItems: 'flex-end',
           justifyContent: 'space-between'
@@ -222,9 +221,9 @@ export default function HolographicGlobeHUD({ style = {} }) {
             style={{
               fontFamily: 'var(--font-heading)',
               fontSize: '0.64rem',
-              fontWeight: 700,
+              fontWeight: 800,
               letterSpacing: '0.12em',
-              color: 'var(--text-main)',
+              color: '#150E04',
               lineHeight: 1.2
             }}
           >
@@ -234,9 +233,9 @@ export default function HolographicGlobeHUD({ style = {} }) {
             style={{
               fontFamily: 'var(--font-heading)',
               fontSize: '0.64rem',
-              fontWeight: 700,
+              fontWeight: 800,
               letterSpacing: '0.12em',
-              color: 'var(--gold-light)',
+              color: '#1E1406',
               lineHeight: 1.2
             }}
           >
@@ -246,9 +245,9 @@ export default function HolographicGlobeHUD({ style = {} }) {
             style={{
               fontFamily: 'var(--font-heading)',
               fontSize: '0.64rem',
-              fontWeight: 700,
+              fontWeight: 800,
               letterSpacing: '0.12em',
-              color: 'var(--text-secondary)',
+              color: '#281B09',
               lineHeight: 1.2
             }}
           >
@@ -256,7 +255,7 @@ export default function HolographicGlobeHUD({ style = {} }) {
           </span>
         </div>
 
-        {/* Gold Analytics 3-Bar Chart Icon */}
+        {/* Gold Analytics 3-Bar Chart Icon in Obsidian Bronze */}
         <div
           style={{
             display: 'flex',
@@ -272,7 +271,7 @@ export default function HolographicGlobeHUD({ style = {} }) {
               width: '3.5px',
               height: '8px',
               borderRadius: '1px',
-              background: 'linear-gradient(to top, #9E7438, #D9A968)'
+              background: '#2B1E0A'
             }}
           />
           <div
@@ -280,8 +279,7 @@ export default function HolographicGlobeHUD({ style = {} }) {
               width: '3.5px',
               height: '13px',
               borderRadius: '1px',
-              background: 'linear-gradient(to top, #D9A968, #F2C77C)',
-              boxShadow: '0 0 6px rgba(242, 199, 124, 0.6)'
+              background: '#231807'
             }}
           />
           <div
@@ -289,8 +287,7 @@ export default function HolographicGlobeHUD({ style = {} }) {
               width: '3.5px',
               height: '18px',
               borderRadius: '1px',
-              background: 'linear-gradient(to top, #F2C77C, #FFF5DE)',
-              boxShadow: '0 0 10px rgba(242, 199, 124, 0.85)'
+              background: '#150E04'
             }}
           />
         </div>
