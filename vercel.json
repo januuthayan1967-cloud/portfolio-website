@@ -7,13 +7,32 @@
       "maxDuration": 30
     }
   },
+  "headers": [
+    {
+      "source": "/og-image.png",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "image/png"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, s-maxage=86400"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/api/index.js"
     },
     {
-      "source": "/((?!api/|assets/|hero/|favicon).*)",
+      "source": "/((?!api/|assets/|hero/|favicon|og-image\\.png|robots\\.txt).*)",
       "destination": "/index.html"
     }
   ]

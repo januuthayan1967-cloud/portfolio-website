@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Social Crawlers
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+Sitemap: https://portfolio-website-src.vercel.app/sitemap.xml
