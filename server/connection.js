@@ -65,7 +65,8 @@ export async function connectDb() {
 
   try {
     cachedConnection = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 9000,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
       maxPoolSize: 10,
     });
     lastAttemptError = null;

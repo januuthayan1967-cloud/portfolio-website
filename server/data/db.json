@@ -325,6 +325,22 @@
   ],
   "messages": [
     {
+      "id": "msg-1791795262243",
+      "name": "Atlas Verification Bot",
+      "email": "test-bot@vanojan-atlas.internal",
+      "subject": "Atlas Migration Verification",
+      "message": "Testing end-to-end Contact Messages persistence on MongoDB Atlas.",
+      "imageUrl": "",
+      "imagePublicId": "",
+      "date": "2026-10-12T08:54:22.243Z",
+      "read": false,
+      "starred": false,
+      "replied": false,
+      "notificationSent": false,
+      "notificationError": "",
+      "replies": []
+    },
+    {
       "id": "msg-1",
       "name": "Arthur Sterling",
       "email": "arthur@sterlingventures.co",
@@ -346,10 +362,10 @@
     }
   ],
   "analytics": {
-    "totalVisits": 2042,
+    "totalVisits": 2055,
     "uniqueVisitors": 1220,
-    "pageViews": 4777,
-    "directInquiries": 36,
+    "pageViews": 4790,
+    "directInquiries": 38,
     "projectViews": 2190,
     "avgSessionSeconds": 245,
     "history": [
@@ -393,6 +409,6 @@
   "admin": {
     "username": "vanojanSE",
     "email": "uthayanvanojan5@gmail.com",
-    "passwordHash": "$2b$12$RSsmXlTD6WxcmFmhqYidRueP7FNr8nJZQVdBjsxeBQoNI1kav.OQ."
+    "passwordHash": "$2b$12$6DF9QNa0FSGiZYmwZDCU6uzMUW0dNKotRttEtFY/nGZMP1yKQk7d2"
   }
 }

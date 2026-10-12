@@ -375,7 +375,7 @@ app.post('/api/admin/login', async (req, res) => {
           { username: cleanUsername },
           { username: new RegExp(`^${cleanUsername}$`, 'i') }
         ]
-      }).lean();
+      }).maxTimeMS(4000).lean();
     } catch (err) {
       console.warn('[MongoDB Query] Admin check error:', err.message);
     }

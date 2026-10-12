@@ -33,7 +33,7 @@ async function runAuthTests() {
     const resLogin = await fetch(`${baseUrl}/api/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: 'admin', password: 'vanojan2026' })
+      body: JSON.stringify({ username: 'vanojanSE', password: 'vanojan2026' })
     });
     const dataLogin = await resLogin.json();
     assert(resLogin.ok, `Admin login successful (HTTP ${resLogin.status})`);
@@ -41,7 +41,7 @@ async function runAuthTests() {
     
     const adminToken = dataLogin.token;
     const decoded = verifyJwt(adminToken);
-    assert(decoded && decoded.role === 'admin' && decoded.username === 'admin', 'Token is a valid signed JWT with role: admin');
+    assert(decoded && decoded.role === 'admin' && decoded.username === 'vanojanSE', 'Token is a valid signed JWT with role: admin');
 
     // Test 2: Token verification endpoint
     console.log('\n2️⃣ Testing /api/auth/verify Endpoint...');

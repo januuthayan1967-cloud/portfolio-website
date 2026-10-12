@@ -125,7 +125,7 @@ async function runTestSuite() {
     // 5. Admin Authentication
     console.log('\n--- 5. Admin Authentication ---');
     const loginRes = await makeRequest('POST', '/api/admin/login', {}, {
-      username: 'admin',
+      username: 'vanojanSE',
       password: 'vanojan2026'
     });
     assert(loginRes.status === 200, 'POST /api/admin/login returns 200 OK');

@@ -24,11 +24,12 @@ export function getJwtSecret() {
  */
 export function signJwt(payload, options = {}) {
   const secret = getJwtSecret();
+  const normalizedOptions = typeof options === 'string' ? { expiresIn: options } : options;
   const defaultOptions = {
     expiresIn: '7d',
     issuer: 'vanojan-portfolio'
   };
-  return jwt.sign(payload, secret, { ...defaultOptions, ...options });
+  return jwt.sign(payload, secret, { ...defaultOptions, ...normalizedOptions });
 }
 
 /**
