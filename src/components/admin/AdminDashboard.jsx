@@ -1114,14 +1114,16 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   </div>
                   <div className="admin-stat-label">Total Visitors</div>
                   <div className="admin-stat-value">
-                    {analyticsReport.summary.totalVisitors > 0
-                      ? analyticsReport.summary.totalVisitors.toLocaleString()
-                      : (overview?.analytics?.totalVisits?.toLocaleString() || '0')}
+                    {(analyticsReport.summary?.totalVisitors !== undefined
+                      ? analyticsReport.summary.totalVisitors
+                      : (overview?.analytics?.totalVisits || 0)).toLocaleString()}
                   </div>
                   <div className="admin-stat-trend green">
-                    {analyticsReport.summary.uniqueVisitors > 0
-                      ? `↑ ${analyticsReport.summary.uniqueVisitors.toLocaleString()} unique visitor${analyticsReport.summary.uniqueVisitors === 1 ? '' : 's'}`
-                      : '• Genuine first-party visits'}
+                    {(analyticsReport.summary?.uniqueVisitors !== undefined
+                      ? analyticsReport.summary.uniqueVisitors
+                      : (overview?.analytics?.uniqueVisitors || 0)) > 0
+                      ? `↑ ${(analyticsReport.summary?.uniqueVisitors ?? overview?.analytics?.uniqueVisitors).toLocaleString()} unique visitor${(analyticsReport.summary?.uniqueVisitors ?? overview?.analytics?.uniqueVisitors) === 1 ? '' : 's'}`
+                      : '• 0 public visitors recorded'}
                   </div>
                 </div>
 
@@ -1142,16 +1144,16 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   </div>
                   <div className="admin-stat-label">Page Impressions</div>
                   <div className="admin-stat-value">
-                    {analyticsReport.summary.pageViews > 0
-                      ? analyticsReport.summary.pageViews.toLocaleString()
-                      : (overview?.analytics?.pageViews?.toLocaleString() || '0')}
+                    {(analyticsReport.summary?.pageViews !== undefined
+                      ? analyticsReport.summary.pageViews
+                      : (overview?.analytics?.pageViews || 0)).toLocaleString()}
                   </div>
                   <div className="admin-stat-trend blue">
-                    {analyticsReport.summary.avgSessionSeconds > 0
+                    {analyticsReport.summary?.avgSessionSeconds > 0
                       ? `• Avg ${Math.floor(analyticsReport.summary.avgSessionSeconds / 60)}m ${analyticsReport.summary.avgSessionSeconds % 60}s session`
-                      : (analyticsReport.summary.activeVisitors > 0
+                      : (analyticsReport.summary?.activeVisitors > 0
                           ? `• ${analyticsReport.summary.activeVisitors} active visitor${analyticsReport.summary.activeVisitors === 1 ? '' : 's'} right now`
-                          : '• Verified page views')}
+                          : '• Verified real page views')}
                   </div>
                 </div>
 

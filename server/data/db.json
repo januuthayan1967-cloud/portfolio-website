@@ -365,12 +365,12 @@
     }
   ],
   "analytics": {
-    "totalVisits": 2088,
-    "uniqueVisitors": 1220,
-    "pageViews": 4823,
+    "totalVisits": 4,
+    "uniqueVisitors": 4,
+    "pageViews": 4,
     "directInquiries": 39,
     "projectViews": 2190,
-    "avgSessionSeconds": 245,
+    "avgSessionSeconds": 56,
     "history": [
       {
         "date": "Oct 2",

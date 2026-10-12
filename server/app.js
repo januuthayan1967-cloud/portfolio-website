@@ -14,7 +14,9 @@ import {
   Analytics,
   Admin,
   Media,
-  User
+  User,
+  VisitorSession,
+  AnalyticsEvent
 } from './models/index.js';
 import {
   uploadStream,
@@ -1003,8 +1005,10 @@ app.delete('/api/media/:publicId(*)', authMiddleware, async (req, res) => {
 app.get('/api/admin/overview', adminOnlyMiddleware, async (req, res) => {
   if (isDbConnected()) {
     try {
-      const [analyticsDoc, totalMessages, unreadMessages, totalProjects, totalMedia, recentMessagesDocs] = await Promise.all([
-        Analytics.findOne().lean(),
+      const [realSessionsCount, realEventsCount, uniqueVisitorsAgg, totalMessages, unreadMessages, totalProjects, totalMedia, recentMessagesDocs] = await Promise.all([
+        VisitorSession.countDocuments({ isBot: false, isAdmin: false }),
+        AnalyticsEvent.countDocuments({ isBot: false, isAdmin: false, eventType: 'pageview' }),
+        VisitorSession.distinct('visitorId', { isBot: false, isAdmin: false }),
         Message.countDocuments(),
         Message.countDocuments({ read: false }),
         Project.countDocuments(),
@@ -1013,7 +1017,11 @@ app.get('/api/admin/overview', adminOnlyMiddleware, async (req, res) => {
       ]);
 
       const db = getDb();
-      const analytics = analyticsDoc ? (({ _id, __v, ...rest }) => rest)(analyticsDoc) : db.analytics;
+      const analytics = {
+        totalVisits: realSessionsCount || 0,
+        uniqueVisitors: (uniqueVisitorsAgg && uniqueVisitorsAgg.length) || 0,
+        pageViews: realEventsCount || 0
+      };
       const recentMessages = (recentMessagesDocs && recentMessagesDocs.length > 0)
         ? recentMessagesDocs.map(m => {
             const { _id, __v, ...rest } = m;
