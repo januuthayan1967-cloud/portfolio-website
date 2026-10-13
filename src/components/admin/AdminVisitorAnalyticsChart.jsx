@@ -1,6 +1,90 @@
 import React, { useState, useMemo } from 'react';
 import { BarChart3, TrendingUp, Calendar, RefreshCw } from 'lucide-react';
 
+/**
+ * Computes a smooth monotonic cubic spline (Fritsch-Carlson algorithm)
+ * Strictly preserves local monotonicity, eliminating overshooting,
+ * ringing oscillations, and any dipping below the baseline (zero).
+ */
+function computeMonotoneSpline(points, topY = 30, bottomY = 210) {
+  if (!points || points.length === 0) return { linePath: '', areaPath: '' };
+  if (points.length === 1) {
+    return {
+      linePath: `M ${points[0].x},${points[0].y}`,
+      areaPath: ''
+    };
+  }
+  if (points.length === 2) {
+    const l = `M ${points[0].x},${points[0].y} L ${points[1].x},${points[1].y}`;
+    const a = `${l} L ${points[1].x},${bottomY} L ${points[0].x},${bottomY} Z`;
+    return { linePath: l, areaPath: a };
+  }
+
+  const n = points.length;
+
+  // Step 1: Compute secant slopes between adjacent points
+  const deltas = new Float64Array(n - 1);
+  for (let i = 0; i < n - 1; i++) {
+    const dx = points[i + 1].x - points[i].x;
+    deltas[i] = dx === 0 ? 0 : (points[i + 1].y - points[i].y) / dx;
+  }
+
+  // Step 2: Compute tangent slopes at each point (m_i)
+  const m = new Float64Array(n);
+  m[0] = deltas[0];
+  m[n - 1] = deltas[n - 2];
+  for (let i = 1; i < n - 1; i++) {
+    // If adjacent slopes have opposite signs or either is 0, slope must be 0 (local extrema or flat)
+    if (deltas[i - 1] * deltas[i] <= 0) {
+      m[i] = 0;
+    } else {
+      m[i] = (deltas[i - 1] + deltas[i]) / 2;
+    }
+  }
+
+  // Step 3: Apply Fritsch & Carlson monotonicity constraints
+  for (let i = 0; i < n - 1; i++) {
+    if (deltas[i] === 0) {
+      m[i] = 0;
+      m[i + 1] = 0;
+    } else {
+      const alpha = m[i] / deltas[i];
+      const beta = m[i + 1] / deltas[i];
+      const dist = alpha * alpha + beta * beta;
+      if (dist > 9) {
+        const tau = 3 / Math.sqrt(dist);
+        m[i] = tau * alpha * deltas[i];
+        m[i + 1] = tau * beta * deltas[i];
+      }
+    }
+  }
+
+  // Step 4: Construct SVG Cubic Bezier Commands
+  let d = `M ${points[0].x},${points[0].y}`;
+  for (let i = 0; i < n - 1; i++) {
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const dx = (p2.x - p1.x) / 3;
+
+    let cp1x = p1.x + dx;
+    let cp1y = p1.y + m[i] * dx;
+    let cp2x = p2.x - dx;
+    let cp2y = p2.y - m[i + 1] * dx;
+
+    // Strict clamping within chart drawing bounds [topY, bottomY]
+    cp1y = Math.min(bottomY, Math.max(topY, cp1y));
+    cp2y = Math.min(bottomY, Math.max(topY, cp2y));
+
+    // Valid cubic Bezier: C cp1x,cp1y cp2x,cp2y p2.x,p2.y (p2.y ensures correct target height)
+    d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+  }
+
+  const last = points[points.length - 1];
+  const area = `${d} L ${last.x},${bottomY} L ${points[0].x},${bottomY} Z`;
+
+  return { linePath: d, areaPath: area };
+}
+
 export default function AdminVisitorAnalyticsChart({
   timeRange = '7d',
   onTimeRangeChange = () => {},
@@ -10,8 +94,9 @@ export default function AdminVisitorAnalyticsChart({
   onRefresh = () => {}
 }) {
   const [activePointIndex, setActivePointIndex] = useState(null);
+  const [metric, setMetric] = useState('visitors'); // 'visitors' | 'pageViews'
 
-  // Fallback points if none provided
+  // Chart data points
   const points = useMemo(() => {
     if (Array.isArray(chartHistory) && chartHistory.length > 0) {
       return chartHistory;
@@ -22,7 +107,7 @@ export default function AdminVisitorAnalyticsChart({
   // Compute scale and SVG coordinates dynamically
   const { maxVal, yLabels, yCoordinates, svgPoints, linePath, areaPath } = useMemo(() => {
     const rawMax = Math.max(
-      ...points.map((p) => Math.max(p.visits || 0, p.pageViews || 0)),
+      ...points.map((p) => (metric === 'visitors' ? (p.visits || 0) : (p.pageViews || 0))),
       4
     );
 
@@ -47,10 +132,11 @@ export default function AdminVisitorAnalyticsChart({
       const x = points.length === 1
         ? startX + plotWidth / 2
         : startX + (idx / (points.length - 1)) * plotWidth;
-      const val = pt.visits || 0;
+      const val = metric === 'visitors' ? (pt.visits || 0) : (pt.pageViews || 0);
       const y = bottomY - (val / max) * heightSpan;
       return {
         ...pt,
+        val,
         x: Math.round(x * 10) / 10,
         y: Math.round(y * 10) / 10
       };
@@ -67,48 +153,37 @@ export default function AdminVisitorAnalyticsChart({
       };
     }
 
-    // Build smooth cubic bezier curve
-    let d = `M ${computed[0].x},${computed[0].y}`;
-    for (let i = 0; i < computed.length - 1; i++) {
-      const p0 = i > 0 ? computed[i - 1] : computed[0];
-      const p1 = computed[i];
-      const p2 = computed[i + 1];
-      const p3 = i < computed.length - 2 ? computed[i + 2] : p2;
-
-      const cp1x = p1.x + (p2.x - p0.x) / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
-      const cp2x = p2.x - (p3.x - p1.x) / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
-
-      d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.x.toFixed(1)}`;
-    }
-
-    const last = computed[computed.length - 1];
-    const area = `${d} L ${last.x},${bottomY} L ${computed[0].x},${bottomY} Z`;
+    const { linePath, areaPath } = computeMonotoneSpline(computed, topY, bottomY);
 
     return {
       maxVal: max,
       yLabels: yVals,
       yCoordinates: yCoords,
       svgPoints: computed,
-      linePath: d,
-      areaPath: area
+      linePath,
+      areaPath
     };
-  }, [points]);
+  }, [points, metric]);
 
   // Selected tooltip point
   const activePoint = useMemo(() => {
     if (activePointIndex !== null && svgPoints[activePointIndex]) {
       return svgPoints[activePointIndex];
     }
-    // Default to the last recorded point or peak
+    // Default to the point with maximum activity or latest active point
     if (svgPoints.length > 0) {
       let maxIdx = 0;
       svgPoints.forEach((p, idx) => {
-        if ((p.visits || 0) > (svgPoints[maxIdx].visits || 0)) {
+        const val = p.val || 0;
+        const currentMax = svgPoints[maxIdx].val || 0;
+        if (val > currentMax) {
           maxIdx = idx;
         }
       });
+      const lastIdx = svgPoints.length - 1;
+      if ((svgPoints[lastIdx].val || 0) > 0 || (svgPoints[maxIdx].val || 0) === 0) {
+        return svgPoints[lastIdx];
+      }
       return svgPoints[maxIdx];
     }
     return null;
@@ -182,7 +257,63 @@ export default function AdminVisitorAnalyticsChart({
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Controls: Metric Toggle & Time Range Dropdown */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Segmented Metric Switch */}
+          <div
+            style={{
+              display: 'inline-flex',
+              background: 'var(--adm-input-bg)',
+              border: '1px solid var(--adm-border-subtle)',
+              borderRadius: '8px',
+              padding: '2px',
+              gap: '2px'
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setMetric('visitors');
+                setActivePointIndex(null);
+              }}
+              style={{
+                border: 'none',
+                background: metric === 'visitors' ? 'var(--adm-gold-primary)' : 'transparent',
+                color: metric === 'visitors' ? '#0b0f19' : 'var(--adm-text-muted)',
+                fontWeight: metric === 'visitors' ? 700 : 500,
+                fontSize: '0.74rem',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+              title="Show unique visitors per day"
+            >
+              Visitors
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMetric('pageViews');
+                setActivePointIndex(null);
+              }}
+              style={{
+                border: 'none',
+                background: metric === 'pageViews' ? 'var(--adm-gold-primary)' : 'transparent',
+                color: metric === 'pageViews' ? '#0b0f19' : 'var(--adm-text-muted)',
+                fontWeight: metric === 'pageViews' ? 700 : 500,
+                fontSize: '0.74rem',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+              title="Show total page views per day"
+            >
+              Page Views
+            </button>
+          </div>
+
           <select
             className="admin-dropdown-select"
             value={timeRange}
@@ -209,16 +340,24 @@ export default function AdminVisitorAnalyticsChart({
           }}
         >
           <div className="admin-chart-tooltip-val">
-            {activePoint.visits} Unique Visitor{activePoint.visits === 1 ? '' : 's'}
+            {metric === 'visitors'
+              ? `${activePoint.visits || 0} Unique Visitor${activePoint.visits === 1 ? '' : 's'}`
+              : `${activePoint.pageViews || 0} Page View${activePoint.pageViews === 1 ? '' : 's'}`}
           </div>
           <div className="admin-chart-tooltip-date">
-            {activePoint.date} • {activePoint.pageViews || 0} Page View{activePoint.pageViews === 1 ? '' : 's'}
+            {activePoint.date} • {metric === 'visitors'
+              ? `${activePoint.pageViews || 0} Page View${activePoint.pageViews === 1 ? '' : 's'}`
+              : `${activePoint.visits || 0} Unique Visitor${activePoint.visits === 1 ? '' : 's'}`}
           </div>
         </div>
       )}
 
       {/* SVG Spline Canvas */}
-      <div className="admin-svg-spline-container" style={{ position: 'relative', minHeight: '240px' }}>
+      <div
+        className="admin-svg-spline-container"
+        style={{ position: 'relative', minHeight: '240px' }}
+        onMouseLeave={() => setActivePointIndex(null)}
+      >
         {svgPoints.length === 0 ? (
           <div
             style={{
@@ -337,7 +476,7 @@ export default function AdminVisitorAnalyticsChart({
                   <circle
                     cx={pt.x}
                     cy={pt.y}
-                    r={isActive ? '7.5' : (pt.visits > 0 ? '3.5' : '2')}
+                    r={isActive ? '7.5' : ((pt.val || 0) > 0 ? '3.5' : '2')}
                     fill="var(--adm-gold-light)"
                     fillOpacity={isActive ? '0.45' : '0.12'}
                     filter={isActive ? 'url(#pointGlow)' : undefined}
@@ -347,7 +486,7 @@ export default function AdminVisitorAnalyticsChart({
                   <circle
                     cx={pt.x}
                     cy={pt.y}
-                    r={isActive ? '4.5' : (pt.visits > 0 ? '3' : '2')}
+                    r={isActive ? '4.5' : ((pt.val || 0) > 0 ? '3' : '2')}
                     fill={isActive ? 'var(--adm-surface)' : 'var(--adm-gold-primary)'}
                     stroke="var(--adm-gold-primary)"
                     strokeWidth={isActive ? '2.5' : '1.5'}
