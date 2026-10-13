@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, ArrowRight, Github, Linkedin, Mail, Play, MapPin, Briefcase, Layers, Code2, Star, X } from 'lucide-react';
+import { ArrowUpRight, ArrowRight, Github, Linkedin, Mail, Play, MapPin, GraduationCap, Clock, Layers, Award, X } from 'lucide-react';
 import { ArchitecturalPortraitFrame, OrbitalEnergyBackground, HolographicGlobeHUD, CapabilitySelector, PortraitGallery } from './hero';
 
 const defaultMetrics = [
-  { value: '3+', label: 'Years Experience' },
-  { value: '12+', label: 'Delivered Systems' },
-  { value: '950+', label: 'Code Commits' },
-  { value: '100%', label: 'Satisfaction' }
+  { value: 'BSc (Hons)', label: 'Degree Programme' },
+  { value: 'Results Pending', label: 'Academic Status' },
+  { value: '9 Projects', label: 'Featured Systems' },
+  { value: 'HND Graduate', label: 'Higher Diploma' }
 ];
-const metricIcons = [Briefcase, Layers, Code2, Star];
+const metricIcons = [GraduationCap, Clock, Layers, Award];
 
 export default function HeroSection({ profile }) {
   const name = profile?.name || 'Uthayagunasingam Vanojan';
@@ -38,21 +38,21 @@ export default function HeroSection({ profile }) {
       <div className="cinematic-layout">
         <div className="cinematic-copy">
           <a className="engagement-status" href="#contact">
-            <i /><span>{profile?.statusText || 'Open for high-impact engineering & architecture engagements'}</span>
+            <i /><span>{profile?.statusText || 'Open for Graduate Software Engineer & Full-Stack Opportunities'}</span>
             <svg viewBox="0 0 86 12" aria-hidden="true"><path d="M0 6H82M77 1l6 5-6 5" /></svg>
           </a>
           <div className="hero-byline">
             <span>{name}</span><i aria-hidden="true">│ │ │</i>
-            <span className="hero-location"><MapPin size={17} /> Sri Lanka, Earth</span>
+            <span className="hero-location"><MapPin size={17} /> Jaffna, Sri Lanka</span>
           </div>
           <h1 className="cinematic-headline">
             <span>Architectural</span>
             <span className="precision-line"><span className="precision-word">Precision.</span>
-              <span className="engineering-badge"><i /><span>Full-stack<br />Software engineer<br />&amp; Solutions architect</span></span>
+              <span className="engineering-badge"><i /><span>Graduate<br />Software engineer<br />&amp; Full-stack developer</span></span>
             </span>
             <span className="depth-line">Cinematic Depth.</span>
           </h1>
-          <p className="cinematic-tagline">{profile?.tagline || 'Bridging architectural rigour and cinematic aesthetic depth to engineer unforgettable software experiences.'}</p>
+          <p className="cinematic-tagline">{profile?.tagline || 'Motivated Software Engineering graduate candidate skilled in React.js, Node.js, Java, Python, and SQL, engineering high-performance applications.'}</p>
           <div className="cinematic-actions">
             <a className="reference-primary" href="#projects">Explore Selected Works <ArrowUpRight size={19} /></a>
             <button className="reference-intro" onClick={() => introDialog.current?.showModal()}><span><Play size={13} fill="currentColor" /></span>Watch Intro</button>
@@ -62,15 +62,25 @@ export default function HeroSection({ profile }) {
           </div>
           <div className="cinematic-socials">
             <span>Connect</span><i />
-            <a href={profile?.github || 'https://github.com'} target="_blank" rel="noreferrer" aria-label="GitHub"><Github size={20} /></a>
-            <a href={profile?.linkedin || 'https://linkedin.com'} target="_blank" rel="noreferrer" aria-label="LinkedIn"><Linkedin size={19} /></a>
+            <a href={profile?.github || 'https://github.com/januuthayan1967-cloud'} target="_blank" rel="noreferrer" aria-label="GitHub"><Github size={20} /></a>
+            <a href={profile?.linkedin || 'https://www.linkedin.com/in/uthayagunasingam-vanojan-1b75a2327/'} target="_blank" rel="noreferrer" aria-label="LinkedIn"><Linkedin size={19} /></a>
             <a href={'mailto:' + (profile?.email || 'uthayanvanojan5@gmail.com')} aria-label="Email"><Mail size={19} /></a>
-            <a href={profile?.twitter || 'https://twitter.com'} target="_blank" rel="noreferrer" aria-label="X"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 3h4l12 18h-4L4 3Zm0 18 7-8m2-2 7-8" /></svg></a>
+            {profile?.twitter ? (
+              <a href={profile.twitter} target="_blank" rel="noreferrer" aria-label="X"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 3h4l12 18h-4L4 3Zm0 18 7-8m2-2 7-8" /></svg></a>
+            ) : null}
           </div>
           <div className="cinematic-metrics">
             {metrics.map((metric, index) => {
-              const Icon = metricIcons[index];
-              return <div className="cinematic-metric" key={metric.label}><div><Icon size={22} /><strong>{metric.value}</strong></div><span>{metric.label}</span></div>;
+              const Icon = metricIcons[index] || metricIcons[0];
+              return (
+                <div className="cinematic-metric" key={metric.label} title={`${metric.value} — ${metric.label}`}>
+                  <div>
+                    <Icon size={18} />
+                    <strong>{metric.value}</strong>
+                  </div>
+                  <span>{metric.label}</span>
+                </div>
+              );
             })}
           </div>
           <a className="cinematic-scroll" href="#about"><span className="scroll-mouse"><i /></span><span>Scroll to explore</span><i className="scroll-rule" /></a>
@@ -81,7 +91,7 @@ export default function HeroSection({ profile }) {
             <ArchitecturalPortraitFrame imageSrc={selectedImage} altText={images.find(image => image.src === selectedImage)?.alt || name}
               imagePosition={selectedImage === portrait ? 'center 43%' : 'center'} imageScale={1.03}>
               <a className="cinematic-identity" href="#contact">
-                <div><strong>{name}</strong><span>Solutions architect · Lead engineer</span><small><i /> Available for Opportunities</small></div>
+                <div><strong>{name}</strong><span>Graduate Software Engineer · Full-Stack Developer</span><small><i /> Available for Opportunities</small></div>
                 <span className="identity-arrow"><ArrowRight size={20} /></span>
               </a>
             </ArchitecturalPortraitFrame>
@@ -99,8 +109,8 @@ export default function HeroSection({ profile }) {
       </div>
       <dialog ref={introDialog} className="cinematic-dialog" onClick={event => { if (event.target === event.currentTarget) introDialog.current.close(); }}>
         <button className="intro-close" aria-label="Close intro" onClick={() => introDialog.current.close()}><X size={22} /></button>
-        <span className="intro-label">Meet the architect</span><h2>{name}</h2>
-        {profile?.introVideo ? <video src={profile.introVideo} controls autoPlay playsInline /> : <><p>{profile?.bio || 'Full-stack software engineer and solutions architect crafting scalable systems and cinematic digital experiences.'}</p><a className="reference-primary" href="#projects" onClick={() => introDialog.current.close()}>Explore Selected Works <ArrowUpRight size={19} /></a></>}
+        <span className="intro-label">Meet the developer</span><h2>{name}</h2>
+        {profile?.introVideo ? <video src={profile.introVideo} controls autoPlay playsInline /> : <><p>{profile?.bio || 'Motivated Software Engineering graduate candidate skilled in React.js, Node.js, Java, Python, and SQL, engineering high-performance applications.'}</p><a className="reference-primary" href="#projects" onClick={() => introDialog.current.close()}>Explore Selected Works <ArrowUpRight size={19} /></a></>}
       </dialog>
     </section>
   );

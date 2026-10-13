@@ -106,6 +106,10 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     imagePublicId: ''
   });
 
+  // Skills Manager interactive input state
+  const [newSkillInputs, setNewSkillInputs] = useState({});
+  const [newCategoryName, setNewCategoryName] = useState('');
+
   // Keep HTML document data-theme synchronized with dashboard theme
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -429,8 +433,8 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
       techStack: '',
       highlights: '',
       featured: true,
-      githubUrl: 'https://github.com',
-      liveUrl: 'https://github.com',
+      githubUrl: '',
+      liveUrl: '',
       image: '',
       imagePublicId: ''
     });
@@ -706,6 +710,35 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     const updated = [...skills];
     updated[catIdx].items[itemIdx].level = parseInt(newLevel, 10);
     setSkills(updated);
+  };
+
+  const deleteSkillItem = (catIdx, itemIdx) => {
+    const updated = [...skills];
+    updated[catIdx].items = updated[catIdx].items.filter((_, i) => i !== itemIdx);
+    setSkills(updated);
+  };
+
+  const handleAddSkillItem = (catIdx) => {
+    const inputVal = (newSkillInputs[catIdx]?.name || '').trim();
+    const levelVal = parseInt(newSkillInputs[catIdx]?.level || 85, 10);
+    if (!inputVal) return;
+    const updated = [...skills];
+    if (!updated[catIdx].items) updated[catIdx].items = [];
+    updated[catIdx].items.push({ name: inputVal, level: levelVal });
+    setSkills(updated);
+    setNewSkillInputs((prev) => ({ ...prev, [catIdx]: { name: '', level: 85 } }));
+  };
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) return;
+    setSkills([...skills, { category: newCategoryName.trim(), items: [] }]);
+    setNewCategoryName('');
+  };
+
+  const handleDeleteCategory = (catIdx) => {
+    const catName = skills[catIdx]?.category || 'this category';
+    if (!window.confirm(`Delete the entire category "${catName}" and all its skills?`)) return;
+    setSkills(skills.filter((_, idx) => idx !== catIdx));
   };
 
   // Unread messages count for badges
@@ -1874,7 +1907,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                     Technical Competencies Manager
                   </h2>
                   <p className="admin-header-subtitle">
-                    Adjust proficiency scores, skill items, and category taxonomies.
+                    Add, edit, or remove technical skills, categories, and proficiency scores.
                   </p>
                 </div>
                 <button onClick={handleSaveSkills} className="admin-btn-primary">
@@ -1883,18 +1916,92 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                 </button>
               </div>
 
+              {/* Add New Category Control */}
+              <div className="admin-card" style={{ marginBottom: '24px', padding: '16px 20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--adm-text-title)' }}>
+                    Add New Category:
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="e.g. Cloud &amp; DevOps or System Architecture"
+                    className="admin-form-input"
+                    style={{ maxWidth: '340px', flex: '1 1 220px' }}
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCategory();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCategory}
+                    className="admin-btn-sync"
+                    style={{ padding: '8px 16px', fontSize: '0.82rem' }}
+                  >
+                    <Plus size={14} />
+                    <span>Create Category</span>
+                  </button>
+                </div>
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '24px' }}>
                 {skills.map((cat, catIdx) => (
-                  <div key={cat.category} className="admin-card">
-                    <h3 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.2rem', color: 'var(--adm-gold-primary)', marginBottom: '16px' }}>
-                      {cat.category}
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div key={cat.category || catIdx} className="admin-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <h3 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.2rem', color: 'var(--adm-gold-primary)', margin: 0 }}>
+                        {cat.category}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCategory(catIdx)}
+                        title="Delete category"
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          border: '1px solid rgba(239, 68, 68, 0.25)',
+                          borderRadius: '8px',
+                          padding: '4px 8px',
+                          color: '#EF4444',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '0.72rem'
+                        }}
+                      >
+                        <Trash2 size={12} />
+                        <span>Delete</span>
+                      </button>
+                    </div>
+
+                    {/* Skill items list */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}>
                       {cat.items?.map((item, itemIdx) => (
-                        <div key={item.name}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <div key={item.name || itemIdx} style={{ background: 'var(--adm-surface-trans)', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--adm-border-subtle)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                             <span style={{ fontSize: '0.88rem', color: 'var(--adm-text-title)', fontWeight: 600 }}>{item.name}</span>
-                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--adm-gold-primary)' }}>{item.level}%</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--adm-gold-primary)' }}>{item.level}%</span>
+                              <button
+                                type="button"
+                                onClick={() => deleteSkillItem(catIdx, itemIdx)}
+                                title="Remove skill"
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: 'var(--adm-text-muted)',
+                                  cursor: 'pointer',
+                                  padding: '2px',
+                                  display: 'flex',
+                                  alignItems: 'center'
+                                }}
+                              >
+                                <Trash2 size={13} style={{ opacity: 0.7 }} />
+                              </button>
+                            </div>
                           </div>
                           <input
                             type="range"
@@ -1906,6 +2013,53 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                           />
                         </div>
                       ))}
+                    </div>
+
+                    {/* Add new skill to this category */}
+                    <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--adm-border-subtle)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        placeholder="Add skill (e.g. Next.js)..."
+                        className="admin-form-input"
+                        style={{ padding: '6px 10px', fontSize: '0.82rem', flex: 1 }}
+                        value={newSkillInputs[catIdx]?.name || ''}
+                        onChange={(e) =>
+                          setNewSkillInputs((prev) => ({
+                            ...prev,
+                            [catIdx]: { ...prev[catIdx], name: e.target.value }
+                          }))
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddSkillItem(catIdx);
+                          }
+                        }}
+                      />
+                      <input
+                        type="number"
+                        min="50"
+                        max="100"
+                        title="Proficiency %"
+                        className="admin-form-input"
+                        style={{ width: '60px', padding: '6px 8px', fontSize: '0.82rem', textAlign: 'center' }}
+                        value={newSkillInputs[catIdx]?.level ?? 85}
+                        onChange={(e) =>
+                          setNewSkillInputs((prev) => ({
+                            ...prev,
+                            [catIdx]: { ...prev[catIdx], level: e.target.value }
+                          }))
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAddSkillItem(catIdx)}
+                        className="admin-btn-sync"
+                        style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+                      >
+                        <Plus size={13} />
+                        <span>Add</span>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -2152,11 +2306,11 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                       setEducation([
                         ...education,
                         {
-                          degree: 'Software Engineer',
-                          institution: 'Enterprise Systems Inc.',
-                          period: '2024 — Present',
-                          badge: 'Full-Time',
-                          description: 'Architecting scalable applications and microservices.'
+                          degree: 'BSc (Hons) Software Engineering',
+                          institution: 'Cardiff Metropolitan University / ICBT Campus',
+                          period: '2023 — 2024',
+                          badge: 'Academic Milestone',
+                          description: 'Coursework completed; final results pending official release.'
                         }
                       ]);
                     }}
@@ -2657,6 +2811,36 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   value={projectForm.highlights}
                   onChange={(e) => setProjectForm({ ...projectForm, highlights: e.target.value })}
                 />
+              </div>
+
+              {/* GitHub & Live Demo Links */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                <div>
+                  <label className="admin-label">GitHub Repository URL (Optional)</label>
+                  <input
+                    type="url"
+                    placeholder="https://github.com/januuthayan1967-cloud/repo-name"
+                    className="admin-form-input"
+                    value={projectForm.githubUrl}
+                    onChange={(e) => setProjectForm({ ...projectForm, githubUrl: e.target.value })}
+                  />
+                  <span style={{ fontSize: '0.72rem', color: 'var(--adm-text-faint)', marginTop: '4px', display: 'block' }}>
+                    Leave empty for projects not yet published on GitHub. The GitHub button appears only when a URL is set.
+                  </span>
+                </div>
+                <div>
+                  <label className="admin-label">Live Demo / Deployment URL (Optional)</label>
+                  <input
+                    type="url"
+                    placeholder="https://your-demo-url.com"
+                    className="admin-form-input"
+                    value={projectForm.liveUrl}
+                    onChange={(e) => setProjectForm({ ...projectForm, liveUrl: e.target.value })}
+                  />
+                  <span style={{ fontSize: '0.72rem', color: 'var(--adm-text-faint)', marginTop: '4px', display: 'block' }}>
+                    Optional live demonstration or staging link.
+                  </span>
+                </div>
               </div>
 
               {/* Project Image */}

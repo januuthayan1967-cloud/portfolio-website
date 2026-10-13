@@ -35,10 +35,10 @@ export default function ProjectsSection({ projects = [] }) {
     if (activeFilter === 'All') return true;
     const cat = (p.category || '').toLowerCase();
     if (activeFilter === 'Web Apps') return cat.includes('web') || cat.includes('full-stack');
-    if (activeFilter === 'Mobile') return cat.includes('mobile') || cat.includes('hospitality');
+    if (activeFilter === 'Mobile') return cat.includes('mobile') || cat.includes('hospitality') || cat.includes('android');
     if (activeFilter === 'Enterprise') return cat.includes('enterprise');
-    if (activeFilter === 'Systems') return cat.includes('system') || cat.includes('analytics');
-    if (activeFilter === 'UI/UX') return true;
+    if (activeFilter === 'Systems') return cat.includes('system') || cat.includes('analytics') || cat.includes('desktop') || cat.includes('machine learning');
+    if (activeFilter === 'UI/UX') return cat.includes('web') || cat.includes('full-stack') || cat.includes('mobile');
     return true;
   });
 
@@ -255,7 +255,7 @@ export default function ProjectsSection({ projects = [] }) {
                     }}
                   />
 
-                  {/* Top-Right External Link Button */}
+                  {/* Top-Right Action Buttons: Live URL & GitHub URL */}
                   {project.liveUrl && (
                     <a
                       href={project.liveUrl}
@@ -278,10 +278,41 @@ export default function ProjectsSection({ projects = [] }) {
                         alignItems: 'center',
                         justifyContent: 'center',
                         textDecoration: 'none',
-                        zIndex: 2
+                        zIndex: 2,
+                        transition: 'all 0.2s ease'
                       }}
                     >
                       <ArrowUpRight size={14} />
+                    </a>
+                  )}
+
+                  {project.githubUrl && (
+                    <a
+                      href={project.githubUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="View GitHub Repository"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: project.liveUrl ? '48px' : '10px',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'rgba(7, 12, 21, 0.85)',
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid rgba(217, 169, 104, 0.4)',
+                        color: 'var(--gold-light)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textDecoration: 'none',
+                        zIndex: 2,
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <Github size={14} />
                     </a>
                   )}
 

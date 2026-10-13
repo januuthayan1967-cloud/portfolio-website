@@ -78,7 +78,7 @@ export default function ProfessionalDesignationPanel({ style = {} }) {
             lineHeight: 1.2
           }}
         >
-          FULL-STACK
+          GRADUATE
         </span>
         <span
           style={{
@@ -103,7 +103,7 @@ export default function ProfessionalDesignationPanel({ style = {} }) {
             lineHeight: 1.2
           }}
         >
-          &amp; SOLUTIONS ARCHITECT
+          &amp; FULL-STACK DEVELOPER
         </span>
       </div>
     </div>

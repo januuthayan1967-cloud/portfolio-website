@@ -6,7 +6,9 @@ import {
   Smartphone, 
   Terminal, 
   Palette,
-  ArrowRight
+  ArrowRight,
+  Layers,
+  Cpu
 } from 'lucide-react';
 import CinematicAtmosphere from './CinematicAtmosphere';
 
@@ -40,6 +42,42 @@ const BrandIcons = {
       <text x="64" y="90" fill="#000000" fontFamily="sans-serif" fontWeight="900" fontSize="56" textAnchor="middle">JS</text>
     </svg>
   ),
+  Java: () => (
+    <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
+      <rect width="128" height="128" rx="20" fill="#5382A1" />
+      <text x="64" y="86" fill="white" fontFamily="sans-serif" fontWeight="900" fontSize="50" textAnchor="middle">Java</text>
+    </svg>
+  ),
+  Python: () => (
+    <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
+      <path d="M63.6 12C36.6 12 38.3 23.7 38.3 23.7L38.4 35.8H64.3V39.5H27.7C27.7 39.5 12 37.7 12 64.6C12 91.5 25.7 89.9 25.7 89.9H33.9V78.4C33.9 78.4 33.4 64.6 47.4 64.6H73.3V52.8C73.3 52.8 74.3 39.5 63.6 39.5H63.6V12ZM52.2 20.3C55.4 20.3 58 22.9 58 26.1C58 29.3 55.4 31.9 52.2 31.9C49 31.9 46.4 29.3 46.4 26.1C46.4 22.9 49 20.3 52.2 20.3Z" fill="#3776AB" />
+      <path d="M64.4 116C91.4 116 89.7 104.3 89.7 104.3L89.6 92.2H63.7V88.5H100.3C100.3 88.5 116 90.3 116 63.4C116 36.5 102.3 38.1 102.3 38.1H94.1V49.6C94.1 49.6 94.6 63.4 80.6 63.4H54.7V75.2C54.7 75.2 53.7 88.5 64.4 88.5H64.4V116ZM75.8 107.7C72.6 107.7 70 105.1 70 101.9C70 98.7 72.6 96.1 75.8 96.1C79 96.1 81.6 98.7 81.6 101.9C81.6 105.1 79 107.7 75.8 107.7Z" fill="#FFD43B" />
+    </svg>
+  ),
+  PHP: () => (
+    <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
+      <ellipse cx="64" cy="64" rx="60" ry="40" fill="#777BB4" />
+      <text x="64" y="78" fill="white" fontFamily="sans-serif" fontWeight="900" fontSize="42" textAnchor="middle">PHP</text>
+    </svg>
+  ),
+  SQL: () => (
+    <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
+      <rect width="128" height="128" rx="20" fill="#003B57" />
+      <text x="64" y="85" fill="#38BDF8" fontFamily="sans-serif" fontWeight="900" fontSize="42" textAnchor="middle">SQL</text>
+    </svg>
+  ),
+  CPP: () => (
+    <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
+      <rect width="128" height="128" rx="20" fill="#00599C" />
+      <text x="64" y="85" fill="white" fontFamily="sans-serif" fontWeight="900" fontSize="46" textAnchor="middle">C++</text>
+    </svg>
+  ),
+  CSharp: () => (
+    <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
+      <rect width="128" height="128" rx="20" fill="#239120" />
+      <text x="64" y="85" fill="white" fontFamily="sans-serif" fontWeight="900" fontSize="46" textAnchor="middle">C#</text>
+    </svg>
+  ),
   HTML5: () => (
     <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
       <polygon points="19,112 10,12 118,12 109,112 64,124" fill="#E44D26" />
@@ -55,6 +93,17 @@ const BrandIcons = {
       <circle cx="64" cy="48" r="6" fill="#FDE047" />
     </svg>
   ),
+  Tailwind: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="#38BDF8">
+      <path d="M12.001,4.8c-3.2,0-5.2,1.6-6,4.8c1.2-1.6,2.6-2.2,4.2-1.8c0.913,0.228,1.565,0.89,2.288,1.624 C13.666,10.618,15.027,12,18.001,12c3.2,0,5.2-1.6,6-4.8c-1.2,1.6-2.6,2.2-4.2,1.8c-0.913-0.228-1.565-0.89-2.288-1.624 C16.337,6.182,14.976,4.8,12.001,4.8z M6.001,12c-3.2,0-5.2,1.6-6,4.8c1.2-1.6,2.6-2.2,4.2-1.8c0.913,0.228,1.565,0.89,2.288,1.624 c1.177,1.194,2.538,2.576,5.512,2.576c3.2,0,5.2-1.6,6-4.8c-1.2,1.6-2.6,2.2-4.2,1.8c-0.913-0.228-1.565-0.89-2.288-1.624 C10.337,13.382,8.976,12,6.001,12z"/>
+    </svg>
+  ),
+  FramerMotion: () => (
+    <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
+      <polygon points="64,14 114,64 14,64" fill="#EA4C89" />
+      <polygon points="14,64 64,114 114,64" fill="#0055FF" />
+    </svg>
+  ),
   Nodejs: () => (
     <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
       <polygon points="64,14 114,43 114,101 64,130 14,101 14,43" fill="#339933" />
@@ -67,10 +116,11 @@ const BrandIcons = {
       <text x="64" y="78" fill="white" fontFamily="sans-serif" fontWeight="800" fontSize="36" textAnchor="middle">ex</text>
     </svg>
   ),
-  Python: () => (
-    <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
-      <path d="M63.6 12C36.6 12 38.3 23.7 38.3 23.7L38.4 35.8H64.3V39.5H27.7C27.7 39.5 12 37.7 12 64.6C12 91.5 25.7 89.9 25.7 89.9H33.9V78.4C33.9 78.4 33.4 64.6 47.4 64.6H73.3V52.8C73.3 52.8 74.3 39.5 63.6 39.5H63.6V12ZM52.2 20.3C55.4 20.3 58 22.9 58 26.1C58 29.3 55.4 31.9 52.2 31.9C49 31.9 46.4 29.3 46.4 26.1C46.4 22.9 49 20.3 52.2 20.3Z" fill="#3776AB" />
-      <path d="M64.4 116C91.4 116 89.7 104.3 89.7 104.3L89.6 92.2H63.7V88.5H100.3C100.3 88.5 116 90.3 116 63.4C116 36.5 102.3 38.1 102.3 38.1H94.1V49.6C94.1 49.6 94.6 63.4 80.6 63.4H54.7V75.2C54.7 75.2 53.7 88.5 64.4 88.5H64.4V116ZM75.8 107.7C72.6 107.7 70 105.1 70 101.9C70 98.7 72.6 96.1 75.8 96.1C79 96.1 81.6 98.7 81.6 101.9C81.6 105.1 79 107.7 75.8 107.7Z" fill="#FFD43B" />
+  Flask: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 2v7.31L4.66 19.3A2 2 0 0 0 6.36 22h11.28a2 2 0 0 0 1.7-2.7L14 9.31V2" />
+      <path d="M8.5 2h7" />
+      <path d="M14 9.3h-4" />
     </svg>
   ),
   RestAPI: () => (
@@ -91,38 +141,16 @@ const BrandIcons = {
       <path d="M64 4C64 4 62 44 62 74C62 88 64 124 64 124C78 106 90 88 90 72C90 40 64 4 64 4Z" fill="#119245" />
     </svg>
   ),
-  Postgres: () => (
+  MySQL: () => (
     <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
-      <circle cx="64" cy="64" r="64" fill="#336791" />
-      <path d="M64 28C46 28 36 40 36 56C36 74 46 92 60 98V86C52 82 48 72 48 62C48 50 56 40 64 40C72 40 80 50 80 62C80 72 76 82 68 86V98C82 92 92 74 92 56C92 40 82 28 64 28Z" fill="white" />
-    </svg>
-  ),
-  AWS: () => (
-    <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
-      <rect width="128" height="128" rx="20" fill="#FF9900" />
-      <path d="M30 75C54 90 80 90 100 75" stroke="#232F3E" strokeWidth="10" strokeLinecap="round" />
-      <polygon points="102,74 96,86 106,82" fill="#232F3E" />
-    </svg>
-  ),
-  Firebase: () => (
-    <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
-      <path d="M26 98L44 24L58 52L26 98Z" fill="#FFA000" />
-      <path d="M102 98L80 40L26 98H102Z" fill="#FFCA28" />
-      <path d="M102 98L80 40L58 52L102 98Z" fill="#F57C00" />
+      <rect width="128" height="128" rx="20" fill="#00618A" />
+      <text x="64" y="85" fill="#E48E00" fontFamily="sans-serif" fontWeight="900" fontSize="36" textAnchor="middle">MySQL</text>
     </svg>
   ),
   SQLite: () => (
     <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
       <rect width="128" height="128" rx="20" fill="#003B57" />
       <text x="64" y="85" fill="#38BDF8" fontFamily="sans-serif" fontWeight="900" fontSize="34" textAnchor="middle">SQL</text>
-    </svg>
-  ),
-  ReactNative: () => (
-    <svg width="18" height="18" viewBox="0 0 115.3 100" fill="#61DAFB">
-      <ellipse cx="57.65" cy="50" rx="16.5" ry="46" transform="rotate(30 57.65 50)" fill="none" stroke="#61DAFB" strokeWidth="6" />
-      <ellipse cx="57.65" cy="50" rx="16.5" ry="46" transform="rotate(90 57.65 50)" fill="none" stroke="#61DAFB" strokeWidth="6" />
-      <ellipse cx="57.65" cy="50" rx="16.5" ry="46" transform="rotate(150 57.65 50)" fill="none" stroke="#61DAFB" strokeWidth="6" />
-      <circle cx="57.65" cy="50" r="9" fill="#61DAFB" />
     </svg>
   ),
   Android: () => (
@@ -135,13 +163,6 @@ const BrandIcons = {
       <rect x="34" y="74" width="60" height="36" rx="6" fill="#3DDC84" />
     </svg>
   ),
-  Flutter: () => (
-    <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
-      <path d="M78 12L24 66L42 84L114 12H78Z" fill="#42A5F5" />
-      <path d="M78 72L50 100L68 118L114 72H78Z" fill="#0D47A1" />
-      <path d="M50 100L68 82L86 100L68 118L50 100Z" fill="#29B6F6" />
-    </svg>
-  ),
   Git: () => (
     <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
       <rect width="128" height="128" rx="20" fill="#F05032" />
@@ -151,25 +172,6 @@ const BrandIcons = {
       <circle cx="64" cy="64" r="12" fill="white" />
     </svg>
   ),
-  Docker: () => (
-    <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
-      <circle cx="64" cy="64" r="64" fill="#2496ED" />
-      <rect x="32" y="52" width="14" height="12" fill="white" rx="2" />
-      <rect x="50" y="52" width="14" height="12" fill="white" rx="2" />
-      <rect x="68" y="52" width="14" height="12" fill="white" rx="2" />
-      <rect x="50" y="36" width="14" height="12" fill="white" rx="2" />
-      <path d="M22 68C26 88 50 94 74 94C102 94 112 78 112 68H22Z" fill="white" />
-    </svg>
-  ),
-  Linux: () => (
-    <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
-      <circle cx="64" cy="64" r="64" fill="#0F172A" />
-      <ellipse cx="64" cy="68" rx="30" ry="38" fill="white" />
-      <circle cx="52" cy="50" r="6" fill="#0F172A" />
-      <circle cx="76" cy="50" r="6" fill="#0F172A" />
-      <polygon points="64,58 54,68 74,68" fill="#F59E0B" />
-    </svg>
-  ),
   Vite: () => (
     <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
       <polygon points="64,12 118,28 64,116 10,28" fill="#BD34FE" />
@@ -177,120 +179,176 @@ const BrandIcons = {
       <polygon points="66,24 40,68 62,68 56,104 88,52 66,52" fill="#FFD43B" />
     </svg>
   ),
-  CICD: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+  WebRTC: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="23 7 16 12 23 17 23 7" />
+      <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
     </svg>
   ),
-  Figma: () => (
-    <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
-      <circle cx="44" cy="40" r="20" fill="#F24E1E" />
-      <circle cx="84" cy="40" r="20" fill="#FF7262" />
-      <circle cx="44" cy="64" r="20" fill="#A259FF" />
-      <circle cx="84" cy="64" r="20" fill="#1ABCFE" />
-      <circle cx="44" cy="88" r="20" fill="#0ACF83" />
-    </svg>
-  ),
-  UIUX: () => (
+  MachineLearning: () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-    </svg>
-  ),
-  Responsive: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0284C7" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="3" width="20" height="14" rx="2" />
-      <line x1="8" y1="21" x2="16" y2="21" />
-      <line x1="12" y1="17" x2="12" y2="21" />
-    </svg>
-  ),
-  Performance: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-      <polyline points="16 7 22 7 22 13" />
+      <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z" />
+      <circle cx="12" cy="12" r="3" />
     </svg>
   )
 };
 
-export default function SkillsSection() {
-  // 6 Categorized Panels matching reference image 1:1
-  const skillPanels = [
-    {
-      num: '01',
-      title: 'Frontend Development',
-      desc: 'Building responsive and interactive user interfaces with modern frameworks',
-      icon: <Code2 size={22} color="#18130D" />,
-      skills: [
-        { name: 'React', badge: 'v18+', badgeType: 'blue', Icon: BrandIcons.React },
-        { name: 'Next.js', badge: 'SSR/SSG', badgeType: 'champagne', Icon: BrandIcons.Nextjs },
-        { name: 'TypeScript', badge: 'Strict', badgeType: 'blue', Icon: BrandIcons.TypeScript },
-        { name: 'JavaScript', badge: 'ES6+', badgeType: 'champagne', Icon: BrandIcons.JavaScript },
-        { name: 'HTML5/CSS3', badge: 'Modern', badgeType: 'orange', Icon: BrandIcons.HTML5 },
-        { name: 'Three.js', badge: 'WebGL', badgeType: 'champagne', Icon: BrandIcons.Threejs }
-      ]
-    },
-    {
-      num: '02',
-      title: 'Backend Development',
-      desc: 'Developing robust and scalable server-side applications',
-      icon: <Server size={22} color="#18130D" />,
-      skills: [
-        { name: 'Node.js', badge: 'Runtime', badgeType: 'green', Icon: BrandIcons.Nodejs },
-        { name: 'Express.js', badge: 'REST API', badgeType: 'champagne', Icon: BrandIcons.Express },
-        { name: 'Python', badge: 'Async', badgeType: 'champagne', Icon: BrandIcons.Python },
-        { name: 'REST APIs', badge: 'Microservices', badgeType: 'champagne', Icon: BrandIcons.RestAPI },
-        { name: 'JWT Auth', badge: 'Security', badgeType: 'green', Icon: BrandIcons.Jwt }
-      ]
-    },
-    {
-      num: '03',
-      title: 'Database & Cloud',
-      desc: 'Managing data and cloud infrastructure for scalable solutions',
-      icon: <Database size={22} color="#18130D" />,
-      skills: [
-        { name: 'MongoDB', badge: 'NoSQL', badgeType: 'green', Icon: BrandIcons.MongoDB },
-        { name: 'PostgreSQL', badge: 'Relational', badgeType: 'blue', Icon: BrandIcons.Postgres },
-        { name: 'AWS', badge: 'Cloud', badgeType: 'champagne', Icon: BrandIcons.AWS },
-        { name: 'Firebase', badge: 'Realtime', badgeType: 'champagne', Icon: BrandIcons.Firebase },
-        { name: 'SQLite', badge: 'Embedded', badgeType: 'blue', Icon: BrandIcons.SQLite }
-      ]
-    },
-    {
-      num: '04',
-      title: 'Mobile Development',
-      desc: 'Creating cross-platform mobile applications for modern devices',
-      icon: <Smartphone size={22} color="#18130D" />,
-      skills: [
-        { name: 'React Native', badge: 'Cross-platform', badgeType: 'green', Icon: BrandIcons.ReactNative },
-        { name: 'Android / Java', badge: 'Native SDK', badgeType: 'green', Icon: BrandIcons.Android },
-        { name: 'Flutter', badge: 'Dart', badgeType: 'blue', Icon: BrandIcons.Flutter }
-      ]
-    },
-    {
-      num: '05',
-      title: 'Tools & DevOps',
-      desc: 'Streamlining development and deployment workflows',
-      icon: <Terminal size={22} color="#18130D" />,
-      skills: [
-        { name: 'Git & GitHub', badge: 'VCS', badgeType: 'champagne', Icon: BrandIcons.Git },
-        { name: 'Docker', badge: 'Containers', badgeType: 'champagne', Icon: BrandIcons.Docker },
-        { name: 'Linux', badge: 'CLI/SSH', badgeType: 'champagne', Icon: BrandIcons.Linux },
-        { name: 'Vite', badge: 'Bundler', badgeType: 'champagne', Icon: BrandIcons.Vite },
-        { name: 'CI/CD Pipelines', badge: 'Automated', badgeType: 'green', Icon: BrandIcons.CICD }
-      ]
-    },
-    {
-      num: '06',
-      title: 'Design & Others',
-      desc: 'Designing beautiful and performant user experiences',
-      icon: <Palette size={22} color="#18130D" />,
-      skills: [
-        { name: 'Figma', badge: 'Prototyping', badgeType: 'champagne', Icon: BrandIcons.Figma },
-        { name: 'UI/UX Design', badge: 'Design System', badgeType: 'champagne', Icon: BrandIcons.UIUX },
-        { name: 'Responsive UI', badge: 'Mobile-first', badgeType: 'blue', Icon: BrandIcons.Responsive },
-        { name: 'Performance Opt', badge: 'Lighthouse', badgeType: 'champagne', Icon: BrandIcons.Performance }
-      ]
-    }
-  ];
+// Helper function to resolve skill icons
+function getSkillIcon(name) {
+  const n = (name || '').toLowerCase();
+  if (n.includes('react') && !n.includes('native')) return BrandIcons.React;
+  if (n.includes('javascript') || n === 'js') return BrandIcons.JavaScript;
+  if (n.includes('typescript') || n === 'ts') return BrandIcons.TypeScript;
+  if (n.includes('python')) return BrandIcons.Python;
+  if (n.includes('java ee') || n.includes('jsp') || n.includes('servlet')) return BrandIcons.Java;
+  if (n.includes('java') && !n.includes('script')) return BrandIcons.Java;
+  if (n.includes('c++')) return BrandIcons.CPP;
+  if (n.includes('c#')) return BrandIcons.CSharp;
+  if (n.includes('php')) return BrandIcons.PHP;
+  if (n.includes('mysql')) return BrandIcons.MySQL;
+  if (n.includes('sqlite')) return BrandIcons.SQLite;
+  if (n.includes('sql')) return BrandIcons.SQL;
+  if (n.includes('html') || n.includes('css')) return BrandIcons.HTML5;
+  if (n.includes('three')) return BrandIcons.Threejs;
+  if (n.includes('tailwind')) return BrandIcons.Tailwind;
+  if (n.includes('framer')) return BrandIcons.FramerMotion;
+  if (n.includes('node')) return BrandIcons.Nodejs;
+  if (n.includes('express')) return BrandIcons.Express;
+  if (n.includes('flask')) return BrandIcons.Flask;
+  if (n.includes('rest') || n.includes('api')) return BrandIcons.RestAPI;
+  if (n.includes('jwt') || n.includes('auth')) return BrandIcons.Jwt;
+  if (n.includes('mongo')) return BrandIcons.MongoDB;
+  if (n.includes('android')) return BrandIcons.Android;
+  if (n.includes('git')) return BrandIcons.Git;
+  if (n.includes('vite')) return BrandIcons.Vite;
+  if (n.includes('webrtc')) return BrandIcons.WebRTC;
+  if (n.includes('machine learning') || n.includes('mobilenet') || n.includes('gemini')) return BrandIcons.MachineLearning;
+  return BrandIcons.JavaScript;
+}
+
+function getCategoryIcon(catName, iconName) {
+  const n = (catName || '').toLowerCase();
+  if (n.includes('language') || iconName === 'Code') return <Code2 size={22} color="#18130D" />;
+  if (n.includes('front') || iconName === 'Layout') return <Layers size={22} color="#18130D" />;
+  if (n.includes('back') || iconName === 'Server') return <Server size={22} color="#18130D" />;
+  if (n.includes('data') || iconName === 'Database') return <Database size={22} color="#18130D" />;
+  if (n.includes('tool') || iconName === 'Terminal') return <Terminal size={22} color="#18130D" />;
+  return <Cpu size={22} color="#18130D" />;
+}
+
+function getCategoryDescription(catName) {
+  const n = (catName || '').toLowerCase();
+  if (n.includes('language')) return 'Core programming languages for full-stack, systems, and mobile software';
+  if (n.includes('front')) return 'Building responsive and interactive user interfaces with modern frameworks';
+  if (n.includes('back')) return 'Developing robust, scalable server architectures, microservices, and REST APIs';
+  if (n.includes('data')) return 'Relational, embedded, and distributed cloud NoSQL database engines';
+  if (n.includes('tool')) return 'Professional IDEs, development environments, and version control workflows';
+  return 'AI microservices, WebRTC streaming, and cloud platform integrations';
+}
+
+export default function SkillsSection({ skills = [] }) {
+  // Build panels from skills prop if available, or fallback to default panels
+  const skillPanels = (Array.isArray(skills) && skills.length > 0)
+    ? skills.map((cat, idx) => ({
+        num: String(idx + 1).padStart(2, '0'),
+        title: cat.category,
+        desc: getCategoryDescription(cat.category),
+        icon: getCategoryIcon(cat.category, cat.icon),
+        skills: (cat.items || []).map((item) => {
+          const badgeType = item.level >= 90 ? 'blue' : (item.level >= 85 ? 'champagne' : 'green');
+          return {
+            name: item.name,
+            badge: item.level ? `${item.level}%` : 'Verified',
+            badgeType,
+            Icon: getSkillIcon(item.name)
+          };
+        })
+      }))
+    : [
+        {
+          num: '01',
+          title: 'Languages',
+          desc: 'Core programming languages for full-stack, systems, and mobile software',
+          icon: <Code2 size={22} color="#18130D" />,
+          skills: [
+            { name: 'JavaScript', badge: '95%', badgeType: 'blue', Icon: BrandIcons.JavaScript },
+            { name: 'Java', badge: '90%', badgeType: 'blue', Icon: BrandIcons.Java },
+            { name: 'Python', badge: '90%', badgeType: 'blue', Icon: BrandIcons.Python },
+            { name: 'PHP', badge: '85%', badgeType: 'champagne', Icon: BrandIcons.PHP },
+            { name: 'SQL', badge: '90%', badgeType: 'blue', Icon: BrandIcons.SQL },
+            { name: 'HTML5 & CSS3', badge: '95%', badgeType: 'blue', Icon: BrandIcons.HTML5 },
+            { name: 'C++', badge: '85%', badgeType: 'champagne', Icon: BrandIcons.CPP },
+            { name: 'C#', badge: '80%', badgeType: 'green', Icon: BrandIcons.CSharp }
+          ]
+        },
+        {
+          num: '02',
+          title: 'Frontend Development',
+          desc: 'Building responsive and interactive user interfaces with modern frameworks',
+          icon: <Layers size={22} color="#18130D" />,
+          skills: [
+            { name: 'React', badge: '95%', badgeType: 'blue', Icon: BrandIcons.React },
+            { name: 'Vite', badge: '90%', badgeType: 'blue', Icon: BrandIcons.Vite },
+            { name: 'Tailwind CSS', badge: '92%', badgeType: 'blue', Icon: BrandIcons.Tailwind },
+            { name: 'Three.js', badge: '88%', badgeType: 'champagne', Icon: BrandIcons.Threejs },
+            { name: 'Framer Motion', badge: '85%', badgeType: 'champagne', Icon: BrandIcons.FramerMotion }
+          ]
+        },
+        {
+          num: '03',
+          title: 'Backend Development',
+          desc: 'Developing robust, scalable server architectures, microservices, and REST APIs',
+          icon: <Server size={22} color="#18130D" />,
+          skills: [
+            { name: 'Node.js', badge: '92%', badgeType: 'blue', Icon: BrandIcons.Nodejs },
+            { name: 'Express.js', badge: '92%', badgeType: 'blue', Icon: BrandIcons.Express },
+            { name: 'Flask', badge: '88%', badgeType: 'champagne', Icon: BrandIcons.Flask },
+            { name: 'Java EE', badge: '85%', badgeType: 'champagne', Icon: BrandIcons.Java },
+            { name: 'REST APIs', badge: '95%', badgeType: 'blue', Icon: BrandIcons.RestAPI },
+            { name: 'JWT Auth', badge: '92%', badgeType: 'blue', Icon: BrandIcons.Jwt }
+          ]
+        },
+        {
+          num: '04',
+          title: 'Databases',
+          desc: 'Relational, embedded, and distributed cloud NoSQL database engines',
+          icon: <Database size={22} color="#18130D" />,
+          skills: [
+            { name: 'MongoDB Atlas', badge: '92%', badgeType: 'blue', Icon: BrandIcons.MongoDB },
+            { name: 'MySQL', badge: '90%', badgeType: 'blue', Icon: BrandIcons.MySQL },
+            { name: 'SQLite', badge: '90%', badgeType: 'blue', Icon: BrandIcons.SQLite }
+          ]
+        },
+        {
+          num: '05',
+          title: 'Development Tools',
+          desc: 'Professional IDEs, development environments, and version control workflows',
+          icon: <Terminal size={22} color="#18130D" />,
+          skills: [
+            { name: 'Git & GitHub', badge: '95%', badgeType: 'blue', Icon: BrandIcons.Git },
+            { name: 'VS Code', badge: '95%', badgeType: 'blue', Icon: BrandIcons.JavaScript },
+            { name: 'Android Studio', badge: '90%', badgeType: 'blue', Icon: BrandIcons.Android },
+            { name: 'Visual Studio', badge: '85%', badgeType: 'champagne', Icon: BrandIcons.CPP },
+            { name: 'NetBeans', badge: '85%', badgeType: 'champagne', Icon: BrandIcons.Java },
+            { name: 'WAMP', badge: '85%', badgeType: 'champagne', Icon: BrandIcons.PHP },
+            { name: 'Jupyter', badge: '88%', badgeType: 'champagne', Icon: BrandIcons.Python }
+          ]
+        },
+        {
+          num: '06',
+          title: 'Additional Technologies',
+          desc: 'AI microservices, WebRTC streaming, and cloud platform integrations',
+          icon: <Cpu size={22} color="#18130D" />,
+          skills: [
+            { name: 'WebRTC', badge: '88%', badgeType: 'champagne', Icon: BrandIcons.WebRTC },
+            { name: 'Cloudinary', badge: '90%', badgeType: 'blue', Icon: BrandIcons.JavaScript },
+            { name: 'Vercel', badge: '92%', badgeType: 'blue', Icon: BrandIcons.JavaScript },
+            { name: 'Machine Learning', badge: '85%', badgeType: 'champagne', Icon: BrandIcons.MachineLearning },
+            { name: 'MobileNetV3', badge: '85%', badgeType: 'champagne', Icon: BrandIcons.MachineLearning },
+            { name: 'JUnit & Robolectric', badge: '88%', badgeType: 'champagne', Icon: BrandIcons.Java }
+          ]
+        }
+      ];
 
   // Helper function for badge colors
   const getBadgeStyle = (type) => {
@@ -463,7 +521,7 @@ export default function SkillsSection() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
             gap: '26px'
           }}
           className="skills-panels-grid"
@@ -653,32 +711,18 @@ export default function SkillsSection() {
             </div>
           ))}
         </div>
+
       </div>
 
       <style>{`
-        [data-theme="dark"] .skill-card-luxury {
-          background: rgba(14, 22, 36, 0.8) !important;
-          border-color: rgba(217, 169, 104, 0.25) !important;
-          box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45) !important;
-        }
-        [data-theme="dark"] .skill-pill-item {
-          background: rgba(20, 31, 50, 0.8) !important;
-          border-color: rgba(245, 240, 232, 0.1) !important;
-        }
-        [data-theme="dark"] .skill-pill-item span.font-sans {
-          color: #F8FAFC !important;
-        }
-
-        @media (max-width: 1100px) {
+        @media (max-width: 1024px) {
           .skills-panels-grid {
             grid-template-columns: repeat(2, 1fr) !important;
-            gap: 20px !important;
           }
         }
-        @media (max-width: 680px) {
+        @media (max-width: 640px) {
           .skills-panels-grid {
             grid-template-columns: 1fr !important;
-            gap: 18px !important;
           }
         }
       `}</style>

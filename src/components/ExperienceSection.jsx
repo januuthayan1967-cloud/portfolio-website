@@ -1,33 +1,43 @@
 import React, { useState } from 'react';
-import { Calendar, Briefcase, GraduationCap, Building2, MapPin, Sparkles } from 'lucide-react';
+import { Calendar, GraduationCap, Building2, MapPin, Sparkles, Award } from 'lucide-react';
 import CinematicAtmosphere from './CinematicAtmosphere';
 
 export default function ExperienceSection({ education = [] }) {
-  const [activeTab, setActiveTab] = useState('experience');
+  const [activeTab, setActiveTab] = useState('education');
 
-  const experienceItems = [
+  // Genuine fallback education milestones from CV if not loaded from database
+  const fallbackEducation = [
     {
-      period: "2023 - Present",
-      role: "Full-Stack Developer",
-      company: "Tech Solutions Company",
-      desc: "Building scalable web platforms and enterprise solutions using modern technologies.",
-      highlights: ["Architected microservices & REST APIs", "Reduced query latency by 45%", "Engineered high-performance React frontend"]
+      degree: "BSc (Hons) Software Engineering",
+      institution: "ICBT Campus (affiliated with Cardiff Metropolitan University, UK)",
+      period: "Coursework completed; final results pending",
+      badge: "Results Pending",
+      description: "Completed comprehensive software engineering curriculum covering advanced full-stack web applications, distributed systems, mobile computing, and AI-integrated systems."
     },
     {
-      period: "2022 - 2023",
-      role: "Software Engineer (Intern)",
-      company: "Innovation Labs",
-      desc: "Developed and maintained web applications, collaborated with cross-functional teams.",
-      highlights: ["Spearheaded automated testing workflows", "Collaborated on multi-tenant architecture", "Implemented responsive UI designs"]
+      degree: "Higher National Diploma in Computing & Software Engineering",
+      institution: "ICBT Campus (affiliated with Cardiff Metropolitan University)",
+      period: "Completed",
+      badge: "HND Completed",
+      description: "In-depth foundation in enterprise software architecture, database management systems, object-oriented software engineering, and web development."
     },
     {
-      period: "2021 - 2022",
-      role: "Freelance Developer",
-      company: "Independent",
-      desc: "Delivered custom solutions for various clients across different industries.",
-      highlights: ["Engineered bespoke client portals", "Custom database schema modeling", "Delivered 100% on-time deployments"]
+      degree: "G.C.E. Advanced Level — Physical Science Stream",
+      institution: "Sri Lanka",
+      period: "2021",
+      badge: "Physical Science",
+      description: "Rigorous scientific foundation in Combined Mathematics, Physics, and Chemistry."
+    },
+    {
+      degree: "G.C.E. Ordinary Level Examination",
+      institution: "Sri Lanka",
+      period: "2018",
+      badge: "Ordinary Level",
+      description: "Completed secondary education with distinctions across Mathematics, Science, and Information Technology."
     }
   ];
+
+  const displayList = (Array.isArray(education) && education.length > 0) ? education : fallbackEducation;
 
   return (
     <section
@@ -45,7 +55,7 @@ export default function ExperienceSection({ education = [] }) {
         {/* SECTION HEADER */}
         <div style={{ marginBottom: '56px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-            <span className="badge-gold">05 // EXPERIENCE</span>
+            <span className="badge-gold">05 // EDUCATION</span>
             <span
               className="font-mono"
               style={{
@@ -55,7 +65,7 @@ export default function ExperienceSection({ education = [] }) {
                 textTransform: 'uppercase'
               }}
             >
-              CHRONOLOGICAL TRAJECTORY
+              ACADEMIC TRAJECTORY &amp; QUALIFICATIONS
             </span>
           </div>
 
@@ -69,10 +79,10 @@ export default function ExperienceSection({ education = [] }) {
                 lineHeight: 1.15
               }}
             >
-              PROFESSIONAL <span className="gold-gradient-text">JOURNEY</span>
+              ACADEMIC <span className="gold-gradient-text">JOURNEY</span>
             </h2>
 
-            {/* Toggle Tab: Professional vs Academic */}
+            {/* Trajectory Status Pill */}
             <div
               style={{
                 display: 'inline-flex',
@@ -84,40 +94,22 @@ export default function ExperienceSection({ education = [] }) {
               }}
             >
               <button
-                onClick={() => setActiveTab('experience')}
-                style={{
-                  padding: '7px 20px',
-                  borderRadius: '9999px',
-                  border: 'none',
-                  background: activeTab === 'experience' ? 'linear-gradient(135deg, #F2CE83 0%, #D4A23A 100%)' : 'transparent',
-                  color: activeTab === 'experience' ? '#111827' : 'var(--text-secondary)',
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.25s ease',
-                  boxShadow: activeTab === 'experience' ? '0 2px 10px rgba(212, 162, 58, 0.25)' : 'none'
-                }}
-              >
-                Work Experience
-              </button>
-              <button
                 onClick={() => setActiveTab('education')}
                 style={{
                   padding: '7px 20px',
                   borderRadius: '9999px',
                   border: 'none',
-                  background: activeTab === 'education' ? 'linear-gradient(135deg, #F2CE83 0%, #D4A23A 100%)' : 'transparent',
-                  color: activeTab === 'education' ? '#111827' : 'var(--text-secondary)',
+                  background: 'linear-gradient(135deg, #F2CE83 0%, #D4A23A 100%)',
+                  color: '#111827',
                   fontFamily: 'var(--font-heading)',
                   fontSize: '0.82rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                   transition: 'all 0.25s ease',
-                  boxShadow: activeTab === 'education' ? '0 2px 10px rgba(212, 162, 58, 0.25)' : 'none'
+                  boxShadow: '0 2px 10px rgba(212, 162, 58, 0.25)'
                 }}
               >
-                Education
+                Education &amp; Qualifications
               </button>
             </div>
           </div>
@@ -131,7 +123,7 @@ export default function ExperienceSection({ education = [] }) {
           <div className="timeline-line-h" />
 
           <div className="timeline-track-h">
-            {(activeTab === 'experience' ? experienceItems : education).map((item, idx) => (
+            {displayList.map((item, idx) => (
               <div key={idx} style={{ position: 'relative' }}>
                 {/* Node on Line */}
                 <div className="timeline-node-h" />
@@ -161,48 +153,66 @@ export default function ExperienceSection({ education = [] }) {
                     e.currentTarget.style.boxShadow = 'var(--card-shadow)';
                   }}
                 >
-                  {/* Period Pill */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  {/* Period Pill & Badge */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                     <span className="badge-gold" style={{ fontSize: '0.72rem', padding: '3px 10px' }}>
                       <Calendar size={12} />
                       {item.period}
                     </span>
+                    {item.badge && (
+                      <span
+                        className="font-mono"
+                        style={{
+                          fontSize: '0.68rem',
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          background: 'rgba(214, 165, 72, 0.12)',
+                          border: '1px solid rgba(242, 200, 121, 0.35)',
+                          color: 'var(--gold-bright, #FFD978)',
+                          fontWeight: 600
+                        }}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Title / Role */}
+                  {/* Title / Degree */}
                   <h3
                     className="font-heading"
                     style={{
-                      fontSize: '1.2rem',
+                      fontSize: '1.15rem',
                       fontWeight: 700,
                       color: 'var(--text-main)',
-                      marginTop: '4px'
+                      marginTop: '4px',
+                      lineHeight: 1.3
                     }}
                   >
-                    {item.role || item.degree}
+                    {item.degree || item.role}
                   </h3>
 
-                  {/* Organization */}
+                  {/* Institution */}
                   <div
                     className="font-mono"
                     style={{
-                      fontSize: '0.82rem',
+                      fontSize: '0.80rem',
                       color: 'var(--gold-primary)',
                       letterSpacing: '0.04em'
                     }}
                   >
-                    {item.company || item.institution}
+                    {item.institution || item.company}
                   </div>
 
                   {/* Description */}
                   <p
                     style={{
-                      fontSize: '0.88rem',
+                      fontSize: '0.86rem',
                       color: 'var(--text-muted)',
-                      lineHeight: 1.6
+                      lineHeight: 1.6,
+                      margin: 0
                     }}
                   >
-                    {item.desc || item.description}
+                    {item.description || item.desc}
                   </p>
                 </div>
               </div>
@@ -228,7 +238,7 @@ export default function ExperienceSection({ education = [] }) {
           />
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {(activeTab === 'experience' ? experienceItems : education).map((item, idx) => (
+            {displayList.map((item, idx) => (
               <div key={idx} style={{ position: 'relative', paddingLeft: '44px' }}>
                 {/* Node */}
                 <div
@@ -261,17 +271,35 @@ export default function ExperienceSection({ education = [] }) {
                     boxShadow: 'var(--card-shadow)'
                   }}
                 >
-                  <span className="badge-gold" style={{ fontSize: '0.7rem', padding: '2px 8px', marginBottom: '8px' }}>
-                    {item.period}
-                  </span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span className="badge-gold" style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
+                      {item.period}
+                    </span>
+                    {item.badge && (
+                      <span
+                        className="font-mono"
+                        style={{
+                          fontSize: '0.64rem',
+                          padding: '2px 6px',
+                          borderRadius: '6px',
+                          background: 'rgba(214, 165, 72, 0.12)',
+                          border: '1px solid rgba(242, 200, 121, 0.35)',
+                          color: 'var(--gold-bright, #FFD978)',
+                          fontWeight: 600
+                        }}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
                   <h3 className="font-heading" style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '4px' }}>
-                    {item.role || item.degree}
+                    {item.degree || item.role}
                   </h3>
                   <div className="font-mono" style={{ fontSize: '0.78rem', color: 'var(--gold-primary)', marginBottom: '8px' }}>
-                    {item.company || item.institution}
+                    {item.institution || item.company}
                   </div>
-                  <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
-                    {item.desc || item.description}
+                  <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', lineHeight: 1.55, margin: 0 }}>
+                    {item.description || item.desc}
                   </p>
                 </div>
               </div>

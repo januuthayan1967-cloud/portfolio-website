@@ -2,331 +2,565 @@
   "profile": {
     "name": "Uthayagunasingam Vanojan",
     "shortName": "Vanojan",
-    "title": "Full-Stack Software Engineer & Solutions Architect",
+    "title": "Graduate Software Engineer | Full-Stack Developer",
     "roleBadges": [
-      "Creative Technologist",
-      "Full-Stack Architect",
-      "High-Performance Systems",
-      "Three.js & WebGL Craftsman"
+      "Graduate Software Engineer",
+      "Full-Stack Developer",
+      "AI-Integrated Systems",
+      "React & Node.js"
     ],
-    "tagline": "Bridging architectural rigour and cinematic aesthetic depth to engineer unforgettable software experiences.",
+    "tagline": "Motivated Software Engineering graduate candidate skilled in React.js, Node.js, Java, Python, and SQL, engineering high-performance applications.",
     "heroImage": "/hero/image2.jpeg",
     "aboutImage": "/hero/image1.jpeg",
-    "bio": "Graduated with a Higher National Diploma in Computing & Software Engineering from ICBT Campus (affiliated with Cardiff Metropolitan University). I specialize in designing and engineering end-to-end distributed applications, resilient cloud backends, and high-performance interactive interfaces. Driven by architectural elegance, clean maintainable code, and high visual aesthetics.",
-    "philosophy": "Great engineering is not merely functional—it possesses clarity, performance, and an undeniable artistic presence.",
+    "bio": "Motivated Software Engineering graduate candidate who has completed the BSc (Hons) Software Engineering programme at ICBT Campus, affiliated with Cardiff Metropolitan University, UK, and is currently awaiting final results. Holds a Higher National Diploma (HND) in Computing and Software Engineering, with hands-on experience in full-stack web development, Android applications, database management, and AI-integrated systems. Skilled in React.js, Node.js, Java, Python, and SQL through academic and independent projects. Seeking an opportunity to contribute technical expertise and problem-solving skills as a Graduate Software Engineer.",
+    "philosophy": "Dedicated to engineering clean, maintainable, and high-performance software systems with robust architectural design and intuitive user experiences.",
     "location": "Jaffna, Sri Lanka",
     "email": "uthayanvanojan5@gmail.com",
     "phone": "+94 75 029 2685",
-    "github": "https://github.com",
-    "linkedin": "https://linkedin.com",
-    "twitter": "https://twitter.com",
-    "statusText": "Open for high-impact engineering & architecture engagements",
+    "github": "https://github.com/januuthayan1967-cloud",
+    "linkedin": "https://www.linkedin.com/in/uthayagunasingam-vanojan-1b75a2327/",
+    "twitter": "",
+    "statusText": "Open for Graduate Software Engineer & Full-Stack Opportunities",
+    "resumeUrl": "/VanojanBSCCV.pdf",
+    "emailNotifications": true,
+    "emailRepliesEnabled": true,
     "metrics": [
       {
-        "label": "Years Experience",
-        "value": "3+",
-        "icon": "Sparkles"
+        "label": "Degree Programme",
+        "value": "BSc (Hons)",
+        "icon": "GraduationCap"
       },
       {
-        "label": "Delivered Systems",
-        "value": "12+",
+        "label": "Academic Status",
+        "value": "Results Pending",
+        "icon": "Clock"
+      },
+      {
+        "label": "Featured Systems",
+        "value": "9 Projects",
         "icon": "Layers"
       },
       {
-        "label": "Code Commits",
-        "value": "950+",
-        "icon": "GitCommit"
-      },
-      {
-        "label": "Satisfaction",
-        "value": "100%",
-        "icon": "ShieldCheck"
+        "label": "Higher Diploma",
+        "value": "HND Graduate",
+        "icon": "Award"
       }
     ],
-    "createdAt": "2026-10-11T07:55:56.220Z",
-    "updatedAt": "2026-10-11T13:51:02.349Z",
     "avatarImage": "",
     "avatarImagePublicId": "",
     "avatarImageUpdatedAt": "2026-10-12T11:32:14.413Z"
   },
   "projects": [
     {
+      "id": "smart-oral-disease-detection",
+      "title": "Smart Oral Disease Detection & Dental Care Assistance",
+      "category": "Full-Stack Web",
+      "subtitle": "AI-Assisted Oral Health Platform (BSc Capstone Project)",
+      "description": "Built an AI-assisted oral health platform with image classification, multi-role access, consultation workflows and PDF reports.",
+      "techStack": [
+        "React",
+        "Node.js",
+        "Express",
+        "Python Flask",
+        "MobileNetV3",
+        "MongoDB",
+        "Gemini AI"
+      ],
+      "featured": true,
+      "image": "/hero/project-analytics.jpg",
+      "gradient": "from-blue-600/30 to-amber-900/30",
+      "liveUrl": "",
+      "githubUrl": "https://github.com/januuthayan1967-cloud/smart-oral-disease-detection",
+      "highlights": [
+        "Deep learning MobileNetV3 image classification for early oral disease detection",
+        "Multi-role role-based access control for patients, dentists, pharmacies, and administrators",
+        "Real-time video consultation workflows, appointment management, and automated PDF diagnostic reports"
+      ],
+      "deliverables": [
+        "Full-Stack Web Platform",
+        "Flask AI Microservice",
+        "Diagnostic PDF Engine"
+      ],
+      "order": 0
+    },
+    {
+      "id": "internship-finder",
+      "title": "Internship Finder Platform",
+      "category": "Full-Stack Web",
+      "subtitle": "Full-Stack Recruitment Platform with Video Interview Integration",
+      "description": "Developed a recruitment platform with student, company and admin dashboards, internship applications, CV uploads and video interview integration.",
+      "techStack": [
+        "React",
+        "Tailwind CSS",
+        "Express",
+        "MongoDB",
+        "WebRTC"
+      ],
+      "featured": true,
+      "image": "/hero/project-futuredesk.jpg",
+      "gradient": "from-amber-600/30 to-blue-900/30",
+      "liveUrl": "",
+      "githubUrl": "https://github.com/januuthayan1967-cloud/internship-finder",
+      "highlights": [
+        "Comprehensive multi-tenant dashboards for students, recruiters, and platform administrators",
+        "Interactive job application tracker with structured CV uploading and filtering",
+        "WebRTC real-time live video interview calling integration"
+      ],
+      "deliverables": [
+        "Recruitment Web SaaS",
+        "WebRTC Video Gateway",
+        "Admin Dashboard"
+      ],
+      "order": 1
+    },
+    {
       "id": "luxevista-resort",
-      "title": "LuxeVista Resort Platform",
-      "category": "Mobile & Hospitality",
-      "subtitle": "Enterprise Hospitality & Room Reservation Mobile Suite",
-      "description": "A premier Android application for luxury resort and hotel operations. Incorporates real-time suite discovery, dynamic room booking, multi-guest scheduling, amenities concierge, and local SQLite data persistence with transactional safety.",
+      "title": "LuxeVista Resort – Mobile Application",
+      "category": "Mobile Application",
+      "subtitle": "Android Room & Service Reservation Mobile Suite",
+      "description": "Created an Android resort booking app with room and service reservations, local database persistence and PDF vouchers.",
       "techStack": [
         "Java",
         "Android Studio",
         "SQLite",
-        "Material Design",
-        "REST APIs",
-        "Async Architecture"
+        "JUnit",
+        "Robolectric"
       ],
       "featured": true,
       "image": "/hero/project-luxevista.jpg",
-      "gradient": "from-amber-600/30 to-blue-900/30",
-      "liveUrl": "https://github.com",
-      "githubUrl": "https://github.com",
+      "gradient": "from-amber-600/30 to-slate-900/30",
+      "liveUrl": "",
+      "githubUrl": "https://github.com/januuthayan1967-cloud/LuxeVistaResortApp",
       "highlights": [
-        "Real-time room availability matrix and reservation checkout",
-        "Offline-first transactional local cache powered by SQLite",
-        "Granular concierge request tracker and amenity reservation"
+        "Native Android suite with real-time room discovery, booking, and concierge services",
+        "Offline-first transactional local persistence powered by SQLite with database migrations",
+        "Canvas-driven PDF voucher generation and 53 automated unit and integration tests with Robolectric"
       ],
       "deliverables": [
-        "Full Mobile Architecture",
-        "Database Schema",
-        "UI/UX System Design"
-      ]
+        "Native Android App",
+        "SQLite Persistence Layer",
+        "Automated Test Suite"
+      ],
+      "order": 2
     },
     {
-      "id": "futuredesk-platform",
-      "title": "FutureDesk Coworking Ecosystem",
+      "id": "portfolio-website",
+      "title": "Full-Stack Portfolio Website",
       "category": "Full-Stack Web",
-      "subtitle": "Smart Workspace Reservation & Desk Allocation Engine",
-      "description": "A next-generation enterprise hot-desking and coworking facility platform. Offers dynamic spatial floor mapping, instant seat reservations, meeting room scheduling, and role-based staff administration with MongoDB indexation.",
+      "subtitle": "Interactive 3D Portfolio & Autonomous Management Console",
+      "description": "Deployed interactive portfolio with an administration dashboard and project galleries.",
       "techStack": [
-        "React.js",
-        "Node.js",
-        "Express.js",
-        "MongoDB",
-        "Tailwind CSS",
-        "JWT Auth"
+        "React",
+        "Three.js",
+        "Express",
+        "MongoDB Atlas",
+        "Cloudinary",
+        "Vercel"
       ],
       "featured": true,
-      "image": "/hero/project-futuredesk.jpg",
-      "gradient": "from-blue-600/30 to-amber-900/30",
-      "liveUrl": "https://github.com",
-      "githubUrl": "https://github.com",
+      "image": "/hero/project-analytics.jpg",
+      "gradient": "from-amber-500/30 to-indigo-950/30",
+      "liveUrl": "https://portfolio-website-src.vercel.app/",
+      "githubUrl": "https://github.com/januuthayan1967-cloud/portfolio-website",
       "highlights": [
-        "Interactive graphical workspace layout and instant reservation sync",
-        "Microservice-ready RESTful architecture with secure JWT authorization",
-        "Comprehensive administrative booking dashboard and usage analytics"
+        "Interactive 3D WebGL atmosphere with Three.js and responsive luxury aesthetic",
+        "Secure executive administration console with JWT authentication and real-time MongoDB Atlas sync",
+        "Cloudinary media integration and production serverless deployment on Vercel"
       ],
       "deliverables": [
-        "Full-Stack React & Node App",
-        "MongoDB Cluster Config",
-        "REST API Specs"
-      ]
+        "Full-Stack Web Application",
+        "Executive Admin Console",
+        "MongoDB Cloud Architecture"
+      ],
+      "order": 3
+    },
+    {
+      "id": "stellar-classification",
+      "title": "Stellar Classification Using Machine Learning",
+      "category": "Machine Learning",
+      "subtitle": "Astronomical Object Classification Pipeline & Web Interface",
+      "description": "Compared machine learning models for stellar-object classification and built a prediction interface.",
+      "techStack": [
+        "Python",
+        "Scikit-learn",
+        "XGBoost",
+        "CatBoost",
+        "Flask"
+      ],
+      "featured": true,
+      "image": "/hero/project-analytics.jpg",
+      "gradient": "from-blue-600/30 to-purple-900/30",
+      "liveUrl": "",
+      "githubUrl": "https://github.com/januuthayan1967-cloud/stellar-classification-project",
+      "highlights": [
+        "End-to-end scientific ML pipeline evaluating multiple models for stellar-object classification",
+        "Comparative model evaluation across XGBoost, CatBoost, Random Forest, Decision Tree, and Logistic Regression",
+        "Lightweight Flask REST inference API with interactive prediction web interface"
+      ],
+      "deliverables": [
+        "ML Training Pipeline",
+        "Comparative Evaluation Report",
+        "Flask Inference Web App"
+      ],
+      "order": 4
     },
     {
       "id": "fitzone-fitness",
-      "title": "FitZone Fitness Management",
+      "title": "FitZone Fitness Center – Gym Web Application",
       "category": "Web Application",
-      "subtitle": "Comprehensive Gym Operations & Trainer Booking Portal",
-      "description": "An integrated web management portal for elite fitness centers. Facilitates member profile management, trainer workout schedules, biometric progress tracking, subscription renewals, and administrative financial auditing.",
+      "subtitle": "Gym Website & Reservation Booking Management Portal",
+      "description": "Gym website with reservation booking.",
       "techStack": [
-        "PHP",
+        "HTML",
+        "CSS",
         "JavaScript",
-        "MySQL",
-        "CSS3 / Vanilla",
-        "Apache",
-        "WAMP"
+        "PHP",
+        "MySQL"
       ],
-      "featured": true,
+      "featured": false,
       "image": "/hero/project-fitzone.jpg",
       "gradient": "from-amber-500/30 to-slate-900/30",
-      "liveUrl": "https://github.com",
-      "githubUrl": "https://github.com",
+      "liveUrl": "",
+      "githubUrl": "https://github.com/januuthayan1967-cloud/fitzone-gym-web",
       "highlights": [
-        "Member subscription lifecycle and recurring renewal alerts",
-        "Trainer booking calendar and dynamic session scheduling",
-        "Highly optimized relational MySQL schema with relational constraints"
+        "Integrated fitness portal handling member subscriptions and trainer session booking",
+        "Relational MySQL schema design with transactional integrity and administrative controls",
+        "Dynamic client-side reservation workflows built with vanilla JavaScript and PHP"
       ],
       "deliverables": [
-        "Full Web Application",
+        "Web Application",
         "Relational Database Schema",
-        "Admin Panel"
-      ]
+        "Administrative Dashboard"
+      ],
+      "order": 5
+    },
+    {
+      "id": "ocean-view-resort",
+      "title": "Ocean View Resort Management System",
+      "category": "Enterprise Systems",
+      "subtitle": "Hotel Booking and Management System with PDF Billing",
+      "description": "Hotel booking and management system with administrative features and PDF billing.",
+      "techStack": [
+        "Java EE",
+        "JSP",
+        "Servlets",
+        "JDBC",
+        "MySQL"
+      ],
+      "featured": false,
+      "image": "/hero/project-luxevista.jpg",
+      "gradient": "from-blue-500/30 to-slate-950/30",
+      "liveUrl": "",
+      "githubUrl": "https://github.com/januuthayan1967-cloud/OceanViewResort",
+      "highlights": [
+        "Java EE MVC architecture implementing Servlets, JavaServer Pages (JSP), and JDBC",
+        "Administrative management portal for room reservations and staff scheduling",
+        "Automated PDF billing invoice generation and relational MySQL storage"
+      ],
+      "deliverables": [
+        "Java EE Enterprise System",
+        "Relational Database Layer",
+        "PDF Billing Generator"
+      ],
+      "order": 6
     },
     {
       "id": "paws-shop-erp",
-      "title": "The Paws Shop ERP",
-      "category": "Enterprise Software",
-      "subtitle": "Veterinary & Pet Supply Inventory Management System",
-      "description": "An enterprise desktop inventory management solution handling hundreds of SKU product lines, supplier purchasing cycles, barcode checkout, point-of-sale receipting, and low-inventory threshold triggers.",
+      "title": "The Paws Shop – Pet Supply Management",
+      "category": "Desktop Application",
+      "subtitle": "Pet Supply Management & Point-of-Sale System",
+      "description": "Pet supply management system.",
       "techStack": [
         "Java",
-        "SQL Database",
-        "JDBC",
-        "OOP Architecture",
-        "NetBeans"
+        "SQL"
       ],
       "featured": false,
       "image": "/hero/project-paws.jpg",
       "gradient": "from-blue-500/30 to-slate-950/30",
-      "liveUrl": "https://github.com",
-      "githubUrl": "https://github.com",
+      "liveUrl": "",
+      "githubUrl": "",
       "highlights": [
-        "Automated low-stock safety alerts and supplier reorder triggers",
-        "Audited transaction histories with zero ledger discrepancies",
-        "Robust Java Swing desktop interface with accelerated shortcut keys"
+        "Object-oriented Java desktop application for product catalog and inventory management",
+        "Point-of-sale receipting, transaction auditing, and supplier reorder threshold triggers",
+        "Relational SQL database integration ensuring ledger consistency"
       ],
       "deliverables": [
         "Java Desktop Application",
-        "SQL Scripts",
-        "Documentation"
-      ]
+        "SQL Database Layer",
+        "User Documentation"
+      ],
+      "order": 7
     },
     {
       "id": "upcountry-warriors",
-      "title": "Upcountry Warriors Engine",
-      "category": "Systems & Analytics",
-      "subtitle": "Competitive Sports Roster & Tournament Analytics Engine",
-      "description": "A high-performance C++ sports telemetry and club roster management engine. Processes player biometric statistics, match performance indexes, game strategies, and tournament rankings with low-latency execution.",
+      "title": "Upcountry Warriors – Player & Team Management",
+      "category": "Desktop Application",
+      "subtitle": "Player and Team Management Application",
+      "description": "Player and team management application.",
       "techStack": [
         "C++",
-        "SQL Connectivity",
-        "Object-Oriented Design",
-        "Data Structures"
+        "SQL"
       ],
       "featured": false,
       "image": "/hero/project-warriors.jpg",
       "gradient": "from-amber-700/30 to-indigo-950/30",
-      "liveUrl": "https://github.com",
-      "githubUrl": "https://github.com",
+      "liveUrl": "",
+      "githubUrl": "",
       "highlights": [
-        "Sub-millisecond analytical sorting for complex player metrics",
-        "Deep relational integrity between tournament rounds and rosters",
-        "Memory-safe modern C++ design principles"
+        "Object-oriented C++ application architecture for sports team roster management",
+        "SQL connectivity layer for player profiles, statistics, and tournament tracking",
+        "Low-latency data processing and structured memory management"
       ],
       "deliverables": [
-        "C++ Core Engine",
+        "C++ Application Engine",
         "Database Integration Layer"
-      ]
+      ],
+      "order": 8
     }
   ],
   "skills": [
     {
-      "category": "Frontend & Creative Engineering",
+      "category": "Languages",
       "icon": "Code",
+      "order": 0,
       "items": [
         {
-          "name": "React.js / Next.js",
-          "level": 94
-        },
-        {
-          "name": "Three.js / WebGL 3D",
-          "level": 88
-        },
-        {
-          "name": "JavaScript (ES6+) / TypeScript",
-          "level": 92
-        },
-        {
-          "name": "HTML5 & Modern CSS3",
-          "level": 96
-        },
-        {
-          "name": "Responsive & Editorial UI",
+          "name": "JavaScript",
           "level": 95
-        }
-      ],
-      "createdAt": "2026-10-11T07:55:56.680Z",
-      "updatedAt": "2026-10-11T07:55:56.680Z"
-    },
-    {
-      "category": "Backend & Systems Architecture",
-      "icon": "Server",
-      "items": [
-        {
-          "name": "Node.js & Express.js",
-          "level": 91
         },
         {
-          "name": "Java & Enterprise OOP",
-          "level": 89
+          "name": "Java",
+          "level": 90
         },
         {
-          "name": "C++ & Low-Level Architecture",
+          "name": "Python",
+          "level": 90
+        },
+        {
+          "name": "PHP",
           "level": 85
         },
         {
-          "name": "C# / ASP.NET",
-          "level": 82
-        },
-        {
-          "name": "RESTful API Engineering",
-          "level": 94
-        }
-      ],
-      "createdAt": "2026-10-11T07:55:56.680Z",
-      "updatedAt": "2026-10-11T07:55:56.680Z"
-    },
-    {
-      "category": "Databases & Data Management",
-      "icon": "Database",
-      "items": [
-        {
-          "name": "MySQL & Relational Design",
-          "level": 93
-        },
-        {
-          "name": "MongoDB & NoSQL Aggregations",
+          "name": "SQL",
           "level": 90
         },
         {
-          "name": "SQLite Embedded Storage",
-          "level": 92
-        },
-        {
-          "name": "Database Normalization & Indexing",
-          "level": 89
-        }
-      ],
-      "createdAt": "2026-10-11T07:55:56.680Z",
-      "updatedAt": "2026-10-11T07:55:56.680Z"
-    },
-    {
-      "category": "Engineering Tools & DevOps",
-      "icon": "Terminal",
-      "items": [
-        {
-          "name": "Git & GitHub Version Control",
+          "name": "HTML5 & CSS3",
           "level": 95
         },
         {
-          "name": "VS Code & Android Studio",
-          "level": 94
+          "name": "C++",
+          "level": 85
         },
         {
-          "name": "NetBeans & Visual Studio",
+          "name": "C#",
+          "level": 80
+        }
+      ]
+    },
+    {
+      "category": "Frontend Development",
+      "icon": "Layout",
+      "order": 1,
+      "items": [
+        {
+          "name": "React",
+          "level": 95
+        },
+        {
+          "name": "Vite",
+          "level": 90
+        },
+        {
+          "name": "Tailwind CSS",
+          "level": 92
+        },
+        {
+          "name": "Three.js",
           "level": 88
         },
         {
-          "name": "WAMP & Server Deployments",
+          "name": "Framer Motion",
+          "level": 85
+        }
+      ]
+    },
+    {
+      "category": "Backend Development",
+      "icon": "Server",
+      "order": 2,
+      "items": [
+        {
+          "name": "Node.js",
+          "level": 92
+        },
+        {
+          "name": "Express.js",
+          "level": 92
+        },
+        {
+          "name": "Flask",
+          "level": 88
+        },
+        {
+          "name": "Java EE",
+          "level": 85
+        },
+        {
+          "name": "REST APIs",
+          "level": 95
+        },
+        {
+          "name": "JWT Auth",
+          "level": 92
+        }
+      ]
+    },
+    {
+      "category": "Databases",
+      "icon": "Database",
+      "order": 3,
+      "items": [
+        {
+          "name": "MongoDB Atlas",
+          "level": 92
+        },
+        {
+          "name": "MySQL",
+          "level": 90
+        },
+        {
+          "name": "SQLite",
           "level": 90
         }
-      ],
-      "createdAt": "2026-10-11T07:55:56.681Z",
-      "updatedAt": "2026-10-11T07:55:56.681Z"
+      ]
+    },
+    {
+      "category": "Development Tools",
+      "icon": "Terminal",
+      "order": 4,
+      "items": [
+        {
+          "name": "Git & GitHub",
+          "level": 95
+        },
+        {
+          "name": "Visual Studio Code",
+          "level": 95
+        },
+        {
+          "name": "Android Studio",
+          "level": 90
+        },
+        {
+          "name": "Visual Studio",
+          "level": 85
+        },
+        {
+          "name": "NetBeans",
+          "level": 85
+        },
+        {
+          "name": "WAMP",
+          "level": 85
+        },
+        {
+          "name": "Jupyter Notebook",
+          "level": 88
+        },
+        {
+          "name": "Google Colab",
+          "level": 88
+        },
+        {
+          "name": "phpMyAdmin",
+          "level": 88
+        }
+      ]
+    },
+    {
+      "category": "Additional Technologies",
+      "icon": "Cpu",
+      "order": 5,
+      "items": [
+        {
+          "name": "WebRTC",
+          "level": 88
+        },
+        {
+          "name": "Cloudinary",
+          "level": 90
+        },
+        {
+          "name": "Vercel",
+          "level": 92
+        },
+        {
+          "name": "Machine Learning",
+          "level": 85
+        },
+        {
+          "name": "MobileNetV3",
+          "level": 85
+        },
+        {
+          "name": "JUnit & Robolectric",
+          "level": 88
+        }
+      ]
     }
   ],
   "education": [
     {
+      "degree": "BSc (Hons) Software Engineering",
+      "institution": "ICBT Campus (affiliated with Cardiff Metropolitan University, UK)",
+      "period": "Coursework completed; final results pending",
+      "badge": "Results Pending",
+      "description": "Completed comprehensive software engineering curriculum covering advanced full-stack web applications, distributed systems, mobile computing, and AI-integrated systems.",
+      "order": 0
+    },
+    {
       "degree": "Higher National Diploma in Computing & Software Engineering",
       "institution": "ICBT Campus (affiliated with Cardiff Metropolitan University)",
-      "period": "2021 – Present",
-      "description": "Focused on Enterprise Software Architecture, Web Application Development, Database Systems, Object-Oriented Engineering, and Mobile Computing.",
-      "badge": "Higher Diploma Honors"
+      "period": "Completed",
+      "badge": "HND Completed",
+      "description": "In-depth foundation in enterprise software architecture, database management systems, object-oriented software engineering, and web development.",
+      "order": 1
     },
     {
-      "degree": "G.C.E Advanced Level — Physical Science Stream",
+      "degree": "G.C.E. Advanced Level — Physical Science Stream",
       "institution": "Sri Lanka",
-      "period": "2018 – 2020",
+      "period": "2021",
+      "badge": "Physical Science",
       "description": "Rigorous scientific foundation in Combined Mathematics, Physics, and Chemistry.",
-      "badge": "Physical Science"
+      "order": 2
     },
     {
-      "degree": "G.C.E Ordinary Level Examination",
+      "degree": "G.C.E. Ordinary Level Examination",
       "institution": "Sri Lanka",
-      "period": "Completed with Distinction",
-      "description": "Academic excellence across Mathematics, Science, and Information Technology.",
-      "badge": "Distinction"
+      "period": "2018",
+      "badge": "Ordinary Level",
+      "description": "Completed secondary education with distinctions across Mathematics, Science, and Information Technology.",
+      "order": 3
     }
   ],
   "messages": [
+    {
+      "id": "msg-1791900157317",
+      "name": "Automated Tester",
+      "email": "tester@enterprise.io",
+      "subject": "Architecture Engagement Inquiry",
+      "message": "Automated integration validation message testing MongoDB Atlas and Nodemailer integration.",
+      "imageUrl": "",
+      "imagePublicId": "",
+      "date": "2026-10-13T14:02:37.317Z",
+      "read": false,
+      "starred": false,
+      "replied": false,
+      "notificationSent": false,
+      "notificationError": "",
+      "replies": []
+    },
     {
       "id": "msg-1791795262243",
       "name": "Atlas Verification Bot",
@@ -365,10 +599,10 @@
     }
   ],
   "analytics": {
-    "totalVisits": 4,
+    "totalVisits": 5,
     "uniqueVisitors": 4,
-    "pageViews": 4,
-    "directInquiries": 39,
+    "pageViews": 5,
+    "directInquiries": 41,
     "projectViews": 2190,
     "avgSessionSeconds": 56,
     "history": [

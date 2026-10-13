@@ -57,7 +57,7 @@ export default function Footer({ onOpenAdmin, profile }) {
                 VANOJAN
               </span>
               <div className="font-mono" style={{ fontSize: '0.62rem', color: 'var(--text-gold)', letterSpacing: '0.15em', fontWeight: 600 }}>
-                SOLUTIONS ARCHITECT &bull; LEAD ENGINEER
+                GRADUATE SOFTWARE ENGINEER &bull; FULL-STACK DEVELOPER
               </div>
             </div>
           </div>

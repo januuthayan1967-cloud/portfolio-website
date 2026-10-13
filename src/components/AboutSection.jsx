@@ -7,18 +7,20 @@ export default function AboutSection({ profile }) {
   const {
     name = "Uthayagunasingam Vanojan",
     aboutImage = "/hero/image1.jpeg",
-    bio = "I am Uthayagunasingam Vanojan, a Full-Stack Software Engineer and Solutions Architect passionate about building scalable systems, elegant user experiences and impactful digital solutions.",
+    bio = "Motivated Software Engineering graduate candidate who has completed the BSc (Hons) Software Engineering programme at ICBT Campus, affiliated with Cardiff Metropolitan University, UK, and is currently awaiting final results. Holds a Higher National Diploma (HND) in Computing and Software Engineering, with hands-on experience in full-stack web development, Android applications, database management, and AI-integrated systems. Skilled in React.js, Node.js, Java, Python, and SQL through academic and independent projects. Seeking an opportunity to contribute technical expertise and problem-solving skills as a Graduate Software Engineer.",
     resumeUrl
   } = profile || {};
 
   const [showJourneyModal, setShowJourneyModal] = useState(false);
 
-  const metrics = [
-    { label: "Years Experience", value: "3+" },
-    { label: "Projects Delivered", value: "15+" },
-    { label: "Core Technologies", value: "8+" },
-    { label: "Commitment", value: "100%" }
+  const defaultMetrics = [
+    { label: "Degree Programme", value: "BSc (Hons)" },
+    { label: "Academic Status", value: "Results Pending" },
+    { label: "Featured Systems", value: "9 Projects" },
+    { label: "Higher Diploma", value: "HND Graduate" }
   ];
+
+  const metrics = (profile?.metrics?.length === 4) ? profile.metrics : defaultMetrics;
 
   const journeyPillars = [
     {
@@ -172,9 +174,9 @@ export default function AboutSection({ profile }) {
             {/* Action Buttons: Download CV & Let's Connect (Matches Reference Image 1) */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
               <a
-                href={resumeUrl || "#contact"}
-                download={resumeUrl ? "Vanojan_CV.pdf" : undefined}
-                target={resumeUrl ? "_blank" : undefined}
+                href={resumeUrl || "/VanojanBSCCV.pdf"}
+                download="VanojanBSCCV.pdf"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="btn-gold reference-primary"
                 style={{ 
@@ -347,7 +349,7 @@ export default function AboutSection({ profile }) {
               altText={name}
               imagePosition="center 18%"
               imageScale={1.08}
-              sideText="FULL-STACK ENGINEER • SOLUTIONS ARCHITECT"
+              sideText="GRADUATE SOFTWARE ENGINEER • FULL-STACK DEVELOPER"
             >
               {/* Overlay Glass Badge at Bottom of Frame (Matches Reference Image 1) */}
               <div
@@ -371,11 +373,11 @@ export default function AboutSection({ profile }) {
                 }}
               >
                 <div>
-                  <div className="font-heading" style={{ fontSize: '0.90rem', fontWeight: 800, color: '#F5F0E8', letterSpacing: '0.04em' }}>
-                    FULL-STACK ENGINEER
+                  <div className="font-heading" style={{ fontSize: '0.86rem', fontWeight: 800, color: '#F5F0E8', letterSpacing: '0.04em' }}>
+                    GRADUATE SOFTWARE ENGINEER
                   </div>
                   <div className="font-mono" style={{ fontSize: '0.62rem', color: 'var(--gold-bright, #FFD978)', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700 }}>
-                    SOLUTIONS ARCHITECT
+                    FULL-STACK DEVELOPER
                   </div>
                 </div>
                 <Sparkles size={16} color="var(--gold-bright, #FFD978)" />
@@ -442,10 +444,10 @@ export default function AboutSection({ profile }) {
               Engineering Rigour &amp; Visual Mastery
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.94rem', lineHeight: 1.7, marginBottom: '16px' }}>
-              Graduated with a Higher National Diploma in Computing &amp; Software Engineering from ICBT Campus, affiliated with Cardiff Metropolitan University. My work focuses on end-to-end distributed system engineering, high-throughput microservices, and bespoke 3D interactive web experiences.
+              Motivated Software Engineering graduate candidate who has completed the BSc (Hons) Software Engineering programme at ICBT Campus, affiliated with Cardiff Metropolitan University, UK, and is currently awaiting final results. Holds a Higher National Diploma (HND) in Computing and Software Engineering, with hands-on experience in full-stack web development, Android applications, database management, and AI-integrated systems.
             </p>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.7 }}>
-              Every solution adheres to strict principles of separation of concerns, defensive programming, automated transactional consistency, and modern design standards.
+              Skilled in React.js, Node.js, Java, Python, and SQL through academic and independent projects. Seeking an opportunity to contribute technical expertise and problem-solving skills as a Graduate Software Engineer.
             </p>
           </div>
         </div>

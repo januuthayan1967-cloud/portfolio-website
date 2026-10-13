@@ -14,7 +14,7 @@ import { ArrowRight } from 'lucide-react';
  */
 export default function PortraitIdentityPanel({
   name = "Uthayagunasingam Vanojan",
-  title = "SOLUTIONS ARCHITECT · LEAD ENGINEER",
+  title = "GRADUATE SOFTWARE ENGINEER · FULL-STACK DEVELOPER",
   status = "Available for Opportunities",
   contactHref = "#contact",
   style = {}
