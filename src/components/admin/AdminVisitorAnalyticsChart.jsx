@@ -5,6 +5,7 @@ export default function AdminVisitorAnalyticsChart({
   timeRange = '7d',
   onTimeRangeChange = () => {},
   chartHistory = [],
+  activeVisitors = 0,
   loading = false,
   onRefresh = () => {}
 }) {
@@ -79,7 +80,7 @@ export default function AdminVisitorAnalyticsChart({
       const cp2x = p2.x - (p3.x - p1.x) / 6;
       const cp2y = p2.y - (p3.y - p1.y) / 6;
 
-      d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+      d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.x.toFixed(1)}`;
     }
 
     const last = computed[computed.length - 1];
@@ -122,8 +123,57 @@ export default function AdminVisitorAnalyticsChart({
             <BarChart3 size={18} />
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <h3 className="admin-chart-heading">Real Visitor Analytics</h3>
+              {activeVisitors > 0 ? (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    color: '#10B981'
+                  }}
+                  title="Active public visitors within recent 60-second window"
+                >
+                  <span
+                    style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      background: '#10B981',
+                      boxShadow: '0 0 6px #10B981'
+                    }}
+                  />
+                  {activeVisitors} Active Now
+                </span>
+              ) : (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.70rem',
+                    color: 'var(--adm-text-muted)'
+                  }}
+                  title="No active visitors in the last 60 seconds"
+                >
+                  <span
+                    style={{
+                      width: '5px',
+                      height: '5px',
+                      borderRadius: '50%',
+                      background: 'var(--adm-text-faint)'
+                    }}
+                  />
+                  0 Active
+                </span>
+              )}
               {loading && <RefreshCw size={13} className="spin" color="var(--adm-gold-primary)" />}
             </div>
             <p className="admin-chart-sub">
@@ -140,6 +190,7 @@ export default function AdminVisitorAnalyticsChart({
             disabled={loading}
           >
             <option value="today">Today (24h)</option>
+            <option value="yesterday">Yesterday (24h)</option>
             <option value="7d">Last 7 Days</option>
             <option value="30d">Last 30 Days</option>
             <option value="90d">Last 90 Days</option>

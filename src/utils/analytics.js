@@ -118,12 +118,15 @@ export async function sendAnalyticsEvent(payload = {}) {
   };
 
   // Deduplication key (prevents React 18 Strict Mode double triggers)
-  const dedupKey = `${bodyData.eventType}:${bodyData.path}:${bodyData.projectSlug}:${Math.floor(Date.now() / 4000)}`;
+  const dedupKey = bodyData.eventType === 'heartbeat'
+    ? `hb:${Math.floor(Date.now() / 15000)}`
+    : `${bodyData.eventType}:${bodyData.path}:${bodyData.projectSlug}:${Math.floor(Date.now() / 3000)}`;
+
   if (recentEvents.has(dedupKey)) {
     return;
   }
   recentEvents.add(dedupKey);
-  setTimeout(() => recentEvents.delete(dedupKey), 8000);
+  setTimeout(() => recentEvents.delete(dedupKey), 6000);
 
   try {
     if (typeof navigator !== 'undefined' && navigator.sendBeacon && payload.isBeacon) {
@@ -157,7 +160,7 @@ export function trackProjectView(projectSlug, projectTitle = '') {
 }
 
 /**
- * Initializes continuous analytics lifecycle (pageview, heartbeats, unloads)
+ * Initializes continuous analytics lifecycle (pageview, heartbeats, unloads, navigation)
  */
 export function initAnalyticsTracker() {
   if (typeof window === 'undefined') return () => {};
@@ -167,18 +170,31 @@ export function initAnalyticsTracker() {
   // Initial pageview tracking
   sendAnalyticsEvent({
     eventType: 'pageview',
-    path: window.location.pathname || '/',
+    path: window.location.pathname + (window.location.hash || ''),
     title: document.title
   });
 
-  // Dwell heartbeat every 30 seconds to update active session duration
+  // Track client hash navigation (sections like #about, #projects, etc.)
+  const handleNavChange = () => {
+    const navPath = window.location.pathname + (window.location.hash || '');
+    sendAnalyticsEvent({
+      eventType: 'pageview',
+      path: navPath,
+      title: document.title
+    });
+  };
+
+  window.addEventListener('hashchange', handleNavChange);
+  window.addEventListener('popstate', handleNavChange);
+
+  // Throttled heartbeat every 25 seconds (well within the 60-second active window)
   const heartbeatTimer = setInterval(() => {
     const dwellSeconds = Math.max(0, Math.floor((Date.now() - sessionStartTimestamp) / 1000));
     sendAnalyticsEvent({
       eventType: 'heartbeat',
       dwellSeconds
     });
-  }, 30000);
+  }, 25000);
 
   // Send unload heartbeat with beacon
   const handleUnload = () => {
@@ -195,6 +211,8 @@ export function initAnalyticsTracker() {
 
   return () => {
     clearInterval(heartbeatTimer);
+    window.removeEventListener('hashchange', handleNavChange);
+    window.removeEventListener('popstate', handleNavChange);
     window.removeEventListener('beforeunload', handleUnload);
     window.removeEventListener('pagehide', handleUnload);
   };

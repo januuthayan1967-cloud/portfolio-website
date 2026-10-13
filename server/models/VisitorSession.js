@@ -49,7 +49,28 @@ const visitorSessionSchema = new mongoose.Schema({
   deviceType: {
     type: String,
     enum: ['desktop', 'mobile', 'tablet'],
-    default: 'desktop'
+    default: 'desktop',
+    index: true
+  },
+  browser: {
+    type: String,
+    default: 'Unknown',
+    index: true
+  },
+  os: {
+    type: String,
+    default: 'Unknown',
+    index: true
+  },
+  country: {
+    type: String,
+    default: 'Unknown',
+    index: true
+  },
+  countryCode: {
+    type: String,
+    default: '',
+    index: true
   },
   isBot: {
     type: Boolean,
@@ -77,5 +98,9 @@ visitorSessionSchema.index({ startedAt: -1, isBot: 1, isAdmin: 1 });
 visitorSessionSchema.index({ lastActiveAt: -1, isBot: 1, isAdmin: 1 });
 visitorSessionSchema.index({ trafficSource: 1, startedAt: -1 });
 visitorSessionSchema.index({ visitorId: 1, startedAt: -1 });
+visitorSessionSchema.index({ deviceType: 1, startedAt: -1 });
+visitorSessionSchema.index({ browser: 1, startedAt: -1 });
+visitorSessionSchema.index({ os: 1, startedAt: -1 });
+visitorSessionSchema.index({ country: 1, startedAt: -1 });
 
 export const VisitorSession = mongoose.models.VisitorSession || mongoose.model('VisitorSession', visitorSessionSchema);

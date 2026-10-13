@@ -1,13 +1,19 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { PieChart, RefreshCw } from 'lucide-react';
 
 export default function AdminTrafficSourcesChart({
   trafficSources = [],
+  devices = [],
+  browsers = [],
+  operatingSystems = [],
+  countries = [],
   totalVisitors = 0,
   timeRange = '7d',
   onTimeRangeChange = () => {},
   loading = false
 }) {
+  const [breakdownType, setBreakdownType] = useState('sources');
+
   const defaultSegments = [
     { label: 'Direct Visits', percentage: 0, count: 0, color: '#D4A23A', strokeColor: '#E6B65B' },
     { label: 'Google Search', percentage: 0, count: 0, color: '#3B82F6', strokeColor: '#60A5FA' },
@@ -16,9 +22,32 @@ export default function AdminTrafficSourcesChart({
     { label: 'Others', percentage: 0, count: 0, color: '#64748B', strokeColor: '#94A3B8' }
   ];
 
-  const segments = Array.isArray(trafficSources) && trafficSources.length > 0
-    ? trafficSources
-    : defaultSegments;
+  const { title, subtitle, segments } = useMemo(() => {
+    let t = 'Traffic Sources';
+    let sub = 'Channel acquisition breakdown';
+    let list = trafficSources;
+
+    if (breakdownType === 'devices') {
+      t = 'Visitor Devices';
+      sub = 'Desktop, mobile & tablet distribution';
+      list = devices;
+    } else if (breakdownType === 'browsers') {
+      t = 'Browser Breakdown';
+      sub = 'Visitor browser client engines';
+      list = browsers;
+    } else if (breakdownType === 'os') {
+      t = 'Operating Systems';
+      sub = 'Client OS distribution';
+      list = operatingSystems;
+    } else if (breakdownType === 'countries') {
+      t = 'Geographic Traffic';
+      sub = 'Country & region breakdown';
+      list = countries;
+    }
+
+    const resolved = Array.isArray(list) && list.length > 0 ? list : defaultSegments;
+    return { title: t, subtitle: sub, segments: resolved };
+  }, [breakdownType, trafficSources, devices, browsers, operatingSystems, countries]);
 
   const total = Number(totalVisitors) || segments.reduce((sum, s) => sum + (s.count || 0), 0);
 
@@ -28,7 +57,6 @@ export default function AdminTrafficSourcesChart({
 
   let cumulativePercent = 0;
   const donutArcs = segments.map((seg) => {
-    // If total is 0, percentage is 0
     const pct = total > 0 ? (typeof seg.percentage === 'number' ? seg.percentage : (seg.count / total) * 100) : 0;
     const strokeDasharray = `${(pct / 100) * circumference} ${circumference}`;
     const strokeDashoffset = -((cumulativePercent / 100) * circumference);
@@ -51,24 +79,44 @@ export default function AdminTrafficSourcesChart({
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h3 className="admin-chart-heading">Traffic Sources</h3>
+              <h3 className="admin-chart-heading">{title}</h3>
               {loading && <RefreshCw size={13} className="spin" color="var(--adm-gold-primary)" />}
             </div>
-            <p className="admin-chart-sub">Channel acquisition breakdown</p>
+            <p className="admin-chart-sub">{subtitle}</p>
           </div>
         </div>
 
-        <select
-          className="admin-dropdown-select"
-          value={timeRange}
-          onChange={(e) => onTimeRangeChange(e.target.value)}
-          disabled={loading}
-        >
-          <option value="today">Today</option>
-          <option value="7d">Last 7 Days</option>
-          <option value="30d">Last 30 Days</option>
-          <option value="90d">Last 90 Days</option>
-        </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+          {/* Dimension Selector */}
+          <select
+            className="admin-dropdown-select"
+            value={breakdownType}
+            onChange={(e) => setBreakdownType(e.target.value)}
+            disabled={loading}
+            aria-label="Analytics Dimension"
+          >
+            <option value="sources">Sources</option>
+            <option value="devices">Devices</option>
+            <option value="browsers">Browsers</option>
+            <option value="os">OS</option>
+            <option value="countries">Countries</option>
+          </select>
+
+          {/* Time Range Selector */}
+          <select
+            className="admin-dropdown-select"
+            value={timeRange}
+            onChange={(e) => onTimeRangeChange(e.target.value)}
+            disabled={loading}
+            aria-label="Time Range"
+          >
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="90d">Last 90 Days</option>
+          </select>
+        </div>
       </div>
 
       {/* Donut & Legend Content */}

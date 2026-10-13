@@ -15,7 +15,7 @@ const analyticsEventSchema = new mongoose.Schema({
   },
   eventType: {
     type: String,
-    enum: ['pageview', 'dwell', 'project_view', 'cta_click'],
+    enum: ['pageview', 'dwell', 'project_view', 'cta_click', 'heartbeat'],
     default: 'pageview',
     index: true
   },
@@ -51,6 +51,22 @@ const analyticsEventSchema = new mongoose.Schema({
     type: String,
     enum: ['desktop', 'mobile', 'tablet'],
     default: 'desktop'
+  },
+  browser: {
+    type: String,
+    default: 'Unknown'
+  },
+  os: {
+    type: String,
+    default: 'Unknown'
+  },
+  country: {
+    type: String,
+    default: 'Unknown'
+  },
+  countryCode: {
+    type: String,
+    default: ''
   },
   isBot: {
     type: Boolean,

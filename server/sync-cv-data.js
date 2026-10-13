@@ -402,7 +402,11 @@ async function syncAll() {
   console.log(`✓ Local fallback database synchronized at ${DB_FILE}`);
 }
 
-syncAll().catch((err) => {
-  console.error('[SYNC ERROR]:', err);
-  process.exit(1);
-});
+const isDirectRun = process.argv[1] && (process.argv[1].endsWith('sync-cv-data.js') || fileURLToPath(import.meta.url) === path.resolve(process.argv[1]));
+if (isDirectRun) {
+  syncAll().catch((err) => {
+    console.error('[SYNC ERROR]:', err);
+    process.exit(1);
+  });
+}
+

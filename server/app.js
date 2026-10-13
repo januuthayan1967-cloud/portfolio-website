@@ -36,7 +36,12 @@ import {
   verifySmtpConnection,
   getSmtpConfig
 } from './services/email.js';
-import { recordAnalyticsEvent, generateAnalyticsReport } from './services/analytics.js';
+import {
+  recordAnalyticsEvent,
+  generateAnalyticsReport,
+  getActiveVisitorsCount,
+  extractCountry
+} from './services/analytics.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -317,6 +322,21 @@ app.post('/api/messages', async (req, res) => {
 });
 
 
+// Rate limiting map for /api/analytics/track abuse protection (max 60 events/minute per IP/visitor)
+const analyticsRateLimits = new Map();
+function isAnalyticsFlood(key) {
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const maxEvents = 30;
+  let record = analyticsRateLimits.get(key);
+  if (!record || (now - record.startTime) > windowMs) {
+    analyticsRateLimits.set(key, { startTime: now, count: 1 });
+    return false;
+  }
+  record.count++;
+  return record.count > maxEvents;
+}
+
 // 3. Genuine First-Party Visitor Analytics Tracking
 app.post('/api/analytics/track', async (req, res) => {
   try {
@@ -332,20 +352,36 @@ app.post('/api/analytics/track', async (req, res) => {
       isAdmin = false
     } = req.body || {};
 
+    const clientIp = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const rateLimitKey = `${clientIp}:${visitorId || 'anon'}`;
+    if (isAnalyticsFlood(rateLimitKey)) {
+      return res.status(429).json({ success: false, error: 'Too many analytics events. Throttled.' });
+    }
+
+    if (!visitorId || typeof visitorId !== 'string' || visitorId.length > 120) {
+      return res.status(400).json({ success: false, error: 'Invalid visitorId' });
+    }
+    if (!sessionId || typeof sessionId !== 'string' || sessionId.length > 120) {
+      return res.status(400).json({ success: false, error: 'Invalid sessionId' });
+    }
+
     const userAgent = req.headers['user-agent'] || '';
     const host = req.headers.host || '';
+    const { country, countryCode } = extractCountry(req.headers);
 
     const result = await recordAnalyticsEvent({
-      visitorId,
-      sessionId,
-      path,
-      title,
-      referrer,
-      eventType,
-      projectSlug,
-      dwellSeconds,
+      visitorId: String(visitorId).trim(),
+      sessionId: String(sessionId).trim(),
+      path: String(path || '/').substring(0, 255),
+      title: String(title || '').substring(0, 255),
+      referrer: String(referrer || '').substring(0, 500),
+      eventType: String(eventType || 'pageview').trim(),
+      projectSlug: String(projectSlug || '').substring(0, 100),
+      dwellSeconds: Math.max(0, parseInt(dwellSeconds, 10) || 0),
       userAgent,
       host,
+      country,
+      countryCode,
       isAdmin: Boolean(isAdmin),
       isDbConnected: isDbConnected()
     });
@@ -366,6 +402,17 @@ app.get('/api/admin/analytics/report', adminOnlyMiddleware, async (req, res) => 
   } catch (err) {
     console.error('[API /api/admin/analytics/report error]:', err.message);
     return res.status(500).json({ success: false, error: 'Failed to generate report' });
+  }
+});
+
+// Admin Dedicated Real-Time Active Visitors Endpoint (Protected, Lightweight Polling)
+app.get('/api/admin/analytics/active', adminOnlyMiddleware, async (req, res) => {
+  try {
+    const active = await getActiveVisitorsCount(isDbConnected());
+    return res.json(active);
+  } catch (err) {
+    console.error('[API /api/admin/analytics/active error]:', err.message);
+    return res.status(500).json({ success: false, error: 'Failed to get active visitors' });
   }
 });
 
@@ -1016,11 +1063,13 @@ app.get('/api/admin/overview', adminOnlyMiddleware, async (req, res) => {
         Message.find().sort({ date: -1 }).limit(5).lean()
       ]);
 
+      const activeStats = await getActiveVisitorsCount(isDbConnected());
       const db = getDb();
       const analytics = {
         totalVisits: realSessionsCount || 0,
         uniqueVisitors: (uniqueVisitorsAgg && uniqueVisitorsAgg.length) || 0,
-        pageViews: realEventsCount || 0
+        pageViews: realEventsCount || 0,
+        activeVisitors: activeStats.activeVisitors || 0
       };
       const recentMessages = (recentMessagesDocs && recentMessagesDocs.length > 0)
         ? recentMessagesDocs.map(m => {

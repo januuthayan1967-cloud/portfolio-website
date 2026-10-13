@@ -32,21 +32,13 @@ const defaultData = {
     }
   ],
   analytics: {
-    totalVisits: 1845,
-    uniqueVisitors: 1220,
-    pageViews: 4580,
-    directInquiries: 32,
-    projectViews: 2190,
-    avgSessionSeconds: 245,
-    history: [
-      { date: "Oct 2", views: 240, inquiries: 3 },
-      { date: "Oct 3", views: 310, inquiries: 4 },
-      { date: "Oct 4", views: 290, inquiries: 2 },
-      { date: "Oct 5", views: 420, inquiries: 6 },
-      { date: "Oct 6", views: 510, inquiries: 7 },
-      { date: "Oct 7", views: 630, inquiries: 8 },
-      { date: "Oct 8", views: 720, inquiries: 10 }
-    ]
+    totalVisits: 0,
+    uniqueVisitors: 0,
+    pageViews: 0,
+    directInquiries: 0,
+    projectViews: 0,
+    avgSessionSeconds: 0,
+    history: []
   },
   admin: {
     username: "admin",

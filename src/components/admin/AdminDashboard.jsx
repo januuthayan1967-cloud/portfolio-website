@@ -81,10 +81,19 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
       uniqueVisitors: 0,
       pageViews: 0,
       avgSessionSeconds: 0,
-      activeVisitors: 0
+      activeVisitors: 0,
+      activeSessions: 0,
+      todayVisitors: 0,
+      todayVisits: 0,
+      yesterdayVisitors: 0,
+      yesterdayVisits: 0
     },
     chartHistory: [],
     trafficSources: [],
+    devices: [],
+    browsers: [],
+    operatingSystems: [],
+    countries: [],
     topPages: [],
     topProjects: []
   });
@@ -250,13 +259,40 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     fetchAnalyticsReport(analyticsRange);
   }, [token]);
 
-  // Polling every 35s for live real visitor metrics without full dashboard reload
+  // Real-time automatic polling: fast active visitors check (15s) and full report (25s)
   useEffect(() => {
-    const pollTimer = setInterval(() => {
+    // 1. Fast lightweight active visitor poll
+    const activePollTimer = setInterval(async () => {
+      try {
+        const res = await fetch('/api/admin/analytics/active', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data.activeVisitors === 'number') {
+            setAnalyticsReport((prev) => ({
+              ...prev,
+              summary: {
+                ...prev.summary,
+                activeVisitors: data.activeVisitors,
+                activeSessions: data.activeSessions || 0
+              }
+            }));
+          }
+        }
+      } catch (e) {}
+    }, 15000);
+
+    // 2. Comprehensive report refresh
+    const reportPollTimer = setInterval(() => {
       fetchAnalyticsReport(analyticsRange, true);
-    }, 35000);
-    return () => clearInterval(pollTimer);
-  }, [fetchAnalyticsReport, analyticsRange]);
+    }, 25000);
+
+    return () => {
+      clearInterval(activePollTimer);
+      clearInterval(reportPollTimer);
+    };
+  }, [fetchAnalyticsReport, analyticsRange, token]);
 
   // Click outside listener for Admin Profile Dropdown
   useEffect(() => {
@@ -1155,7 +1191,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                     {(analyticsReport.summary?.uniqueVisitors !== undefined
                       ? analyticsReport.summary.uniqueVisitors
                       : (overview?.analytics?.uniqueVisitors || 0)) > 0
-                      ? `↑ ${(analyticsReport.summary?.uniqueVisitors ?? overview?.analytics?.uniqueVisitors).toLocaleString()} unique visitor${(analyticsReport.summary?.uniqueVisitors ?? overview?.analytics?.uniqueVisitors) === 1 ? '' : 's'}`
+                      ? `↑ ${(analyticsReport.summary?.uniqueVisitors ?? overview?.analytics?.uniqueVisitors).toLocaleString()} unique visitor${(analyticsReport.summary?.uniqueVisitors ?? overview?.analytics?.uniqueVisitors) === 1 ? '' : 's'}${analyticsReport.summary?.todayVisitors ? ` • Today: ${analyticsReport.summary.todayVisitors}` : ''}`
                       : '• 0 public visitors recorded'}
                   </div>
                 </div>
@@ -1182,11 +1218,16 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                       : (overview?.analytics?.pageViews || 0)).toLocaleString()}
                   </div>
                   <div className="admin-stat-trend blue">
-                    {analyticsReport.summary?.avgSessionSeconds > 0
-                      ? `• Avg ${Math.floor(analyticsReport.summary.avgSessionSeconds / 60)}m ${analyticsReport.summary.avgSessionSeconds % 60}s session`
-                      : (analyticsReport.summary?.activeVisitors > 0
-                          ? `• ${analyticsReport.summary.activeVisitors} active visitor${analyticsReport.summary.activeVisitors === 1 ? '' : 's'} right now`
-                          : '• Verified real page views')}
+                    {analyticsReport.summary?.activeVisitors > 0 ? (
+                      <span style={{ color: '#10B981', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', boxShadow: '0 0 6px #10B981' }} />
+                        {analyticsReport.summary.activeVisitors} active visitor{analyticsReport.summary.activeVisitors === 1 ? '' : 's'} right now
+                      </span>
+                    ) : analyticsReport.summary?.avgSessionSeconds > 0 ? (
+                      `• Avg ${Math.floor(analyticsReport.summary.avgSessionSeconds / 60)}m ${analyticsReport.summary.avgSessionSeconds % 60}s session`
+                    ) : (
+                      '• Verified real page views'
+                    )}
                   </div>
                 </div>
 
@@ -1245,11 +1286,16 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   timeRange={analyticsRange}
                   onTimeRangeChange={handleAnalyticsRangeChange}
                   chartHistory={analyticsReport.chartHistory}
+                  activeVisitors={analyticsReport.summary?.activeVisitors || 0}
                   loading={analyticsLoading}
                   onRefresh={() => fetchAnalyticsReport(analyticsRange)}
                 />
                 <AdminTrafficSourcesChart
                   trafficSources={analyticsReport.trafficSources}
+                  devices={analyticsReport.devices}
+                  browsers={analyticsReport.browsers}
+                  operatingSystems={analyticsReport.operatingSystems}
+                  countries={analyticsReport.countries}
                   totalVisitors={analyticsReport.summary.totalVisitors}
                   timeRange={analyticsRange}
                   onTimeRangeChange={handleAnalyticsRangeChange}

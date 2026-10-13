@@ -48,7 +48,7 @@
     ],
     "avatarImage": "",
     "avatarImagePublicId": "",
-    "avatarImageUpdatedAt": "2026-10-12T11:32:14.413Z"
+    "avatarImageUpdatedAt": "2026-10-13T17:34:48.914Z"
   },
   "projects": [
     {
@@ -599,9 +599,9 @@
     }
   ],
   "analytics": {
-    "totalVisits": 5,
+    "totalVisits": 33,
     "uniqueVisitors": 4,
-    "pageViews": 5,
+    "pageViews": 33,
     "directInquiries": 41,
     "projectViews": 2190,
     "avgSessionSeconds": 56,
@@ -649,6 +649,6 @@
     "passwordHash": "$2b$12$6DF9QNa0FSGiZYmwZDCU6uzMUW0dNKotRttEtFY/nGZMP1yKQk7d2",
     "profileImageUrl": "",
     "profileImagePublicId": "",
-    "profileImageUpdatedAt": "2026-10-12T11:32:14.413Z"
+    "profileImageUpdatedAt": "2026-10-13T17:34:48.914Z"
   }
 }
