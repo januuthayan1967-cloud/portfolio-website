@@ -3,72 +3,83 @@ import { Volume2, VolumeX } from 'lucide-react';
 
 export default function AudioPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
-  const audioCtxRef = useRef(null);
-  const gainNodeRef = useRef(null);
-  const oscillatorsRef = useRef([]);
+  const audioRef = useRef(null);
 
-  const toggleAudio = () => {
-    if (!isPlaying) {
-      // Start ambient drone using Web Audio API
-      try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const ctx = audioCtxRef.current || new AudioContext();
-        audioCtxRef.current = ctx;
+  useEffect(() => {
+    // Single managed HTMLAudioElement instance for background ambient audio
+    const audio = new Audio();
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.volume = 0.55;
 
-        if (ctx.state === 'suspended') {
-          ctx.resume();
-        }
+    // Use primary custom audio file path
+    audio.src = '/audio/mybackground.mpeg';
 
-        const masterGain = ctx.createGain();
-        masterGain.gain.setValueAtTime(0.001, ctx.currentTime);
-        masterGain.gain.exponentialRampToValueAtTime(0.04, ctx.currentTime + 3);
-        masterGain.connect(ctx.destination);
-        gainNodeRef.current = masterGain;
-
-        // Warm harmonic cinematic chord (F - C - A - E deep subtle pad)
-        const frequencies = [87.31, 130.81, 164.81, 220.0];
-        const oscs = frequencies.map((freq) => {
-          const osc = ctx.createOscillator();
-          const filter = ctx.createBiquadFilter();
-          filter.type = 'lowpass';
-          filter.frequency.setValueAtTime(320, ctx.currentTime);
-
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, ctx.currentTime);
-          osc.connect(filter);
-          filter.connect(masterGain);
-          osc.start();
-          return osc;
-        });
-
-        oscillatorsRef.current = oscs;
-        setIsPlaying(true);
-      } catch (err) {
-        console.warn('Audio playback error:', err);
-      }
-    } else {
-      // Graceful fade out
-      if (gainNodeRef.current && audioCtxRef.current) {
-        const ctx = audioCtxRef.current;
-        gainNodeRef.current.gain.linearRampToValueAtTime(0.001, ctx.currentTime + 1.2);
-        setTimeout(() => {
-          oscillatorsRef.current.forEach(osc => osc.stop());
-          oscillatorsRef.current = [];
-          setIsPlaying(false);
-        }, 1200);
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    const handleEnded = () => {
+      // Ensure continuous seamless loop
+      if (audio.loop) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
       } else {
         setIsPlaying(false);
       }
-    }
-  };
+    };
 
-  useEffect(() => {
-    return () => {
-      if (audioCtxRef.current) {
-        audioCtxRef.current.close().catch(() => {});
+    const handleError = () => {
+      // Fallback: If browser strictly rejects .mpeg extension, try .mp3
+      if (audio.src && audio.src.endsWith('/audio/mybackground.mpeg')) {
+        console.warn('Audio fallback: switching from /audio/mybackground.mpeg to /audio/mybackground.mp3');
+        audio.src = '/audio/mybackground.mp3';
+        audio.load();
       }
     };
+
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
+
+    audioRef.current = audio;
+
+    return () => {
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
+      audio.pause();
+      audio.src = '';
+      audioRef.current = null;
+    };
   }, []);
+
+  const toggleAudio = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (!isPlaying) {
+      // User interaction: Play/Resume audio from current position
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch((err) => {
+            // Autoplay rejection or abort handling
+            if (err.name !== 'AbortError') {
+              console.warn('Audio playback prevented by browser policy:', err);
+            }
+            setIsPlaying(false);
+          });
+      }
+    } else {
+      // User interaction: Pause audio immediately, preserving current playback position
+      audio.pause();
+      setIsPlaying(false);
+    }
+  };
 
   return (
     <div
