@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import { connectDb, pingDb, isDbConnected } from './connection.js';
@@ -16,16 +17,18 @@ import {
   Media,
   User,
   VisitorSession,
-  AnalyticsEvent
+  AnalyticsEvent,
+  Cv
 } from './models/index.js';
 import {
   uploadStream,
   deleteCloudinaryImage,
+  deleteCloudinaryAsset,
   getCloudinaryStatus,
   isCloudinaryConfigured,
   generateSignedUploadParams
 } from './config/cloudinary.js';
-import { uploadSingleImage } from './middleware/upload.js';
+import { uploadSingleImage, uploadCvPdf } from './middleware/upload.js';
 import { signJwt, verifyJwt } from './utils/jwt.js';
 import bcrypt from 'bcryptjs';
 import {
@@ -83,7 +86,13 @@ function checkRateLimit(type, key, maxAttempts, windowMs) {
 
 
 // Serve public static assets (including hero photos and project images)
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../public'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.pdf')) {
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    }
+  }
+}));
 
 export function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -158,15 +167,35 @@ app.get('/api/health', async (req, res) => {
 app.get('/api/portfolio', async (req, res) => {
   if (isDbConnected()) {
     try {
-      const [profileDoc, projectsDocs, skillsDocs, eduDocs] = await Promise.all([
+      const [profileDoc, projectsDocs, skillsDocs, eduDocs, activeCvDoc] = await Promise.all([
         Profile.findOne().lean(),
         Project.find().sort({ order: 1, createdAt: 1 }).lean(),
         SkillCategory.find().sort({ order: 1, createdAt: 1 }).lean(),
-        Education.find().sort({ order: 1, createdAt: 1 }).lean()
+        Education.find().sort({ order: 1, createdAt: 1 }).lean(),
+        Cv.findOne({ isActive: true }).sort({ updatedAt: -1 }).lean()
       ]);
 
       if (profileDoc && projectsDocs && projectsDocs.length > 0) {
         const cleanProfile = (({ _id, __v, ...rest }) => rest)(profileDoc);
+
+        // Synchronize dynamic CV URL and active CV metadata
+        if (activeCvDoc) {
+          const cvVersion = new Date(activeCvDoc.lastUpdatedDate || activeCvDoc.updatedAt || Date.now()).getTime();
+          cleanProfile.resumeUrl = `/api/cv/download?v=${cvVersion}`;
+          cleanProfile.activeCv = {
+            originalFilename: activeCvDoc.originalFilename,
+            fileSize: activeCvDoc.fileSize,
+            uploadDate: activeCvDoc.uploadDate,
+            lastUpdatedDate: activeCvDoc.lastUpdatedDate,
+            downloadUrl: `/api/cv/download?v=${cvVersion}`,
+            viewUrl: `/api/cv/view?v=${cvVersion}`,
+            isActive: true
+          };
+        } else {
+          cleanProfile.resumeUrl = '';
+          cleanProfile.activeCv = null;
+        }
+
         const cleanProjects = projectsDocs.map(p => {
           const { _id, __v, ...rest } = p;
           return rest;
@@ -185,6 +214,7 @@ app.get('/api/portfolio', async (req, res) => {
           projects: cleanProjects,
           skills: cleanSkills,
           education: cleanEducation,
+          activeCv: cleanProfile.activeCv,
           source: 'mongodb-atlas'
         });
       }
@@ -195,11 +225,32 @@ app.get('/api/portfolio', async (req, res) => {
 
   // Fallback to local JSON
   const db = getDb();
+  const fallbackProfile = { ...(db.profile || {}) };
+  const fallbackCv = db.activeCv;
+
+  if (fallbackCv && fallbackCv.isActive) {
+    const cvVersion = new Date(fallbackCv.lastUpdatedDate || Date.now()).getTime();
+    fallbackProfile.resumeUrl = `/api/cv/download?v=${cvVersion}`;
+    fallbackProfile.activeCv = {
+      originalFilename: fallbackCv.originalFilename || 'VanojanBSCCV.pdf',
+      fileSize: fallbackCv.fileSize || 120506,
+      uploadDate: fallbackCv.uploadDate,
+      lastUpdatedDate: fallbackCv.lastUpdatedDate,
+      downloadUrl: `/api/cv/download?v=${cvVersion}`,
+      viewUrl: `/api/cv/view?v=${cvVersion}`,
+      isActive: true
+    };
+  } else if (!fallbackProfile.resumeUrl || fallbackCv?.isActive === false) {
+    fallbackProfile.resumeUrl = '';
+    fallbackProfile.activeCv = null;
+  }
+
   res.json({
-    profile: db.profile,
+    profile: fallbackProfile,
     projects: db.projects,
     skills: db.skills,
     education: db.education,
+    activeCv: fallbackProfile.activeCv || null,
     source: 'local-fallback'
   });
 });
@@ -861,6 +912,350 @@ app.get('/api/auth/verify', authMiddleware, (req, res) => {
 // Get Current Auth Profile
 app.get('/api/auth/me', authMiddleware, (req, res) => {
   res.json({ success: true, user: req.user });
+});
+
+// ============================================================================
+// DYNAMIC CV & RESUME MANAGEMENT ROUTES (Cloudinary & MongoDB Atlas Backed)
+// ============================================================================
+
+// Helper to resolve currently active CV from MongoDB Atlas or local JSON fallback
+async function getActiveCvRecord() {
+  if (isDbConnected()) {
+    try {
+      const activeDoc = await Cv.findOne({ isActive: true }).sort({ updatedAt: -1 }).lean();
+      if (activeDoc) return activeDoc;
+    } catch (err) {
+      console.warn('[MongoDB Atlas] Error querying active CV, checking local db fallback:', err.message);
+    }
+  }
+  const db = getDb();
+  if (db.activeCv && db.activeCv.isActive) {
+    return db.activeCv;
+  }
+  return null;
+}
+
+// 1. Public: Get active CV metadata
+app.get('/api/cv/active', async (req, res) => {
+  try {
+    const activeCv = await getActiveCvRecord();
+    if (!activeCv) {
+      return res.json({ success: true, activeCv: null });
+    }
+    const version = new Date(activeCv.lastUpdatedDate || activeCv.updatedAt || Date.now()).getTime();
+    res.json({
+      success: true,
+      activeCv: {
+        id: activeCv._id ? activeCv._id.toString() : 'active_cv',
+        originalFilename: activeCv.originalFilename,
+        fileSize: activeCv.fileSize,
+        uploadDate: activeCv.uploadDate,
+        lastUpdatedDate: activeCv.lastUpdatedDate,
+        format: activeCv.format || 'pdf',
+        mimeType: activeCv.mimeType || 'application/pdf',
+        fileHash: activeCv.fileHash || '',
+        downloadUrl: `/api/cv/download?v=${version}`,
+        viewUrl: `/api/cv/view?v=${version}`,
+        isActive: true,
+        storageProvider: activeCv.cloudinaryPublicId && !activeCv.cloudinaryPublicId.startsWith('local_') ? 'cloudinary' : 'server_storage'
+      }
+    });
+  } catch (err) {
+    console.error('[CV Active Error]:', err);
+    res.status(500).json({ error: 'Failed to retrieve active CV metadata' });
+  }
+});
+
+// Helper for sending/streaming CV PDF (for download or inline view)
+async function serveCvFile(req, res, isView = false) {
+  const activeCv = await getActiveCvRecord();
+  if (!activeCv) {
+    return res.status(404).json({ error: 'No active CV is currently available.' });
+  }
+
+  const filename = (activeCv.originalFilename || 'VanojanBSCCV.pdf').replace(/["\r\n]/g, '');
+  const disposition = isView ? 'inline' : 'attachment';
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `${disposition}; filename="${filename}"`);
+  res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+
+  // If stored in Cloudinary via external URL
+  const targetUrl = activeCv.secureUrl || activeCv.url;
+  if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
+    if (isView) {
+      return res.redirect(302, targetUrl);
+    }
+    // For download, fetch and stream to ensure browser prompts with exact filename
+    try {
+      const remoteRes = await fetch(targetUrl);
+      if (remoteRes.ok) {
+        const arrayBuf = await remoteRes.arrayBuffer();
+        return res.send(Buffer.from(arrayBuf));
+      }
+    } catch (fetchErr) {
+      console.warn('[CV Download Stream Fallback]:', fetchErr.message);
+    }
+    return res.redirect(302, targetUrl);
+  }
+
+  // Local file fallback
+  const candidatePaths = [
+    activeCv.url ? path.resolve(__dirname, '../public', activeCv.url.replace(/^\//, '')) : null,
+    path.resolve(__dirname, '../public/VanojanBSCCV.pdf'),
+    path.resolve(__dirname, '../VanojanBSCCV.pdf')
+  ].filter(Boolean);
+
+  for (const p of candidatePaths) {
+    if (fs.existsSync(p)) {
+      return res.sendFile(p);
+    }
+  }
+
+  return res.status(404).json({ error: 'CV document could not be located.' });
+}
+
+// 2. Public: Download active CV with attachment header
+app.get('/api/cv/download', (req, res) => serveCvFile(req, res, false));
+
+// 3. Public: View active CV in browser with inline header
+app.get('/api/cv/view', (req, res) => serveCvFile(req, res, true));
+
+// 4. Admin: Get detailed CV Management status & history
+app.get('/api/admin/cv', adminOnlyMiddleware, async (req, res) => {
+  try {
+    const activeCv = await getActiveCvRecord();
+    let history = [];
+    if (isDbConnected()) {
+      try {
+        history = await Cv.find().sort({ updatedAt: -1 }).limit(8).lean();
+      } catch (e) {}
+    }
+    res.json({
+      success: true,
+      activeCv,
+      history,
+      cloudinaryStatus: getCloudinaryStatus()
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Helper to process uploaded CV buffer and persist to Cloudinary + Atlas + Local DB
+async function processCvUpload(fileBuffer, originalName, username = 'admin', isReplace = false) {
+  const timestamp = Date.now();
+  const uniqueId = crypto.randomBytes(4).toString('hex');
+  const safeBaseName = path.basename(originalName, path.extname(originalName)).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+  const fileSize = fileBuffer.length;
+
+  let uploadedUrl = '';
+  let publicId = '';
+  let resourceType = 'raw';
+
+  // 1. Upload to Cloudinary if credentials are configured
+  if (isCloudinaryConfigured()) {
+    const uploadOptions = {
+      folder: 'vanojan_portfolio/cv',
+      public_id: `cv_${safeBaseName}_${timestamp}_${uniqueId}.pdf`,
+      resource_type: 'raw',
+      format: 'pdf',
+      tags: ['cv', 'resume', username]
+    };
+
+    const uploadResult = await uploadStream(fileBuffer, uploadOptions);
+    if (!uploadResult || !uploadResult.secure_url) {
+      throw new Error('Cloudinary failed to return a valid delivery URL for the CV.');
+    }
+    uploadedUrl = uploadResult.secure_url;
+    publicId = uploadResult.public_id;
+    resourceType = uploadResult.resource_type || 'raw';
+  } else {
+    // 2. Resilient local fallback when Cloudinary API keys are not supplied in current environment
+    const localUploadDir = path.join(__dirname, '../public/uploads/cv');
+    if (!fs.existsSync(localUploadDir)) {
+      fs.mkdirSync(localUploadDir, { recursive: true });
+    }
+    const localFileName = `cv_${safeBaseName}_${timestamp}_${uniqueId}.pdf`;
+    const localFilePath = path.join(localUploadDir, localFileName);
+    fs.writeFileSync(localFilePath, fileBuffer);
+
+    uploadedUrl = `/uploads/cv/${localFileName}`;
+    publicId = `local_cv_${timestamp}_${uniqueId}`;
+  }
+
+  // 3. Keep public/VanojanBSCCV.pdf synced
+  try {
+    const staticCvPath = path.join(__dirname, '../public/VanojanBSCCV.pdf');
+    fs.writeFileSync(staticCvPath, fileBuffer);
+    const rootCvPath = path.join(__dirname, '../VanojanBSCCV.pdf');
+    fs.writeFileSync(rootCvPath, fileBuffer);
+  } catch (syncErr) {
+    console.warn('[CV File Sync Warning]:', syncErr.message);
+  }
+
+  // 4. Capture previous active CV's publicId for Cloudinary cleanup
+  let previousPublicId = null;
+  if (isDbConnected()) {
+    try {
+      const prevActive = await Cv.findOne({ isActive: true }).sort({ updatedAt: -1 });
+      if (prevActive) {
+        previousPublicId = prevActive.cloudinaryPublicId;
+      }
+      await Cv.updateMany({ isActive: true }, { isActive: false });
+    } catch (dbErr) {
+      console.warn('[MongoDB updateMany Warning]:', dbErr.message);
+    }
+  }
+
+  // 5. Create new active CV document in MongoDB Atlas
+  let savedCv = null;
+  if (isDbConnected()) {
+    try {
+      savedCv = await Cv.create({
+        originalFilename: originalName,
+        cloudinaryPublicId: publicId,
+        cloudinaryResourceType: resourceType,
+        url: uploadedUrl,
+        secureUrl: uploadedUrl,
+        fileSize,
+        format: 'pdf',
+        mimeType: 'application/pdf',
+        fileHash,
+        uploadDate: new Date(),
+        lastUpdatedDate: new Date(),
+        isActive: true,
+        uploader: username
+      });
+
+      await Profile.findOneAndUpdate(
+        {},
+        { resumeUrl: `/api/cv/download?v=${timestamp}` },
+        { upsert: true }
+      );
+    } catch (dbSaveErr) {
+      console.warn('[MongoDB Cv.create Warning]:', dbSaveErr.message);
+    }
+  }
+
+  // 6. Synchronize local fallback db.json
+  const db = getDb();
+  const cvRecord = {
+    originalFilename: originalName,
+    cloudinaryPublicId: publicId,
+    cloudinaryResourceType: resourceType,
+    url: uploadedUrl,
+    secureUrl: uploadedUrl,
+    fileSize,
+    format: 'pdf',
+    mimeType: 'application/pdf',
+    fileHash,
+    uploadDate: new Date().toISOString(),
+    lastUpdatedDate: new Date().toISOString(),
+    isActive: true
+  };
+  db.activeCv = cvRecord;
+  if (db.profile) {
+    db.profile.resumeUrl = `/api/cv/download?v=${timestamp}`;
+  }
+  saveDb(db);
+
+  // 7. Cleanup old Cloudinary asset only after the new CV is verified and activated
+  if (isReplace && previousPublicId && isCloudinaryConfigured()) {
+    try {
+      await deleteCloudinaryAsset(previousPublicId, { resource_type: 'raw' });
+    } catch (cleanErr) {
+      console.warn('[Previous CV Cloudinary Deletion Warning]:', cleanErr.message);
+    }
+  }
+
+  return savedCv || cvRecord;
+}
+
+// 5. Admin: Upload new CV (PDF only, max 10MB)
+app.post('/api/admin/cv/upload', adminOnlyMiddleware, uploadCvPdf(), async (req, res) => {
+  try {
+    const cvRecord = await processCvUpload(
+      req.file.buffer,
+      req.file.originalname,
+      req.user?.username || 'admin',
+      false
+    );
+    res.json({
+      success: true,
+      message: 'CV uploaded and published successfully to portfolio.',
+      cv: cvRecord
+    });
+  } catch (err) {
+    console.error('[CV Upload Error]:', err);
+    res.status(500).json({ error: err.message || 'Failed to process CV upload.' });
+  }
+});
+
+// 6. Admin: Replace existing CV with new version (verify before switching, then delete old)
+app.post('/api/admin/cv/replace', adminOnlyMiddleware, uploadCvPdf(), async (req, res) => {
+  try {
+    const cvRecord = await processCvUpload(
+      req.file.buffer,
+      req.file.originalname,
+      req.user?.username || 'admin',
+      true
+    );
+    res.json({
+      success: true,
+      message: 'CV replaced and verified successfully.',
+      cv: cvRecord
+    });
+  } catch (err) {
+    console.error('[CV Replace Error]:', err);
+    res.status(500).json({ error: err.message || 'Failed to replace CV.' });
+  }
+});
+
+// 7. Admin: Remove active CV (deactivates CV, cleans Cloudinary, clears portfolio links)
+app.delete('/api/admin/cv', adminOnlyMiddleware, async (req, res) => {
+  try {
+    const activeCv = await getActiveCvRecord();
+    if (!activeCv) {
+      return res.status(404).json({ error: 'No active CV found to remove.' });
+    }
+
+    // Destroy on Cloudinary if it has a Cloudinary public ID
+    if (activeCv.cloudinaryPublicId && !activeCv.cloudinaryPublicId.startsWith('local_') && isCloudinaryConfigured()) {
+      try {
+        await deleteCloudinaryAsset(activeCv.cloudinaryPublicId, { resource_type: 'raw' });
+      } catch (cleanErr) {
+        console.warn('[CV Removal Cloudinary Warning]:', cleanErr.message);
+      }
+    }
+
+    // Deactivate in MongoDB Atlas
+    if (isDbConnected()) {
+      try {
+        await Cv.updateMany({ isActive: true }, { isActive: false });
+        await Profile.findOneAndUpdate({}, { resumeUrl: '' });
+      } catch (dbErr) {
+        console.warn('[MongoDB CV Removal Warning]:', dbErr.message);
+      }
+    }
+
+    // Clear in local fallback db.json
+    const db = getDb();
+    db.activeCv = null;
+    if (db.profile) {
+      db.profile.resumeUrl = '';
+    }
+    saveDb(db);
+
+    res.json({
+      success: true,
+      message: 'Active CV successfully removed. Portfolio CV links are now disabled.'
+    });
+  } catch (err) {
+    console.error('[CV Delete Error]:', err);
+    res.status(500).json({ error: err.message || 'Failed to remove CV.' });
+  }
 });
 
 // CLOUDINARY & MEDIA MANAGEMENT ROUTES

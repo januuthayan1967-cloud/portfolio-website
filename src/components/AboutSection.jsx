@@ -173,26 +173,51 @@ export default function AboutSection({ profile }) {
 
             {/* Action Buttons: Download CV & Let's Connect (Matches Reference Image 1) */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
-              <a
-                href={resumeUrl || "/VanojanBSCCV.pdf"}
-                download="VanojanBSCCV.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-gold reference-primary"
-                style={{ 
-                  padding: '0.85rem 2.2rem', 
-                  fontSize: '0.88rem',
-                  fontWeight: 700,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  borderRadius: '9999px',
-                  textDecoration: 'none'
-                }}
-              >
-                <span>Download CV</span>
-                <ArrowUpRight size={17} />
-              </a>
+              {Boolean(resumeUrl && resumeUrl.trim() !== '' && resumeUrl !== '#') ? (
+                <a
+                  href={resumeUrl.startsWith('/api/cv') || resumeUrl.startsWith('http') ? resumeUrl : `/api/cv/download?v=${Date.now()}`}
+                  download={profile?.activeCv?.originalFilename || "VanojanBSCCV.pdf"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-gold reference-primary"
+                  style={{ 
+                    padding: '0.85rem 2.2rem', 
+                    fontSize: '0.88rem',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    borderRadius: '9999px',
+                    textDecoration: 'none'
+                  }}
+                >
+                  <span>Download CV</span>
+                  <ArrowUpRight size={17} />
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="btn-ghost-luxury"
+                  title="Executive CV is currently being updated by the administrator"
+                  style={{ 
+                    padding: '0.85rem 1.8rem', 
+                    fontSize: '0.88rem',
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    borderRadius: '9999px',
+                    opacity: 0.55,
+                    cursor: 'not-allowed',
+                    background: 'var(--surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-muted)'
+                  }}
+                >
+                  <span>CV Updating</span>
+                </button>
+              )}
 
               <a
                 href="#contact"

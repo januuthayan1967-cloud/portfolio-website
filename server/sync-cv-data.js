@@ -35,7 +35,7 @@ export const verifiedProfile = {
   linkedin: "https://www.linkedin.com/in/uthayagunasingam-vanojan-1b75a2327/",
   twitter: "",
   statusText: "Open for Graduate Software Engineer & Full-Stack Opportunities",
-  resumeUrl: "/VanojanBSCCV.pdf",
+  resumeUrl: "/api/cv/download",
   emailNotifications: true,
   emailRepliesEnabled: true,
   metrics: [
@@ -313,7 +313,7 @@ export const verifiedSkills = [
 
 export const verifiedEducation = [
   {
-    degree: "BSc (Hons) Software Engineering",
+    degree: "BSc (Hons) Software Engineering (2026)",
     institution: "ICBT Campus (affiliated with Cardiff Metropolitan University, UK)",
     period: "Coursework completed; final results pending",
     badge: "Results Pending",
@@ -321,7 +321,7 @@ export const verifiedEducation = [
     order: 0
   },
   {
-    degree: "Higher National Diploma in Computing & Software Engineering",
+    degree: "Higher National Diploma in Computing & Software Engineering (2025)",
     institution: "ICBT Campus (affiliated with Cardiff Metropolitan University)",
     period: "Completed",
     badge: "HND Completed",
@@ -389,13 +389,15 @@ async function syncAll() {
     ...existingDb,
     profile: {
       ...verifiedProfile,
+      resumeUrl: existingDb.profile?.resumeUrl || verifiedProfile.resumeUrl,
       avatarImage: existingDb.profile?.avatarImage || "",
       avatarImagePublicId: existingDb.profile?.avatarImagePublicId || "",
       avatarImageUpdatedAt: existingDb.profile?.avatarImageUpdatedAt || null
     },
     projects: verifiedProjects,
     skills: verifiedSkills,
-    education: verifiedEducation
+    education: verifiedEducation,
+    activeCv: existingDb.activeCv || null
   };
 
   fs.writeFileSync(DB_FILE, JSON.stringify(updatedDb, null, 2), 'utf-8');

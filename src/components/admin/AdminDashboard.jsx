@@ -7,7 +7,7 @@ import {
   GraduationCap, MailCheck, KeyRound, Lock, Send, Search, Filter,
   Images, FileText, ChevronUp, ChevronDown, ChevronRight, Sun, Moon,
   Bell, Menu, MoreVertical, Crown, PieChart, BarChart3, Camera,
-  Sparkles, ShieldCheck
+  Sparkles, ShieldCheck, Download, AlertTriangle
 } from 'lucide-react';
 
 import '../../styles/admin.css';
@@ -61,6 +61,15 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
   // Account Security State
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [changingPassword, setChangingPassword] = useState(false);
+
+  // CV / Resume Management State
+  const [activeCv, setActiveCv] = useState(null);
+  const [cvHistory, setCvHistory] = useState([]);
+  const [cvUploading, setCvUploading] = useState(false);
+  const [cvUploadProgress, setCvUploadProgress] = useState(0);
+  const [confirmRemoveCvModalOpen, setConfirmRemoveCvModalOpen] = useState(false);
+  const cvFileInputRef = useRef(null);
+  const cvReplaceInputRef = useRef(null);
 
   // Profile Photo Management & Dropdown State
   const [adminAvatar, setAdminAvatar] = useState('');
@@ -221,12 +230,140 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
           }
         })
         .catch(() => {});
+
+      // Fetch Active CV & History
+      fetch('/api/admin/cv', { headers })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.success) {
+            setActiveCv(data.activeCv || null);
+            if (Array.isArray(data.history)) setCvHistory(data.history);
+          }
+        })
+        .catch(() => {});
     } catch (err) {
       console.warn('[AdminDashboard] Non-fatal data loading warning:', err.message);
       showToast('Dashboard data loaded', 'info');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Refresh CV Data on demand
+  const fetchCvData = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/cv', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success) {
+          setActiveCv(data.activeCv || null);
+          if (Array.isArray(data.history)) setCvHistory(data.history);
+        }
+      }
+    } catch (err) {
+      console.warn('[AdminDashboard] Error refreshing CV data:', err);
+    }
+  }, [token]);
+
+  // Upload or Replace CV (PDF only, max 10MB)
+  const handleUploadCv = async (file, isReplace = false) => {
+    if (!file) return;
+
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      showToast('Please upload a valid PDF document (.pdf format only).', 'error');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('File size exceeds the 10 MB maximum limit. Please upload a smaller file.', 'error');
+      return;
+    }
+
+    setCvUploading(true);
+    setCvUploadProgress(15);
+
+    const progressInterval = setInterval(() => {
+      setCvUploadProgress((prev) => (prev < 88 ? prev + 12 : prev));
+    }, 180);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const endpoint = isReplace ? '/api/admin/cv/replace' : '/api/admin/cv/upload';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      clearInterval(progressInterval);
+      setCvUploadProgress(100);
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to upload CV.');
+      }
+
+      setActiveCv(data.cv);
+      await fetchCvData();
+      if (onDataRefresh) onDataRefresh();
+      showToast(isReplace ? 'CV replaced & verified successfully!' : 'CV uploaded & published to portfolio!', 'success');
+    } catch (err) {
+      clearInterval(progressInterval);
+      showToast(err.message || 'Error uploading CV document', 'error');
+    } finally {
+      setTimeout(() => {
+        setCvUploading(false);
+        setCvUploadProgress(0);
+        if (cvFileInputRef.current) cvFileInputRef.current.value = '';
+        if (cvReplaceInputRef.current) cvReplaceInputRef.current.value = '';
+      }, 450);
+    }
+  };
+
+  // Remove CV
+  const handleRemoveCv = async () => {
+    try {
+      const res = await fetch('/api/admin/cv', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to remove CV.');
+      }
+
+      setActiveCv(null);
+      setProfile((prev) => ({ ...prev, resumeUrl: '' }));
+      await fetchCvData();
+      if (onDataRefresh) onDataRefresh();
+      setConfirmRemoveCvModalOpen(false);
+      showToast('CV removed successfully. Portfolio download links are disabled.', 'success');
+    } catch (err) {
+      showToast(err.message || 'Error removing CV', 'error');
+    }
+  };
+
+  const handleDownloadCv = () => {
+    const downloadUrl = `/api/cv/download?v=${Date.now()}`;
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.setAttribute('download', activeCv?.originalFilename || 'VanojanBSCCV.pdf');
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleViewCv = () => {
+    window.open(`/api/cv/view?v=${Date.now()}`, '_blank', 'noopener,noreferrer');
   };
 
   // Fetch Real Visitor Analytics Report
@@ -1035,16 +1172,17 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
               </div>
             </div>
 
-            {/* Navigation Tab Links (9 Items) */}
+            {/* Navigation Tab Links (10 Items) */}
             <nav className="admin-nav-list">
               {[
                 { id: 'overview', label: 'Analytics Overview', icon: LayoutDashboard },
+                { id: 'cv', label: 'CV / Resume Management', icon: FileText, badge: activeCv ? 'Live' : undefined },
                 { id: 'projects', label: 'Projects & Gallery', icon: FolderGit2, badge: projects.length },
                 { id: 'media', label: 'Cloudinary Assets', icon: Image, badge: mediaList.length },
                 { id: 'messages', label: 'Inbox & Dispatches', icon: Mail, badge: unreadCount, isDanger: unreadCount > 0 },
                 { id: 'skills', label: 'Skills Matrix', icon: Cpu },
                 { id: 'education', label: 'Timelines & Journey', icon: GraduationCap },
-                { id: 'profile', label: 'Identity, Bio & CV', icon: UserCheck },
+                { id: 'profile', label: 'Identity & Bio', icon: UserCheck },
                 { id: 'email', label: 'Gmail & SMTP', icon: MailCheck },
                 { id: 'security', label: 'Account Security', icon: KeyRound }
               ].map((tab) => {
@@ -1454,6 +1592,507 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* =========================================================================
+              TAB: CV / RESUME MANAGEMENT (Cloudinary & Atlas Backed)
+              ========================================================================= */}
+          {activeTab === 'cv' && (
+            <div>
+              {/* Header Title & Subtitle */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <span className="admin-badge-gold">08 // EXECUTIVE RESUME</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                      ASSET PIPELINE
+                    </span>
+                  </div>
+                  <h2 className="admin-header-title" style={{ fontSize: '1.85rem' }}>
+                    CV &amp; Resume <span className="admin-gold-gradient-text">Management</span>
+                  </h2>
+                  <p className="admin-header-subtitle">
+                    Autonomous PDF document pipeline with Cloudinary cloud storage and MongoDB Atlas persistence.
+                  </p>
+                </div>
+
+                {/* Status Badges & Quick Action */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '6px 14px',
+                      borderRadius: '9999px',
+                      background: activeCv ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                      border: activeCv ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(239, 68, 68, 0.35)',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.74rem',
+                      color: activeCv ? '#10B981' : '#EF4444',
+                      fontWeight: 600
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: '7px',
+                        height: '7px',
+                        borderRadius: '50%',
+                        background: activeCv ? '#10B981' : '#EF4444',
+                        boxShadow: activeCv ? '0 0 8px #10B981' : 'none'
+                      }}
+                    />
+                    <span>{activeCv ? 'Active & Published' : 'No Active CV'}</span>
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '6px 14px',
+                      borderRadius: '9999px',
+                      background: 'var(--adm-gold-pill-bg)',
+                      border: '1px solid var(--adm-border)',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.74rem',
+                      color: 'var(--adm-gold-primary)',
+                      fontWeight: 600
+                    }}
+                  >
+                    <HardDrive size={13} />
+                    <span>
+                      {cloudinaryStatus?.configured ? 'Cloudinary (vyr3hnbq)' : 'Atlas Local Store'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Upload Progress Bar (when active) */}
+              {cvUploading && (
+                <div
+                  className="admin-card"
+                  style={{
+                    marginBottom: '24px',
+                    padding: '20px 24px',
+                    border: '1.5px solid var(--adm-gold-primary)',
+                    boxShadow: 'var(--adm-gold-glow)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <RefreshCw size={16} className="spinning" color="var(--adm-gold-primary)" />
+                      <span style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--adm-text-title)' }}>
+                        Verifying &amp; Uploading PDF Document...
+                      </span>
+                    </div>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--adm-gold-primary)' }}>
+                      {cvUploadProgress}%
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '8px',
+                      borderRadius: '9999px',
+                      background: 'var(--adm-border-subtle)',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${cvUploadProgress}%`,
+                        height: '100%',
+                        background: 'var(--adm-gold-gradient)',
+                        borderRadius: '9999px',
+                        transition: 'width 0.25s ease'
+                      }}
+                    />
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)', marginTop: '8px' }}>
+                    Validating binary signature (%PDF-), streaming buffer, and updating MongoDB Atlas active state.
+                  </div>
+                </div>
+              )}
+
+              {/* Hidden file inputs for Upload and Replace */}
+              <input
+                ref={cvFileInputRef}
+                type="file"
+                accept=".pdf,application/pdf"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleUploadCv(file, false);
+                }}
+              />
+              <input
+                ref={cvReplaceInputRef}
+                type="file"
+                accept=".pdf,application/pdf"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleUploadCv(file, true);
+                }}
+              />
+
+              {/* Active CV Hero Card */}
+              {activeCv ? (
+                <div
+                  className="admin-card"
+                  style={{
+                    marginBottom: '28px',
+                    padding: '28px',
+                    border: '1.5px solid var(--adm-border-strong)',
+                    boxShadow: 'var(--adm-card-shadow-hover)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                >
+                  {/* Subtle golden ambient flare */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '-40px',
+                      right: '-40px',
+                      width: '160px',
+                      height: '160px',
+                      borderRadius: '50%',
+                      background: 'radial-gradient(circle, rgba(212, 162, 58, 0.2) 0%, transparent 70%)',
+                      pointerEvents: 'none'
+                    }}
+                  />
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '24px' }}>
+                    {/* File identity and title */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '18px', minWidth: '280px' }}>
+                      <div
+                        style={{
+                          width: '64px',
+                          height: '64px',
+                          borderRadius: '16px',
+                          background: 'linear-gradient(135deg, rgba(212, 162, 58, 0.25) 0%, rgba(212, 162, 58, 0.05) 100%)',
+                          border: '1.5px solid var(--adm-gold-primary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'var(--adm-gold-primary)',
+                          boxShadow: '0 8px 24px rgba(212, 162, 58, 0.2)',
+                          flexShrink: 0
+                        }}
+                      >
+                        <FileText size={30} />
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <h3
+                            style={{
+                              fontFamily: 'var(--font-heading)',
+                              fontSize: '1.35rem',
+                              fontWeight: 700,
+                              color: 'var(--adm-text-title)',
+                              margin: 0
+                            }}
+                          >
+                            {activeCv.originalFilename || 'VanojanBSCCV.pdf'}
+                          </h3>
+                          <span
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              fontFamily: 'var(--font-mono)',
+                              background: 'rgba(212, 162, 58, 0.16)',
+                              color: 'var(--adm-gold-primary)',
+                              border: '1px solid var(--adm-border)'
+                            }}
+                          >
+                            PDF
+                          </span>
+                        </div>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--adm-text-muted)', marginTop: '4px' }}>
+                          Primary executive curriculum vitae served across public portfolio buttons.
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Controls Toolbar (View, Download, Replace, Remove) */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={handleViewCv}
+                        className="admin-btn-secondary"
+                        title="Open CV in native PDF viewer"
+                      >
+                        <Eye size={15} />
+                        <span>View CV</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleDownloadCv}
+                        className="admin-btn-primary"
+                        title="Download active CV"
+                      >
+                        <Download size={15} />
+                        <span>Download CV</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => cvReplaceInputRef.current?.click()}
+                        className="admin-btn-secondary"
+                        disabled={cvUploading}
+                        title="Upload and verify new CV before switching active version"
+                      >
+                        <RefreshCw size={15} className={cvUploading ? 'spinning' : ''} />
+                        <span>Replace CV</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setConfirmRemoveCvModalOpen(true)}
+                        className="admin-btn-danger"
+                        disabled={cvUploading}
+                        title="Remove active CV"
+                      >
+                        <Trash2 size={15} />
+                        <span>Remove CV</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Metadata Chips Grid */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gap: '16px',
+                      marginTop: '28px',
+                      paddingTop: '20px',
+                      borderTop: '1px solid var(--adm-border-subtle)'
+                    }}
+                  >
+                    {/* File Size */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span className="admin-label" style={{ marginBottom: 0 }}>Document Size</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.95rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                        {activeCv.fileSize ? `${(activeCv.fileSize / 1024).toFixed(1)} KB` : '117.7 KB'}
+                      </span>
+                    </div>
+
+                    {/* Last Updated */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span className="admin-label" style={{ marginBottom: 0 }}>Last Updated</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.95rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                        {activeCv.lastUpdatedDate ? new Date(activeCv.lastUpdatedDate).toLocaleString() : 'Recent'}
+                      </span>
+                    </div>
+
+                    {/* Original Upload Date */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span className="admin-label" style={{ marginBottom: 0 }}>Initial Upload</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.95rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                        {activeCv.uploadDate ? new Date(activeCv.uploadDate).toLocaleDateString() : 'Today'}
+                      </span>
+                    </div>
+
+                    {/* Storage Provider */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span className="admin-label" style={{ marginBottom: 0 }}>Cloud Storage</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.95rem', fontWeight: 700, color: 'var(--adm-gold-primary)' }}>
+                        {activeCv.cloudinaryPublicId && !activeCv.cloudinaryPublicId.startsWith('local_')
+                          ? `Cloudinary (${activeCv.cloudinaryPublicId.split('/').pop()})`
+                          : 'Atlas Document Storage'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Empty State: Upload CV Prompt */
+                <div
+                  className="admin-card"
+                  style={{
+                    marginBottom: '28px',
+                    padding: '48px 32px',
+                    textAlign: 'center',
+                    border: '2px dashed var(--adm-border-strong)',
+                    borderRadius: '20px',
+                    background: 'var(--adm-card-bg)',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => cvFileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) handleUploadCv(file, false);
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '72px',
+                      height: '72px',
+                      borderRadius: '50%',
+                      background: 'var(--adm-gold-pill-bg)',
+                      border: '1.5px solid var(--adm-border)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 18px',
+                      color: 'var(--adm-gold-primary)'
+                    }}
+                  >
+                    <UploadCloud size={32} />
+                  </div>
+                  <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.35rem', fontWeight: 700, color: 'var(--adm-text-title)', marginBottom: '8px' }}>
+                    No Active CV Uploaded
+                  </h3>
+                  <p style={{ color: 'var(--adm-text-muted)', fontSize: '0.88rem', maxWidth: '440px', margin: '0 auto 20px' }}>
+                    Click or drag &amp; drop your executive resume here to publish it live on your portfolio. Only PDF files up to 10 MB are permitted.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      cvFileInputRef.current?.click();
+                    }}
+                    className="admin-btn-primary"
+                    style={{ margin: '0 auto' }}
+                  >
+                    <UploadCloud size={16} />
+                    <span>Upload CV Document</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Secondary Upload / Replace Dropzone (shown when CV already exists) */}
+              {activeCv && (
+                <div
+                  className="admin-card"
+                  style={{
+                    padding: '24px 28px',
+                    marginBottom: '28px',
+                    border: '1.5px dashed var(--adm-border)',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '16px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => cvReplaceInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) handleUploadCv(file, true);
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '12px',
+                        background: 'var(--adm-gold-pill-bg)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--adm-gold-primary)'
+                      }}
+                    >
+                      <UploadCloud size={20} />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '0.94rem', color: 'var(--adm-text-title)' }}>
+                        Quick Drop New Version (Atomic Replace)
+                      </div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.74rem', color: 'var(--adm-text-muted)', marginTop: '2px' }}>
+                        Drag &amp; drop an updated PDF to verify and replace without downtime.
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      cvReplaceInputRef.current?.click();
+                    }}
+                    className="admin-btn-secondary"
+                  >
+                    <RefreshCw size={14} />
+                    <span>Choose New PDF</span>
+                  </button>
+                </div>
+              )}
+
+              {/* History / Audit Log */}
+              {cvHistory && cvHistory.length > 0 && (
+                <div className="admin-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                    <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                      Version History &amp; Audit Logs
+                    </h3>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)' }}>
+                      {cvHistory.length} Recorded Iterations
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {cvHistory.map((item, idx) => (
+                      <div
+                        key={item._id || idx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '12px 16px',
+                          borderRadius: '10px',
+                          background: item.isActive ? 'var(--adm-gold-pill-bg)' : 'var(--adm-surface)',
+                          border: item.isActive ? '1px solid var(--adm-border-strong)' : '1px solid var(--adm-border-subtle)',
+                          flexWrap: 'wrap',
+                          gap: '12px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <FileText size={16} color={item.isActive ? 'var(--adm-gold-primary)' : 'var(--adm-text-muted)'} />
+                          <div>
+                            <div style={{ fontSize: '0.86rem', fontWeight: 600, color: 'var(--adm-text-title)' }}>
+                              {item.originalFilename}
+                            </div>
+                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.70rem', color: 'var(--adm-text-muted)' }}>
+                              {(item.fileSize / 1024).toFixed(1)} KB &bull; Uploaded {new Date(item.uploadDate || item.createdAt).toLocaleString()} by {item.uploader || 'admin'}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontSize: '0.66rem',
+                              fontFamily: 'var(--font-mono)',
+                              fontWeight: 700,
+                              background: item.isActive ? 'rgba(16, 185, 129, 0.15)' : 'var(--adm-surface-trans)',
+                              color: item.isActive ? '#10B981' : 'var(--adm-text-muted)',
+                              border: item.isActive ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--adm-border-subtle)'
+                            }}
+                          >
+                            {item.isActive ? 'Active Version' : 'Archived'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -2240,29 +2879,46 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   </div>
                 </div>
 
-                {/* CV URL */}
-                <div style={{ marginBottom: '24px' }}>
-                  <label className="admin-label">CV / Executive Resume URL</label>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <input
-                      type="text"
-                      placeholder="https://res.cloudinary.com/... or /resume.pdf"
-                      className="admin-form-input"
-                      value={profile.resumeUrl || ''}
-                      onChange={(e) => setProfile({ ...profile, resumeUrl: e.target.value })}
-                    />
-                    {profile.resumeUrl && (
-                      <a
-                        href={profile.resumeUrl}
-                        target="_blank"
-                        rel="noreferrer"
+                {/* CV / Executive Resume Management Card */}
+                <div style={{ marginBottom: '24px', padding: '18px 20px', borderRadius: '14px', background: 'var(--adm-surface)', border: '1px solid var(--adm-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div className="admin-chart-icon-box" style={{ width: '40px', height: '40px' }}>
+                        <FileText size={18} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                          Executive CV &amp; Resume Pipeline
+                        </div>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.74rem', color: 'var(--adm-text-muted)', marginTop: '2px' }}>
+                          {activeCv ? (
+                            <span style={{ color: '#10B981' }}>● Active: {activeCv.originalFilename} ({(activeCv.fileSize / 1024).toFixed(1)} KB)</span>
+                          ) : (
+                            <span style={{ color: '#EF4444' }}>● No active CV published</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {activeCv && (
+                        <button
+                          type="button"
+                          onClick={handleViewCv}
+                          className="admin-btn-secondary"
+                        >
+                          <Eye size={13} />
+                          <span>Preview</span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('cv')}
                         className="admin-btn-primary"
-                        style={{ textDecoration: 'none' }}
                       >
-                        <ExternalLink size={14} />
-                        <span>Preview</span>
-                      </a>
-                    )}
+                        <FileText size={13} />
+                        <span>Manage in CV Console &rarr;</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -3031,6 +3687,86 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
           fetchData();
         }}
       />
+
+      {/* CONFIRM REMOVE CV MODAL */}
+      {confirmRemoveCvModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1200,
+            background: 'rgba(2, 4, 8, 0.85)',
+            backdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setConfirmRemoveCvModalOpen(false)}
+        >
+          <div
+            className="admin-card"
+            style={{
+              width: '100%',
+              maxWidth: '460px',
+              borderRadius: '24px',
+              padding: '32px',
+              border: '1.5px solid rgba(239, 68, 68, 0.45)',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 25px rgba(239, 68, 68, 0.15)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '18px' }}>
+              <div
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '14px',
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  border: '1.5px solid rgba(239, 68, 68, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#EF4444',
+                  flexShrink: 0
+                }}
+              >
+                <AlertTriangle size={22} />
+              </div>
+              <div>
+                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--adm-text-title)', margin: 0 }}>
+                  Confirm CV Removal
+                </h3>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)', marginTop: '2px' }}>
+                  Irreversible public action
+                </div>
+              </div>
+            </div>
+
+            <p style={{ color: 'var(--adm-text-muted)', fontSize: '0.88rem', lineHeight: 1.5, marginBottom: '24px' }}>
+              Are you sure you want to remove <strong style={{ color: 'var(--adm-text-title)' }}>{activeCv?.originalFilename || 'VanojanBSCCV.pdf'}</strong>? Once removed, the &ldquo;Download CV&rdquo; buttons across your public portfolio will be gracefully disabled until you upload a new version.
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setConfirmRemoveCvModalOpen(false)}
+                className="admin-btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveCv}
+                className="admin-btn-danger"
+              >
+                <Trash2 size={15} />
+                <span>Confirm Removal</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

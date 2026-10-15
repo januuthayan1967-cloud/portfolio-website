@@ -8,14 +8,14 @@ export default function ExperienceSection({ education = [] }) {
   // Genuine fallback education milestones from CV if not loaded from database
   const fallbackEducation = [
     {
-      degree: "BSc (Hons) Software Engineering",
+      degree: "BSc (Hons) Software Engineering (2026)",
       institution: "ICBT Campus (affiliated with Cardiff Metropolitan University, UK)",
       period: "Coursework completed; final results pending",
       badge: "Results Pending",
       description: "Completed comprehensive software engineering curriculum covering advanced full-stack web applications, distributed systems, mobile computing, and AI-integrated systems."
     },
     {
-      degree: "Higher National Diploma in Computing & Software Engineering",
+      degree: "Higher National Diploma in Computing & Software Engineering (2025)",
       institution: "ICBT Campus (affiliated with Cardiff Metropolitan University)",
       period: "Completed",
       badge: "HND Completed",

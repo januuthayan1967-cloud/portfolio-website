@@ -9,3 +9,4 @@ export { VisitorSession } from './VisitorSession.js';
 export { Admin } from './Admin.js';
 export { Media } from './Media.js';
 export { User } from './User.js';
+export { Cv } from './Cv.js';

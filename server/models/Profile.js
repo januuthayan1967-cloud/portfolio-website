@@ -28,7 +28,7 @@ const profileSchema = new mongoose.Schema({
   linkedin: { type: String, default: 'https://www.linkedin.com/in/uthayagunasingam-vanojan-1b75a2327/' },
   twitter: { type: String, default: '' },
   statusText: { type: String, default: 'Open for Graduate Software Engineer & Full-Stack Opportunities' },
-  resumeUrl: { type: String, default: '/VanojanBSCCV.pdf' },
+  resumeUrl: { type: String, default: '/VanojanBSCCV.pdf?v=20261015' },
   emailNotifications: { type: Boolean, default: true },
   emailRepliesEnabled: { type: Boolean, default: true },
   metrics: { type: [metricSchema], default: [] }

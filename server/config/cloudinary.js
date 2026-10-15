@@ -87,6 +87,31 @@ export function deleteCloudinaryImage(publicId, options = {}) {
 }
 
 /**
+ * Deletes any asset (image, raw file, pdf) from Cloudinary safely
+ * @param {string} publicId - Cloudinary public ID
+ * @param {Object} options - Deletion options (e.g., { resource_type: 'raw' })
+ * @returns {Promise<Object>}
+ */
+export function deleteCloudinaryAsset(publicId, options = {}) {
+  return new Promise((resolve) => {
+    if (!isCloudinaryConfigured()) {
+      return resolve({ result: 'not_configured' });
+    }
+    const opts = {
+      resource_type: options.resource_type || (publicId.endsWith('.pdf') ? 'raw' : 'image'),
+      ...options
+    };
+    cloudinary.uploader.destroy(publicId, opts, (error, result) => {
+      if (error) {
+        console.warn(`[Cloudinary Destroy Warning]: ${error.message}`);
+        return resolve({ error: error.message });
+      }
+      resolve(result || { result: 'ok' });
+    });
+  });
+}
+
+/**
  * Generates a server-side signed upload signature for direct uploads without exposing the API Secret
  * @param {Object} paramsToSign - Parameters to sign (folder, timestamp, etc.)
  * @returns {Object} - Signature, timestamp, apiKey, and cloudName

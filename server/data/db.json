@@ -21,7 +21,7 @@
     "linkedin": "https://www.linkedin.com/in/uthayagunasingam-vanojan-1b75a2327/",
     "twitter": "",
     "statusText": "Open for Graduate Software Engineer & Full-Stack Opportunities",
-    "resumeUrl": "/VanojanBSCCV.pdf",
+    "resumeUrl": "/api/cv/download?v=1792082299353",
     "emailNotifications": true,
     "emailRepliesEnabled": true,
     "metrics": [
@@ -512,7 +512,7 @@
   ],
   "education": [
     {
-      "degree": "BSc (Hons) Software Engineering",
+      "degree": "BSc (Hons) Software Engineering (2026)",
       "institution": "ICBT Campus (affiliated with Cardiff Metropolitan University, UK)",
       "period": "Coursework completed; final results pending",
       "badge": "Results Pending",
@@ -520,7 +520,7 @@
       "order": 0
     },
     {
-      "degree": "Higher National Diploma in Computing & Software Engineering",
+      "degree": "Higher National Diploma in Computing & Software Engineering (2025)",
       "institution": "ICBT Campus (affiliated with Cardiff Metropolitan University)",
       "period": "Completed",
       "badge": "HND Completed",
@@ -650,5 +650,19 @@
     "profileImageUrl": "",
     "profileImagePublicId": "",
     "profileImageUpdatedAt": "2026-10-13T17:34:48.914Z"
+  },
+  "activeCv": {
+    "originalFilename": "VanojanBSCCV.pdf",
+    "cloudinaryPublicId": "local_cv_migrated_1792082299353",
+    "cloudinaryResourceType": "raw",
+    "url": "/VanojanBSCCV.pdf?v=1792082299353",
+    "secureUrl": "/VanojanBSCCV.pdf?v=1792082299353",
+    "fileSize": 119699,
+    "format": "pdf",
+    "mimeType": "application/pdf",
+    "fileHash": "e12320eb67f0ef95d141ab5f975aee56ef1cf525dbf5683c546d3d6570f22215",
+    "uploadDate": "2026-10-15T16:38:31.650Z",
+    "lastUpdatedDate": "2026-10-15T16:38:31.651Z",
+    "isActive": true
   }
 }
