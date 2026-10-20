@@ -50,7 +50,13 @@ export default function App() {
   // Fetch public portfolio data
   const loadPortfolioData = useCallback(async () => {
     try {
-      const res = await fetch('/api/portfolio');
+      const res = await fetch(`/api/portfolio?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       if (res.ok) {
         const json = await res.json();
         setData(json);

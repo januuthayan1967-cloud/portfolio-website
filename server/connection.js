@@ -13,9 +13,10 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 mongoose.set('bufferCommands', false);
 
 let cachedConnection = null;
+let cachedPromise = null;
 let lastAttemptTime = 0;
 let lastAttemptError = null;
-const RETRY_COOLDOWN_MS = 10000;
+const RETRY_COOLDOWN_MS = 5000;
 
 function getSanitizedUri() {
   let uri = process.env.MONGODB_URI;
@@ -52,8 +53,15 @@ export async function connectDb() {
     return mongoose.connection;
   }
 
-  if (cachedConnection && cachedConnection.readyState === 1) {
-    return cachedConnection;
+  if (cachedPromise && (mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2)) {
+    try {
+      await cachedPromise;
+      if (mongoose.connection.readyState === 1) {
+        return mongoose.connection;
+      }
+    } catch (e) {
+      cachedPromise = null;
+    }
   }
 
   const now = Date.now();
@@ -63,20 +71,35 @@ export async function connectDb() {
 
   lastAttemptTime = now;
 
-  try {
-    cachedConnection = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 15000,
-      connectTimeoutMS: 15000,
-      maxPoolSize: 10,
-    });
+  cachedPromise = mongoose.connect(uri, {
+    serverSelectionTimeoutMS: 15000,
+    connectTimeoutMS: 15000,
+    maxPoolSize: 10,
+  }).then((conn) => {
+    cachedConnection = conn;
     lastAttemptError = null;
     console.log(`[MongoDB Atlas] Connected successfully to database: ${mongoose.connection.name}`);
-    return cachedConnection;
-  } catch (error) {
+    return conn;
+  }).catch((error) => {
     cachedConnection = null;
+    cachedPromise = null;
     lastAttemptError = error;
     console.error('[MongoDB Atlas] Connection attempt failed:', error.message);
     throw error;
+  });
+
+  return await cachedPromise;
+}
+
+export async function ensureDb() {
+  if (mongoose.connection.readyState === 1) {
+    return true;
+  }
+  try {
+    const conn = await connectDb();
+    return Boolean(conn && mongoose.connection.readyState === 1);
+  } catch (e) {
+    return false;
   }
 }
 

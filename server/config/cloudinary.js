@@ -52,6 +52,8 @@ export function uploadStream(buffer, options = {}) {
     const defaultOptions = {
       folder: 'vanojan_portfolio',
       resource_type: 'auto',
+      type: 'upload',
+      access_mode: 'public',
       ...options
     };
 

@@ -4,7 +4,8 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
-import { connectDb, pingDb, isDbConnected } from './connection.js';
+import mongoose from 'mongoose';
+import { connectDb, pingDb, isDbConnected, ensureDb } from './connection.js';
 import { getDb, saveDb } from './db.js';
 import {
   Profile,
@@ -140,7 +141,7 @@ export function adminOnlyMiddleware(req, res, next) {
 app.use('/api', async (req, res, next) => {
   if (!isDbConnected() && process.env.MONGODB_URI) {
     try {
-      await connectDb();
+      await ensureDb();
     } catch (err) {
       // Continue to fallback handler
     }
@@ -150,6 +151,7 @@ app.use('/api', async (req, res, next) => {
 
 // HEALTH & CONNECTION VERIFICATION
 app.get('/api/health', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
   const ping = await pingDb();
   const cloudinaryStatus = getCloudinaryStatus();
   res.json({
@@ -165,6 +167,14 @@ app.get('/api/health', async (req, res) => {
 
 // 1. Get full portfolio data
 app.get('/api/portfolio', async (req, res) => {
+  // Prevent any intermediary or browser caching of dynamic portfolio data
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+
+  await ensureDb();
+
   if (isDbConnected()) {
     try {
       const [profileDoc, projectsDocs, skillsDocs, eduDocs, activeCvDoc] = await Promise.all([
@@ -172,7 +182,7 @@ app.get('/api/portfolio', async (req, res) => {
         Project.find().sort({ order: 1, createdAt: 1 }).lean(),
         SkillCategory.find().sort({ order: 1, createdAt: 1 }).lean(),
         Education.find().sort({ order: 1, createdAt: 1 }).lean(),
-        Cv.findOne({ isActive: true }).sort({ updatedAt: -1 }).lean()
+        Cv.findOne({ isActive: true }).sort({ uploadDate: -1, updatedAt: -1 }).lean()
       ]);
 
       if (profileDoc && projectsDocs && projectsDocs.length > 0) {
@@ -180,7 +190,7 @@ app.get('/api/portfolio', async (req, res) => {
 
         // Synchronize dynamic CV URL and active CV metadata
         if (activeCvDoc) {
-          const cvVersion = new Date(activeCvDoc.lastUpdatedDate || activeCvDoc.updatedAt || Date.now()).getTime();
+          const cvVersion = new Date(activeCvDoc.lastUpdatedDate || activeCvDoc.uploadDate || activeCvDoc.updatedAt || Date.now()).getTime();
           cleanProfile.resumeUrl = `/api/cv/download?v=${cvVersion}`;
           cleanProfile.activeCv = {
             originalFilename: activeCvDoc.originalFilename,
@@ -229,7 +239,7 @@ app.get('/api/portfolio', async (req, res) => {
   const fallbackCv = db.activeCv;
 
   if (fallbackCv && fallbackCv.isActive) {
-    const cvVersion = new Date(fallbackCv.lastUpdatedDate || Date.now()).getTime();
+    const cvVersion = new Date(fallbackCv.lastUpdatedDate || fallbackCv.uploadDate || Date.now()).getTime();
     fallbackProfile.resumeUrl = `/api/cv/download?v=${cvVersion}`;
     fallbackProfile.activeCv = {
       originalFilename: fallbackCv.originalFilename || 'VanojanBSCCV.pdf',
@@ -247,9 +257,9 @@ app.get('/api/portfolio', async (req, res) => {
 
   res.json({
     profile: fallbackProfile,
-    projects: db.projects,
-    skills: db.skills,
-    education: db.education,
+    projects: db.projects || [],
+    skills: db.skills || [],
+    education: db.education || [],
     activeCv: fallbackProfile.activeCv || null,
     source: 'local-fallback'
   });
@@ -920,9 +930,10 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
 
 // Helper to resolve currently active CV from MongoDB Atlas or local JSON fallback
 async function getActiveCvRecord() {
+  await ensureDb();
   if (isDbConnected()) {
     try {
-      const activeDoc = await Cv.findOne({ isActive: true }).sort({ updatedAt: -1 }).lean();
+      const activeDoc = await Cv.findOne({ isActive: true }).sort({ uploadDate: -1, updatedAt: -1 }).lean();
       if (activeDoc) return activeDoc;
     } catch (err) {
       console.warn('[MongoDB Atlas] Error querying active CV, checking local db fallback:', err.message);
@@ -937,12 +948,17 @@ async function getActiveCvRecord() {
 
 // 1. Public: Get active CV metadata
 app.get('/api/cv/active', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+
   try {
     const activeCv = await getActiveCvRecord();
     if (!activeCv) {
       return res.json({ success: true, activeCv: null });
     }
-    const version = new Date(activeCv.lastUpdatedDate || activeCv.updatedAt || Date.now()).getTime();
+    const version = new Date(activeCv.lastUpdatedDate || activeCv.uploadDate || activeCv.updatedAt || Date.now()).getTime();
     res.json({
       success: true,
       activeCv: {
@@ -978,30 +994,30 @@ async function serveCvFile(req, res, isView = false) {
 
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `${disposition}; filename="${filename}"`);
-  res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
 
-  // If stored in Cloudinary via external URL
+  // If stored in Cloudinary via external URL, attempt to stream remote asset
   const targetUrl = activeCv.secureUrl || activeCv.url;
   if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
-    if (isView) {
-      return res.redirect(302, targetUrl);
-    }
-    // For download, fetch and stream to ensure browser prompts with exact filename
     try {
       const remoteRes = await fetch(targetUrl);
       if (remoteRes.ok) {
         const arrayBuf = await remoteRes.arrayBuffer();
         return res.send(Buffer.from(arrayBuf));
+      } else {
+        console.warn(`[CV Stream Warning]: Remote CV fetch from ${targetUrl} returned HTTP ${remoteRes.status}. Using resilient local fallback.`);
       }
     } catch (fetchErr) {
       console.warn('[CV Download Stream Fallback]:', fetchErr.message);
     }
-    return res.redirect(302, targetUrl);
   }
 
-  // Local file fallback
+  // Local file fallback (preserves instant download and prevents 401 ACL failures)
   const candidatePaths = [
-    activeCv.url ? path.resolve(__dirname, '../public', activeCv.url.replace(/^\//, '')) : null,
+    activeCv.url && !activeCv.url.startsWith('http') ? path.resolve(__dirname, '../public', activeCv.url.replace(/^\//, '')) : null,
     path.resolve(__dirname, '../public/VanojanBSCCV.pdf'),
     path.resolve(__dirname, '../VanojanBSCCV.pdf')
   ].filter(Boolean);
@@ -1010,6 +1026,10 @@ async function serveCvFile(req, res, isView = false) {
     if (fs.existsSync(p)) {
       return res.sendFile(p);
     }
+  }
+
+  if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
+    return res.redirect(307, targetUrl);
   }
 
   return res.status(404).json({ error: 'CV document could not be located.' });
@@ -1021,15 +1041,88 @@ app.get('/api/cv/download', (req, res) => serveCvFile(req, res, false));
 // 3. Public: View active CV in browser with inline header
 app.get('/api/cv/view', (req, res) => serveCvFile(req, res, true));
 
-// 4. Admin: Get detailed CV Management status & history
+// Helper for serving historical/archived CV files
+async function serveHistoricalCvFile(req, res, isView = false) {
+  const { id } = req.params;
+  await ensureDb();
+  if (!isDbConnected()) {
+    return res.status(503).json({ error: 'Database connection required to access historical CVs.' });
+  }
+
+  const query = mongoose.isValidObjectId(id) ? { _id: id } : { cloudinaryPublicId: id };
+  const cvDoc = await Cv.findOne(query).lean();
+  if (!cvDoc) {
+    return res.status(404).json({ error: 'CV document record not found.' });
+  }
+
+  const filename = (cvDoc.originalFilename || 'VanojanBSCCV.pdf').replace(/["\r\n]/g, '');
+  const disposition = isView ? 'inline' : 'attachment';
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `${disposition}; filename="${filename}"`);
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+
+  const targetUrl = cvDoc.secureUrl || cvDoc.url;
+  if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
+    try {
+      const remoteRes = await fetch(targetUrl);
+      if (remoteRes.ok) {
+        const arrayBuf = await remoteRes.arrayBuffer();
+        return res.send(Buffer.from(arrayBuf));
+      } else {
+        console.warn(`[Historical CV Stream Warning]: Fetch from ${targetUrl} returned HTTP ${remoteRes.status}. Using fallback.`);
+      }
+    } catch (fetchErr) {
+      console.warn('[Historical CV Stream Fallback]:', fetchErr.message);
+    }
+  }
+
+  const candidatePaths = [
+    cvDoc.url && !cvDoc.url.startsWith('http') ? path.resolve(__dirname, '../public', cvDoc.url.replace(/^\//, '')) : null,
+    path.resolve(__dirname, '../public/VanojanBSCCV.pdf'),
+    path.resolve(__dirname, '../VanojanBSCCV.pdf')
+  ].filter(Boolean);
+
+  for (const p of candidatePaths) {
+    if (fs.existsSync(p)) {
+      return res.sendFile(p);
+    }
+  }
+
+  if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
+    return res.redirect(307, targetUrl);
+  }
+
+  return res.status(404).json({ error: 'Historical CV file could not be located on storage.' });
+}
+
+// 4. Admin: Download and View historical CV versions
+app.get('/api/admin/cv/:id/download', adminOnlyMiddleware, (req, res) => serveHistoricalCvFile(req, res, false));
+app.get('/api/admin/cv/:id/view', adminOnlyMiddleware, (req, res) => serveHistoricalCvFile(req, res, true));
+
+// 5. Admin: Get detailed CV Management status & history
 app.get('/api/admin/cv', adminOnlyMiddleware, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   try {
+    await ensureDb();
     const activeCv = await getActiveCvRecord();
     let history = [];
     if (isDbConnected()) {
       try {
-        history = await Cv.find().sort({ updatedAt: -1 }).limit(8).lean();
-      } catch (e) {}
+        const rawHistory = await Cv.find().sort({ uploadDate: -1, createdAt: -1 }).lean();
+        history = rawHistory.map(item => ({
+          ...item,
+          id: item._id ? item._id.toString() : item.id
+        }));
+      } catch (e) {
+        console.warn('[Admin CV History Query Warning]:', e.message);
+      }
     }
     res.json({
       success: true,
@@ -1061,6 +1154,8 @@ async function processCvUpload(fileBuffer, originalName, username = 'admin', isR
       public_id: `cv_${safeBaseName}_${timestamp}_${uniqueId}.pdf`,
       resource_type: 'raw',
       format: 'pdf',
+      type: 'upload',
+      access_mode: 'public',
       tags: ['cv', 'resume', username]
     };
 
@@ -1085,31 +1180,31 @@ async function processCvUpload(fileBuffer, originalName, username = 'admin', isR
     publicId = `local_cv_${timestamp}_${uniqueId}`;
   }
 
-  // 3. Keep public/VanojanBSCCV.pdf synced
+  // 3. Keep public/VanojanBSCCV.pdf synced in local environments if writable
   try {
     const staticCvPath = path.join(__dirname, '../public/VanojanBSCCV.pdf');
     fs.writeFileSync(staticCvPath, fileBuffer);
     const rootCvPath = path.join(__dirname, '../VanojanBSCCV.pdf');
     fs.writeFileSync(rootCvPath, fileBuffer);
   } catch (syncErr) {
-    console.warn('[CV File Sync Warning]:', syncErr.message);
+    // Ignore in read-only environments
   }
 
-  // 4. Capture previous active CV's publicId for Cloudinary cleanup
+  // 4. Capture previous active CV's publicId for Cloudinary cleanup IF isReplace
   let previousPublicId = null;
+  await ensureDb();
   if (isDbConnected()) {
     try {
       const prevActive = await Cv.findOne({ isActive: true }).sort({ updatedAt: -1 });
       if (prevActive) {
         previousPublicId = prevActive.cloudinaryPublicId;
       }
-      await Cv.updateMany({ isActive: true }, { isActive: false });
     } catch (dbErr) {
-      console.warn('[MongoDB updateMany Warning]:', dbErr.message);
+      console.warn('[MongoDB find previous active CV Warning]:', dbErr.message);
     }
   }
 
-  // 5. Create new active CV document in MongoDB Atlas
+  // 5. Create new active CV document in MongoDB Atlas FIRST before deactivating any old records
   let savedCv = null;
   if (isDbConnected()) {
     try {
@@ -1129,6 +1224,10 @@ async function processCvUpload(fileBuffer, originalName, username = 'admin', isR
         uploader: username
       });
 
+      // ONLY after new CV document is safely created and activated:
+      // Deactivate all previous CV versions
+      await Cv.updateMany({ _id: { $ne: savedCv._id }, isActive: true }, { isActive: false });
+
       await Profile.findOneAndUpdate(
         {},
         { resumeUrl: `/api/cv/download?v=${timestamp}` },
@@ -1136,6 +1235,7 @@ async function processCvUpload(fileBuffer, originalName, username = 'admin', isR
       );
     } catch (dbSaveErr) {
       console.warn('[MongoDB Cv.create Warning]:', dbSaveErr.message);
+      throw new Error(`Failed to persist CV record to database: ${dbSaveErr.message}`);
     }
   }
 
@@ -1170,10 +1270,14 @@ async function processCvUpload(fileBuffer, originalName, username = 'admin', isR
     }
   }
 
-  return savedCv || cvRecord;
+  const resultDoc = savedCv ? (savedCv.toObject ? savedCv.toObject() : savedCv) : cvRecord;
+  return {
+    ...resultDoc,
+    id: resultDoc._id ? resultDoc._id.toString() : resultDoc.id
+  };
 }
 
-// 5. Admin: Upload new CV (PDF only, max 10MB)
+// 6. Admin: Upload new CV (PDF only, max 10MB)
 app.post('/api/admin/cv/upload', adminOnlyMiddleware, uploadCvPdf(), async (req, res) => {
   try {
     const cvRecord = await processCvUpload(
@@ -1193,7 +1297,7 @@ app.post('/api/admin/cv/upload', adminOnlyMiddleware, uploadCvPdf(), async (req,
   }
 });
 
-// 6. Admin: Replace existing CV with new version (verify before switching, then delete old)
+// 7. Admin: Replace existing CV with new version (verify before switching, then delete old)
 app.post('/api/admin/cv/replace', adminOnlyMiddleware, uploadCvPdf(), async (req, res) => {
   try {
     const cvRecord = await processCvUpload(
@@ -1213,7 +1317,52 @@ app.post('/api/admin/cv/replace', adminOnlyMiddleware, uploadCvPdf(), async (req
   }
 });
 
-// 7. Admin: Remove active CV (deactivates CV, cleans Cloudinary, clears portfolio links)
+// 8. Admin: Delete previous CV version individually by ID (BUG 2)
+app.delete('/api/admin/cv/:id', adminOnlyMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    await ensureDb();
+    if (!isDbConnected()) {
+      return res.status(503).json({ error: 'Database connection required to manage CV versions.' });
+    }
+
+    const query = mongoose.isValidObjectId(id) ? { _id: id } : { cloudinaryPublicId: id };
+    const cvDoc = await Cv.findOne(query);
+
+    if (!cvDoc) {
+      return res.status(404).json({ error: 'CV version record not found.' });
+    }
+
+    // Protect active CV from accidental deletion
+    if (cvDoc.isActive) {
+      return res.status(400).json({
+        error: 'Cannot delete the active CV version. Please upload or activate a replacement CV first.'
+      });
+    }
+
+    // Delete corresponding cloud file using its stored Cloudinary public ID
+    if (cvDoc.cloudinaryPublicId && !cvDoc.cloudinaryPublicId.startsWith('local_') && isCloudinaryConfigured()) {
+      try {
+        await deleteCloudinaryAsset(cvDoc.cloudinaryPublicId, { resource_type: 'raw' });
+      } catch (cloudErr) {
+        console.warn('[Cloudinary CV Delete Warning]:', cloudErr.message);
+      }
+    }
+
+    await Cv.deleteOne({ _id: cvDoc._id });
+
+    res.json({
+      success: true,
+      message: `Previous CV version "${cvDoc.originalFilename}" permanently deleted.`,
+      deletedId: id
+    });
+  } catch (err) {
+    console.error('[CV Version Delete Error]:', err);
+    res.status(500).json({ error: err.message || 'Failed to delete CV version.' });
+  }
+});
+
+// 9. Admin: Remove active CV (deactivates CV, cleans Cloudinary, clears portfolio links)
 app.delete('/api/admin/cv', adminOnlyMiddleware, async (req, res) => {
   try {
     const activeCv = await getActiveCvRecord();
@@ -1445,6 +1594,12 @@ app.delete('/api/media/:publicId(*)', authMiddleware, async (req, res) => {
 
 // Admin Overview
 app.get('/api/admin/overview', adminOnlyMiddleware, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
+  await ensureDb();
+
   if (isDbConnected()) {
     try {
       const [realSessionsCount, realEventsCount, uniqueVisitorsAgg, totalMessages, unreadMessages, totalProjects, totalMedia, recentMessagesDocs] = await Promise.all([
@@ -1455,30 +1610,30 @@ app.get('/api/admin/overview', adminOnlyMiddleware, async (req, res) => {
         Message.countDocuments({ read: false }),
         Project.countDocuments(),
         Media.countDocuments(),
-        Message.find().sort({ date: -1 }).limit(5).lean()
+        Message.find().sort({ date: -1, createdAt: -1 }).limit(5).lean()
       ]);
 
       const activeStats = await getActiveVisitorsCount(isDbConnected());
-      const db = getDb();
       const analytics = {
         totalVisits: realSessionsCount || 0,
         uniqueVisitors: (uniqueVisitorsAgg && uniqueVisitorsAgg.length) || 0,
         pageViews: realEventsCount || 0,
         activeVisitors: activeStats.activeVisitors || 0
       };
-      const recentMessages = (recentMessagesDocs && recentMessagesDocs.length > 0)
-        ? recentMessagesDocs.map(m => {
-            const { _id, __v, ...rest } = m;
-            return rest;
-          })
-        : db.messages.slice(0, 5);
+      const recentMessages = (recentMessagesDocs || []).map(m => {
+        const { _id, __v, ...rest } = m;
+        return {
+          ...rest,
+          id: rest.id || (_id ? _id.toString() : '')
+        };
+      });
 
       return res.json({
         analytics,
-        totalMessages: totalMessages || db.messages.length,
-        unreadMessages: unreadMessages !== undefined ? unreadMessages : db.messages.filter(m => !m.read).length,
-        totalProjects: totalProjects || db.projects.length,
-        totalMedia: totalMedia || 0,
+        totalMessages: totalMessages ?? 0,
+        unreadMessages: unreadMessages ?? 0,
+        totalProjects: totalProjects ?? 0,
+        totalMedia: totalMedia ?? 0,
         recentMessages
       });
     } catch (err) {
@@ -1488,33 +1643,40 @@ app.get('/api/admin/overview', adminOnlyMiddleware, async (req, res) => {
 
   const db = getDb();
   res.json({
-    analytics: db.analytics,
-    totalMessages: db.messages.length,
-    unreadMessages: db.messages.filter(m => !m.read).length,
-    totalProjects: db.projects.length,
+    analytics: db.analytics || {},
+    totalMessages: (db.messages || []).length,
+    unreadMessages: (db.messages || []).filter(m => !m.read).length,
+    totalProjects: (db.projects || []).length,
     totalMedia: 0,
-    recentMessages: db.messages.slice(0, 5)
+    recentMessages: (db.messages || []).slice(0, 5)
   });
 });
 
 // Admin Messages CRUD
 app.get('/api/admin/messages', adminOnlyMiddleware, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
+  await ensureDb();
+
   if (isDbConnected()) {
     try {
-      const messagesDocs = await Message.find().sort({ date: -1 }).lean();
-      if (messagesDocs && messagesDocs.length > 0) {
-        return res.json(messagesDocs.map(m => {
-          const { _id, __v, ...rest } = m;
-          return rest;
-        }));
-      }
+      const messagesDocs = await Message.find().sort({ date: -1, createdAt: -1 }).lean();
+      return res.json((messagesDocs || []).map(m => {
+        const { _id, __v, ...rest } = m;
+        return {
+          ...rest,
+          id: rest.id || (_id ? _id.toString() : '')
+        };
+      }));
     } catch (err) {
       console.warn('[MongoDB Query] Admin messages error:', err.message);
     }
   }
 
   const db = getDb();
-  res.json(db.messages);
+  res.json(db.messages || []);
 });
 
 app.patch('/api/admin/messages/:id', adminOnlyMiddleware, async (req, res) => {
@@ -1524,13 +1686,18 @@ app.patch('/api/admin/messages/:id', adminOnlyMiddleware, async (req, res) => {
   if (req.body.starred !== undefined) update.starred = Boolean(req.body.starred);
 
   let updatedMsg = null;
+  await ensureDb();
 
   if (isDbConnected()) {
     try {
-      const updated = await Message.findOneAndUpdate({ id }, update, { returnDocument: 'after' }).lean();
+      const query = mongoose.isValidObjectId(id) ? { $or: [{ id }, { _id: id }] } : { id };
+      const updated = await Message.findOneAndUpdate(query, update, { returnDocument: 'after' }).lean();
       if (updated) {
         const { _id, __v, ...cleanMsg } = updated;
-        updatedMsg = cleanMsg;
+        updatedMsg = {
+          ...cleanMsg,
+          id: cleanMsg.id || (_id ? _id.toString() : id)
+        };
       }
     } catch (err) {
       console.warn('[MongoDB Query] Message patch error:', err.message);
@@ -1539,7 +1706,7 @@ app.patch('/api/admin/messages/:id', adminOnlyMiddleware, async (req, res) => {
 
   // Backup sync & fallback
   const db = getDb();
-  const localMsg = db.messages.find(m => m.id === id);
+  const localMsg = (db.messages || []).find(m => m.id === id || m._id === id);
   if (!updatedMsg && !localMsg) {
     return res.status(404).json({ error: 'Message not found' });
   }
@@ -1556,23 +1723,52 @@ app.patch('/api/admin/messages/:id', adminOnlyMiddleware, async (req, res) => {
 
 app.delete('/api/admin/messages/:id', adminOnlyMiddleware, async (req, res) => {
   const { id } = req.params;
+  if (!id) {
+    return res.status(400).json({ error: 'Message ID is required.' });
+  }
+
+  let deleted = false;
+  await ensureDb();
 
   if (isDbConnected()) {
     try {
-      await Message.deleteOne({ id });
+      const query = mongoose.isValidObjectId(id) ? { $or: [{ id }, { _id: id }] } : { id };
+      const existing = await Message.findOne(query);
+      if (existing) {
+        if (existing.imagePublicId && isCloudinaryConfigured()) {
+          try {
+            await deleteCloudinaryAsset(existing.imagePublicId);
+          } catch (cloudErr) {
+            console.warn('[Message Cloudinary Delete Warning]:', cloudErr.message);
+          }
+        }
+        await Message.deleteOne({ _id: existing._id });
+        deleted = true;
+      }
     } catch (err) {
       console.warn('[MongoDB Query] Message delete error:', err.message);
+      return res.status(500).json({ error: 'Failed to delete message from database.' });
     }
   }
 
-  // Backup sync
+  // Backup sync for local development
   try {
     const db = getDb();
-    db.messages = db.messages.filter(m => m.id !== id);
-    saveDb(db);
+    if (Array.isArray(db.messages)) {
+      const prevCount = db.messages.length;
+      db.messages = db.messages.filter(m => m.id !== id && m._id !== id);
+      if (db.messages.length < prevCount) {
+        deleted = true;
+        saveDb(db);
+      }
+    }
   } catch (e) {}
 
-  res.json({ success: true, id });
+  if (!deleted && !isDbConnected()) {
+    return res.status(404).json({ error: 'Message not found' });
+  }
+
+  res.json({ success: true, message: 'Message permanently removed.', id });
 });
 
 // Admin Email Reply System (Dispatches authenticated reply via Gmail SMTP)

@@ -68,8 +68,14 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
   const [cvUploading, setCvUploading] = useState(false);
   const [cvUploadProgress, setCvUploadProgress] = useState(0);
   const [confirmRemoveCvModalOpen, setConfirmRemoveCvModalOpen] = useState(false);
+  const [cvToDelete, setCvToDelete] = useState(null);
+  const [deletingCvId, setDeletingCvId] = useState(null);
   const cvFileInputRef = useRef(null);
   const cvReplaceInputRef = useRef(null);
+
+  // Message Deletion State
+  const [messageToDelete, setMessageToDelete] = useState(null);
+  const [deletingMessageId, setDeletingMessageId] = useState(null);
 
   // Profile Photo Management & Dropdown State
   const [adminAvatar, setAdminAvatar] = useState('');
@@ -366,6 +372,48 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     window.open(`/api/cv/view?v=${Date.now()}`, '_blank', 'noopener,noreferrer');
   };
 
+  const handleViewHistoricalCv = (item) => {
+    const id = item._id || item.id;
+    window.open(`/api/admin/cv/${id}/view?v=${Date.now()}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDownloadHistoricalCv = (item) => {
+    const id = item._id || item.id;
+    const downloadUrl = `/api/admin/cv/${id}/download?v=${Date.now()}`;
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.setAttribute('download', item.originalFilename || 'VanojanBSCCV.pdf');
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const confirmDeleteCvVersion = async () => {
+    if (!cvToDelete) return;
+    const id = cvToDelete._id || cvToDelete.id;
+    setDeletingCvId(id);
+    try {
+      const res = await fetch(`/api/admin/cv/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to delete CV version.');
+      }
+      setCvHistory((prev) => prev.filter((c) => (c._id || c.id) !== id));
+      showToast(data.message || `Previous CV "${cvToDelete.originalFilename}" deleted successfully!`, 'success');
+      setCvToDelete(null);
+      await fetchCvData();
+      if (onDataRefresh) onDataRefresh();
+    } catch (err) {
+      showToast(err.message || 'Error deleting previous CV version', 'error');
+    } finally {
+      setDeletingCvId(null);
+    }
+  };
+
   // Fetch Real Visitor Analytics Report
   const fetchAnalyticsReport = useCallback(async (range = '7d', isSilent = false) => {
     if (!isSilent) setAnalyticsLoading(true);
@@ -578,20 +626,45 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     }
   };
 
-  // Handle Delete Message
-  const deleteMessage = async (id) => {
-    if (!window.confirm('Delete this message permanently?')) return;
+  // Handle Delete Message (Opens confirmation modal)
+  const deleteMessage = (msgOrId) => {
+    if (typeof msgOrId === 'object' && msgOrId !== null) {
+      setMessageToDelete(msgOrId);
+    } else {
+      const found = messages.find((m) => m.id === msgOrId || m._id === msgOrId);
+      if (found) {
+        setMessageToDelete(found);
+      } else {
+        setMessageToDelete({ id: msgOrId, name: 'Selected Message', subject: '', date: new Date().toISOString() });
+      }
+    }
+  };
+
+  const confirmDeleteMessage = async () => {
+    if (!messageToDelete) return;
+    const id = messageToDelete.id || messageToDelete._id;
+    setDeletingMessageId(id);
     try {
       const res = await fetch(`/api/admin/messages/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.ok) {
-        setMessages((prev) => prev.filter((m) => m.id !== id));
-        showToast('Message deleted');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to delete message.');
       }
+      setMessages((prev) => prev.filter((m) => m.id !== id && m._id !== id));
+      setOverview((prev) => prev ? {
+        ...prev,
+        totalMessages: Math.max(0, (prev.totalMessages || 1) - 1),
+        recentMessages: (prev.recentMessages || []).filter((m) => m.id !== id && m._id !== id)
+      } : prev);
+      showToast('Message permanently removed from database.', 'success');
+      setMessageToDelete(null);
     } catch (err) {
-      showToast('Delete failed', 'error');
+      showToast(err.message || 'Delete failed', 'error');
+    } finally {
+      setDeletingMessageId(null);
     }
   };
 
@@ -2035,61 +2108,159 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
               {/* History / Audit Log */}
               {cvHistory && cvHistory.length > 0 && (
                 <div className="admin-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-                    <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
-                      Version History &amp; Audit Logs
-                    </h3>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', fontWeight: 700, color: 'var(--adm-text-title)', margin: 0 }}>
+                        Previous CV Management &amp; Version History
+                      </h3>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)', marginTop: '3px' }}>
+                        Manage, download, and delete persisted CV iterations in MongoDB Atlas &amp; Cloudinary
+                      </div>
+                    </div>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-gold-primary)', background: 'var(--adm-gold-pill-bg)', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--adm-border)' }}>
                       {cvHistory.length} Recorded Iterations
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {cvHistory.map((item, idx) => (
-                      <div
-                        key={item._id || idx}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '12px 16px',
-                          borderRadius: '10px',
-                          background: item.isActive ? 'var(--adm-gold-pill-bg)' : 'var(--adm-surface)',
-                          border: item.isActive ? '1px solid var(--adm-border-strong)' : '1px solid var(--adm-border-subtle)',
-                          flexWrap: 'wrap',
-                          gap: '12px'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <FileText size={16} color={item.isActive ? 'var(--adm-gold-primary)' : 'var(--adm-text-muted)'} />
-                          <div>
-                            <div style={{ fontSize: '0.86rem', fontWeight: 600, color: 'var(--adm-text-title)' }}>
-                              {item.originalFilename}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {cvHistory.map((item, idx) => {
+                      const itemId = item._id || item.id || idx;
+                      const formattedSize = item.fileSize ? `${(item.fileSize / 1024).toFixed(1)} KB` : 'N/A';
+                      const formattedDate = new Date(item.uploadDate || item.createdAt || Date.now()).toLocaleString();
+                      const isStorageCloud = Boolean(item.cloudinaryPublicId && !item.cloudinaryPublicId.startsWith('local_'));
+
+                      return (
+                        <div
+                          key={itemId}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '14px 18px',
+                            borderRadius: '12px',
+                            background: item.isActive ? 'var(--adm-gold-pill-bg)' : 'var(--adm-surface)',
+                            border: item.isActive ? '1.5px solid var(--adm-gold-primary)' : '1px solid var(--adm-border-subtle)',
+                            flexWrap: 'wrap',
+                            gap: '14px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: '240px', flex: 1 }}>
+                            <div
+                              style={{
+                                width: '38px',
+                                height: '38px',
+                                borderRadius: '10px',
+                                background: item.isActive ? 'rgba(217, 169, 104, 0.15)' : 'var(--adm-surface-trans)',
+                                border: item.isActive ? '1px solid var(--adm-gold-primary)' : '1px solid var(--adm-border-subtle)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: item.isActive ? 'var(--adm-gold-primary)' : 'var(--adm-text-muted)',
+                                flexShrink: 0
+                              }}
+                            >
+                              <FileText size={18} />
                             </div>
-                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.70rem', color: 'var(--adm-text-muted)' }}>
-                              {(item.fileSize / 1024).toFixed(1)} KB &bull; Uploaded {new Date(item.uploadDate || item.createdAt).toLocaleString()} by {item.uploader || 'admin'}
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--adm-text-title)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {item.originalFilename || 'VanojanBSCCV.pdf'}
+                              </div>
+                              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)', marginTop: '3px' }}>
+                                <span>{formattedSize}</span> &bull; <span>Uploaded {formattedDate}</span>
+                                {item.uploader ? <span> by {item.uploader}</span> : null}
+                                <span style={{ marginLeft: '6px', opacity: 0.75 }}>
+                                  ({isStorageCloud ? 'Cloudinary' : 'Server Storage'})
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span
-                            style={{
-                              padding: '2px 8px',
-                              borderRadius: '4px',
-                              fontSize: '0.66rem',
-                              fontFamily: 'var(--font-mono)',
-                              fontWeight: 700,
-                              background: item.isActive ? 'rgba(16, 185, 129, 0.15)' : 'var(--adm-surface-trans)',
-                              color: item.isActive ? '#10B981' : 'var(--adm-text-muted)',
-                              border: item.isActive ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--adm-border-subtle)'
-                            }}
-                          >
-                            {item.isActive ? 'Active Version' : 'Archived'}
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <span
+                              style={{
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                fontSize: '0.68rem',
+                                fontFamily: 'var(--font-mono)',
+                                fontWeight: 700,
+                                background: item.isActive ? 'rgba(16, 185, 129, 0.15)' : 'var(--adm-surface-trans)',
+                                color: item.isActive ? '#10B981' : 'var(--adm-text-muted)',
+                                border: item.isActive ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--adm-border-subtle)',
+                                marginRight: '4px'
+                              }}
+                            >
+                              {item.isActive ? 'Active Version' : 'Previous Version'}
+                            </span>
+
+                            {/* Preview Action */}
+                            <button
+                              type="button"
+                              onClick={() => handleViewHistoricalCv(item)}
+                              title="Preview this CV version in a new tab"
+                              className="admin-btn-secondary"
+                              style={{ padding: '6px 12px', fontSize: '0.76rem', gap: '6px' }}
+                            >
+                              <Eye size={13} />
+                              <span>Preview</span>
+                            </button>
+
+                            {/* Download Action */}
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadHistoricalCv(item)}
+                              title="Download this CV version"
+                              className="admin-btn-secondary"
+                              style={{ padding: '6px 12px', fontSize: '0.76rem', gap: '6px' }}
+                            >
+                              <Download size={13} />
+                              <span>Download</span>
+                            </button>
+
+                            {/* Delete Action (Protected: Active CV cannot be deleted) */}
+                            {item.isActive ? (
+                              <button
+                                type="button"
+                                disabled
+                                title="Active CV cannot be deleted. Please upload or activate a replacement first."
+                                style={{
+                                  background: 'rgba(239, 68, 68, 0.05)',
+                                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                                  borderRadius: '8px',
+                                  padding: '7px 10px',
+                                  color: '#EF4444',
+                                  opacity: 0.35,
+                                  cursor: 'not-allowed',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setCvToDelete(item)}
+                                title="Permanently delete this previous CV version"
+                                style={{
+                                  background: 'rgba(239, 68, 68, 0.1)',
+                                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                                  borderRadius: '8px',
+                                  padding: '7px 10px',
+                                  color: '#EF4444',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -2505,7 +2676,8 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                             </button>
 
                             <button
-                              onClick={() => deleteMessage(m.id)}
+                              onClick={() => deleteMessage(m)}
+                              title="Permanently delete message"
                               style={{
                                 background: 'rgba(239, 68, 68, 0.1)',
                                 border: '1px solid rgba(239, 68, 68, 0.3)',
@@ -3762,6 +3934,223 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
               >
                 <Trash2 size={15} />
                 <span>Confirm Removal</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRM DELETE HISTORICAL CV VERSION MODAL (BUG 2) */}
+      {cvToDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1200,
+            background: 'rgba(2, 4, 8, 0.85)',
+            backdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => !deletingCvId && setCvToDelete(null)}
+        >
+          <div
+            className="admin-card"
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              borderRadius: '24px',
+              padding: '32px',
+              border: '1.5px solid rgba(239, 68, 68, 0.45)',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 25px rgba(239, 68, 68, 0.15)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '18px' }}>
+              <div
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '14px',
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  border: '1.5px solid rgba(239, 68, 68, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#EF4444',
+                  flexShrink: 0
+                }}
+              >
+                <Trash2 size={22} />
+              </div>
+              <div>
+                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--adm-text-title)', margin: 0 }}>
+                  Permanently Delete Previous CV
+                </h3>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)', marginTop: '2px' }}>
+                  Irreversible MongoDB &amp; Cloudinary Removal
+                </div>
+              </div>
+            </div>
+
+            <p style={{ color: 'var(--adm-text-body)', fontSize: '0.88rem', lineHeight: 1.5, marginBottom: '18px' }}>
+              Are you sure you want to permanently delete this previous CV version?
+            </p>
+
+            <div
+              style={{
+                padding: '14px 16px',
+                borderRadius: '12px',
+                background: 'var(--adm-surface-trans)',
+                border: '1px solid var(--adm-border-subtle)',
+                marginBottom: '22px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: 'var(--adm-text-title)', fontSize: '0.9rem', marginBottom: '6px' }}>
+                <FileText size={16} color="var(--adm-gold-primary)" />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {cvToDelete.originalFilename || 'VanojanBSCCV.pdf'}
+                </span>
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div>&bull; Uploaded: {new Date(cvToDelete.uploadDate || cvToDelete.createdAt || Date.now()).toLocaleString()}</div>
+                <div>&bull; File Size: {cvToDelete.fileSize ? `${(cvToDelete.fileSize / 1024).toFixed(1)} KB` : 'PDF Document'}</div>
+                <div>&bull; Storage: {cvToDelete.cloudinaryPublicId && !cvToDelete.cloudinaryPublicId.startsWith('local_') ? 'Cloudinary Persistent Cloud' : 'Server Storage'}</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                disabled={Boolean(deletingCvId)}
+                onClick={() => setCvToDelete(null)}
+                className="admin-btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(deletingCvId)}
+                onClick={confirmDeleteCvVersion}
+                className="admin-btn-danger"
+                style={{ gap: '6px' }}
+              >
+                <Trash2 size={15} className={deletingCvId ? 'spinning' : ''} />
+                <span>{deletingCvId ? 'Deleting...' : 'Permanently Delete'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRM DELETE MESSAGE MODAL (BUG 3) */}
+      {messageToDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1200,
+            background: 'rgba(2, 4, 8, 0.85)',
+            backdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => !deletingMessageId && setMessageToDelete(null)}
+        >
+          <div
+            className="admin-card"
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              borderRadius: '24px',
+              padding: '32px',
+              border: '1.5px solid rgba(239, 68, 68, 0.45)',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 25px rgba(239, 68, 68, 0.15)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '18px' }}>
+              <div
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '14px',
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  border: '1.5px solid rgba(239, 68, 68, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#EF4444',
+                  flexShrink: 0
+                }}
+              >
+                <Trash2 size={22} />
+              </div>
+              <div>
+                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--adm-text-title)', margin: 0 }}>
+                  Permanently Delete Message
+                </h3>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)', marginTop: '2px' }}>
+                  Irreversible MongoDB Atlas &amp; Inbox Removal
+                </div>
+              </div>
+            </div>
+
+            <p style={{ color: 'var(--adm-text-body)', fontSize: '0.88rem', lineHeight: 1.5, marginBottom: '18px' }}>
+              Are you sure you want to permanently delete this contact inquiry from your database?
+            </p>
+
+            <div
+              style={{
+                padding: '14px 16px',
+                borderRadius: '12px',
+                background: 'var(--adm-surface-trans)',
+                border: '1px solid var(--adm-border-subtle)',
+                marginBottom: '22px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 700, color: 'var(--adm-text-title)', fontSize: '0.92rem' }}>
+                  {messageToDelete.name}
+                </span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)' }}>
+                  {messageToDelete.email}
+                </span>
+              </div>
+              {messageToDelete.subject && (
+                <div style={{ color: 'var(--adm-gold-primary)', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}>
+                  {messageToDelete.subject}
+                </div>
+              )}
+              {messageToDelete.message && (
+                <div style={{ color: 'var(--adm-text-muted)', fontSize: '0.78rem', lineHeight: 1.5, maxHeight: '60px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  &ldquo;{messageToDelete.message}&rdquo;
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                disabled={Boolean(deletingMessageId)}
+                onClick={() => setMessageToDelete(null)}
+                className="admin-btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(deletingMessageId)}
+                onClick={confirmDeleteMessage}
+                className="admin-btn-danger"
+                style={{ gap: '6px' }}
+              >
+                <Trash2 size={15} className={deletingMessageId ? 'spinning' : ''} />
+                <span>{deletingMessageId ? 'Deleting...' : 'Delete Message'}</span>
               </button>
             </div>
           </div>

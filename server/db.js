@@ -19,18 +19,7 @@ const defaultData = {
   projects: verifiedProjects,
   skills: verifiedSkills,
   education: verifiedEducation,
-  messages: [
-    {
-      id: "msg-1",
-      name: "Arthur Sterling",
-      email: "arthur@sterlingventures.co",
-      subject: "Graduate Software Engineer Inquiry",
-      message: "Hello Vanojan, we reviewed your projects and were very impressed by your full-stack craftsmanship and technical profile. We'd love to schedule an introductory conversation regarding a software engineering engagement.",
-      date: "2026-10-07T14:30:00.000Z",
-      read: true,
-      starred: true
-    }
-  ],
+  messages: [],
   analytics: {
     totalVisits: 0,
     uniqueVisitors: 0,
