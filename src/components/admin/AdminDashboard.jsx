@@ -7,7 +7,7 @@ import {
   GraduationCap, MailCheck, KeyRound, Lock, Send, Search, Filter,
   Images, FileText, ChevronUp, ChevronDown, ChevronRight, Sun, Moon,
   Bell, Menu, MoreVertical, Crown, PieChart, BarChart3, Camera,
-  Sparkles, ShieldCheck, Download, AlertTriangle
+  Sparkles, ShieldCheck, Download, AlertTriangle, Layers
 } from 'lucide-react';
 
 import '../../styles/admin.css';
@@ -34,6 +34,9 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
   const [skills, setSkills] = useState([]);
   const [education, setEducation] = useState([]);
   const [profile, setProfile] = useState({});
+  const [originalProfile, setOriginalProfile] = useState({});
+  const [savingHero, setSavingHero] = useState(false);
+  const [savingAbout, setSavingAbout] = useState(false);
   const [mediaList, setMediaList] = useState([]);
   const [mediaFilterTag, setMediaFilterTag] = useState('all');
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -196,6 +199,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
             setSkills(dataPortfolio.skills || []);
             setEducation(dataPortfolio.education || []);
             setProfile(dataPortfolio.profile || {});
+            setOriginalProfile(JSON.parse(JSON.stringify(dataPortfolio.profile || {})));
           }
         } catch (e) {}
       }
@@ -923,12 +927,168 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
       });
       if (res.ok) {
         showToast('Profile configuration updated');
+        setOriginalProfile(JSON.parse(JSON.stringify(profile)));
         onDataRefresh?.();
       } else {
         showToast('Update failed', 'error');
       }
     } catch (err) {
       showToast('Update error', 'error');
+    }
+  };
+
+  // Helper to update specific metric card
+  const updateMetric = (idx, field, value) => {
+    const list = [...(profile.metrics || [
+      { value: 'BSc (Hons)', label: 'Degree Programme', icon: 'GraduationCap' },
+      { value: 'Results Pending', label: 'Academic Status', icon: 'Clock' },
+      { value: '9 Projects', label: 'Featured Systems', icon: 'Layers' },
+      { value: 'HND Graduate', label: 'Higher Diploma', icon: 'Award' }
+    ])];
+    if (!list[idx]) list[idx] = { label: '', value: '', icon: 'Sparkles' };
+    list[idx] = { ...list[idx], [field]: value };
+    setProfile((prev) => ({ ...prev, metrics: list }));
+  };
+
+  // Helper to update specific journey pillar card
+  const updateJourneyPillar = (idx, field, value) => {
+    const list = [...(profile.journeyPillars || [
+      { title: 'Problem Solving', desc: 'Deconstructing complex enterprise challenges into clean, modular, and maintainable logic.', icon: 'Cpu' },
+      { title: 'Clean Architecture', desc: 'Building resilient microservices, normalized databases, and scalable distributed patterns.', icon: 'Layers' },
+      { title: 'User Focused', desc: 'Crafting intuitive, accessible, and high-performance digital experiences with cinematic aesthetics.', icon: 'Users' }
+    ])];
+    if (!list[idx]) list[idx] = { title: '', desc: '', icon: 'Cpu' };
+    list[idx] = { ...list[idx], [field]: value };
+    setProfile((prev) => ({ ...prev, journeyPillars: list }));
+  };
+
+  // Helper to update hero capability pill
+  const updateHeroCapability = (idx, value) => {
+    const list = [...(profile.heroCapabilities || ['Design', 'Develop', 'Architect', 'Innovate'])];
+    list[idx] = value;
+    setProfile((prev) => ({ ...prev, heroCapabilities: list }));
+  };
+
+  // Save Hero Section & Cards
+  const handleSaveHero = async (e) => {
+    if (e) e.preventDefault();
+    setSavingHero(true);
+    try {
+      const res = await fetch('/api/admin/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(profile)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast('Hero section & interactive cards saved successfully!', 'success');
+        setOriginalProfile(JSON.parse(JSON.stringify(profile)));
+        if (onDataRefresh) onDataRefresh();
+      } else {
+        showToast(data.error || 'Failed to save Hero section cards', 'error');
+      }
+    } catch (err) {
+      showToast('Error saving Hero cards: ' + err.message, 'error');
+    } finally {
+      setSavingHero(false);
+    }
+  };
+
+  // Cancel / Revert Hero Changes
+  const handleCancelHero = () => {
+    if (Object.keys(originalProfile).length > 0) {
+      setProfile((prev) => ({
+        ...prev,
+        heroTitlePrefix: originalProfile.heroTitlePrefix,
+        heroTitleHighlight: originalProfile.heroTitleHighlight,
+        heroTitleSuffix: originalProfile.heroTitleSuffix,
+        heroBadgeText: originalProfile.heroBadgeText,
+        heroPrimaryCtaText: originalProfile.heroPrimaryCtaText,
+        heroPrimaryCtaLink: originalProfile.heroPrimaryCtaLink,
+        heroSecondaryCtaText: originalProfile.heroSecondaryCtaText,
+        heroActionNote: originalProfile.heroActionNote,
+        heroIdentityName: originalProfile.heroIdentityName,
+        heroIdentityTitle: originalProfile.heroIdentityTitle,
+        heroIdentityStatus: originalProfile.heroIdentityStatus,
+        heroIdentityLink: originalProfile.heroIdentityLink,
+        heroGlobeLine1: originalProfile.heroGlobeLine1,
+        heroGlobeLine2: originalProfile.heroGlobeLine2,
+        heroGlobeLine3: originalProfile.heroGlobeLine3,
+        heroGlobeTooltip: originalProfile.heroGlobeTooltip,
+        heroCapabilities: originalProfile.heroCapabilities ? [...originalProfile.heroCapabilities] : ['Design', 'Develop', 'Architect', 'Innovate'],
+        heroWatermarkNumber: originalProfile.heroWatermarkNumber,
+        heroWatermarkText: originalProfile.heroWatermarkText,
+        heroGalleryWorkstation: originalProfile.heroGalleryWorkstation,
+        heroGalleryStudio: originalProfile.heroGalleryStudio,
+        statusText: originalProfile.statusText,
+        tagline: originalProfile.tagline,
+        location: originalProfile.location,
+        metrics: originalProfile.metrics ? JSON.parse(JSON.stringify(originalProfile.metrics)) : prev.metrics
+      }));
+      showToast('Hero section modifications discarded', 'info');
+    } else {
+      fetchData();
+    }
+  };
+
+  // Save About Section & Cards
+  const handleSaveAbout = async (e) => {
+    if (e) e.preventDefault();
+    setSavingAbout(true);
+    try {
+      const res = await fetch('/api/admin/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(profile)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast('About section & experience cards saved successfully!', 'success');
+        setOriginalProfile(JSON.parse(JSON.stringify(profile)));
+        if (onDataRefresh) onDataRefresh();
+      } else {
+        showToast(data.error || 'Failed to save About section cards', 'error');
+      }
+    } catch (err) {
+      showToast('Error saving About cards: ' + err.message, 'error');
+    } finally {
+      setSavingAbout(false);
+    }
+  };
+
+  // Cancel / Revert About Changes
+  const handleCancelAbout = () => {
+    if (Object.keys(originalProfile).length > 0) {
+      setProfile((prev) => ({
+        ...prev,
+        aboutBadge: originalProfile.aboutBadge,
+        aboutPillText: originalProfile.aboutPillText,
+        aboutHeadingPrefix: originalProfile.aboutHeadingPrefix,
+        aboutHeadingHighlight: originalProfile.aboutHeadingHighlight,
+        bio: originalProfile.bio,
+        aboutJourneyTitle: originalProfile.aboutJourneyTitle,
+        aboutJourneyBadge: originalProfile.aboutJourneyBadge,
+        aboutJourneySubtitle: originalProfile.aboutJourneySubtitle,
+        aboutJourneyButtonText: originalProfile.aboutJourneyButtonText,
+        journeyPillars: originalProfile.journeyPillars ? JSON.parse(JSON.stringify(originalProfile.journeyPillars)) : prev.journeyPillars,
+        aboutCardRole: originalProfile.aboutCardRole,
+        aboutCardSubtitle: originalProfile.aboutCardSubtitle,
+        aboutSideText: originalProfile.aboutSideText,
+        journeyModalBadge: originalProfile.journeyModalBadge,
+        journeyModalTitle: originalProfile.journeyModalTitle,
+        journeyModalParagraph1: originalProfile.journeyModalParagraph1,
+        journeyModalParagraph2: originalProfile.journeyModalParagraph2,
+        metrics: originalProfile.metrics ? JSON.parse(JSON.stringify(originalProfile.metrics)) : prev.metrics
+      }));
+      showToast('About section modifications discarded', 'info');
+    } else {
+      fetchData();
     }
   };
 
@@ -1245,10 +1405,12 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
               </div>
             </div>
 
-            {/* Navigation Tab Links (10 Items) */}
+            {/* Navigation Tab Links (12 Items) */}
             <nav className="admin-nav-list">
               {[
                 { id: 'overview', label: 'Analytics Overview', icon: LayoutDashboard },
+                { id: 'hero', label: 'Hero Section & Cards', icon: Sparkles },
+                { id: 'about', label: 'About Section & Cards', icon: Crown },
                 { id: 'cv', label: 'CV / Resume Management', icon: FileText, badge: activeCv ? 'Live' : undefined },
                 { id: 'projects', label: 'Projects & Gallery', icon: FolderGit2, badge: projects.length },
                 { id: 'media', label: 'Cloudinary Assets', icon: Image, badge: mediaList.length },
@@ -1288,6 +1450,28 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
           {/* Quick Actions Card Box at bottom */}
           <div className="admin-quick-actions-box">
             <div className="admin-quick-actions-title">Quick Actions</div>
+            <button
+              className="admin-quick-action-item"
+              onClick={() => setActiveTab('hero')}
+            >
+              <div className="admin-quick-action-inner">
+                <Sparkles size={14} color="var(--adm-gold-primary)" />
+                <span>Edit Hero Cards</span>
+              </div>
+              <ChevronRight size={13} color="var(--adm-text-faint)" />
+            </button>
+
+            <button
+              className="admin-quick-action-item"
+              onClick={() => setActiveTab('about')}
+            >
+              <div className="admin-quick-action-inner">
+                <Crown size={14} color="var(--adm-gold-primary)" />
+                <span>Edit About Cards</span>
+              </div>
+              <ChevronRight size={13} color="var(--adm-text-faint)" />
+            </button>
+
             <button
               className="admin-quick-action-item"
               onClick={openNewProjectModal}
@@ -1663,6 +1847,1141 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* =========================================================================
+              TAB: HERO SECTION & INTERACTIVE CARDS
+              ========================================================================= */}
+          {activeTab === 'hero' && (
+            <div>
+              {/* Header Title & Subtitle with Actions */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <span className="admin-badge-gold">01 // HERO SHOWCASE</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                      HOMEPAGE CONTENT &amp; CARDS
+                    </span>
+                  </div>
+                  <h2 className="admin-header-title" style={{ fontSize: '1.85rem' }}>
+                    Hero Section &amp; <span className="admin-gold-gradient-text">Interactive Cards</span>
+                  </h2>
+                  <p className="admin-header-subtitle">
+                    Manage headline typography, status indicators, action CTAs, stat metric cards, and 3D HUD components.
+                  </p>
+                </div>
+
+                {/* Top Action Buttons: Cancel & Save */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={handleCancelHero}
+                    disabled={savingHero}
+                    className="admin-btn-secondary"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '7px',
+                      padding: '9px 18px',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      background: 'var(--adm-surface)',
+                      border: '1px solid var(--adm-border)',
+                      color: 'var(--adm-text-body)',
+                      fontWeight: 600,
+                      fontSize: '0.84rem'
+                    }}
+                  >
+                    <X size={15} />
+                    <span>Discard Changes</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveHero}
+                    disabled={savingHero}
+                    className="admin-btn-primary"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '9px 22px',
+                      borderRadius: '10px',
+                      cursor: savingHero ? 'not-allowed' : 'pointer',
+                      fontWeight: 700
+                    }}
+                  >
+                    {savingHero ? <RefreshCw size={15} className="spin" /> : <Save size={15} />}
+                    <span>{savingHero ? 'Saving to MongoDB...' : 'Save Hero Cards'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* HERO CARDS EDITING GRID */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1040px' }}>
+                
+                {/* 1. Hero Main Headline, Badge & Description Card */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                      <Sparkles size={17} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                        Primary Headline, Badge &amp; Tagline
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                        Configures the cinematic 3-line headline, floating engineering pill, and hero description.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                    <div>
+                      <label className="admin-label">Headline Line 1 (Prefix)</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="Architectural"
+                        value={profile.heroTitlePrefix ?? 'Architectural'}
+                        onChange={(e) => setProfile({ ...profile, heroTitlePrefix: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="admin-label">Headline Line 2 (Golden Highlight)</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="Precision."
+                        value={profile.heroTitleHighlight ?? 'Precision.'}
+                        onChange={(e) => setProfile({ ...profile, heroTitleHighlight: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="admin-label">Headline Line 3 (Suffix)</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="Cinematic Depth."
+                        value={profile.heroTitleSuffix ?? 'Cinematic Depth.'}
+                        onChange={(e) => setProfile({ ...profile, heroTitleSuffix: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                    <div>
+                      <label className="admin-label">
+                        Floating Engineering Badge Text (Line breaks supported)
+                      </label>
+                      <textarea
+                        rows={3}
+                        className="admin-form-textarea"
+                        placeholder="Graduate&#10;Software engineer&#10;&amp; Full-stack developer"
+                        value={profile.heroBadgeText ?? 'Graduate\nSoftware engineer\n& Full-stack developer'}
+                        onChange={(e) => setProfile({ ...profile, heroBadgeText: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="admin-label">Status Pill Text (Header &amp; Hero Beacon)</label>
+                      <textarea
+                        rows={3}
+                        className="admin-form-textarea"
+                        placeholder="Open for Graduate Software Engineer &amp; Full-Stack Opportunities"
+                        value={profile.statusText ?? 'Open for Graduate Software Engineer & Full-Stack Opportunities'}
+                        onChange={(e) => setProfile({ ...profile, statusText: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="admin-label">Hero Description / Tagline</label>
+                    <textarea
+                      rows={3}
+                      className="admin-form-textarea"
+                      placeholder="Motivated Software Engineering graduate candidate skilled in React.js, Node.js, Java, Python, and SQL, engineering high-performance applications."
+                      value={profile.tagline ?? ''}
+                      onChange={(e) => setProfile({ ...profile, tagline: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* 2. Hero Interactive Actions, Links & Byline */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                      <ArrowUpRight size={17} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                        Action Buttons, Byline &amp; Links
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                        Configure the primary call-to-action, video intro button, action pointer, and location.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                    <div>
+                      <label className="admin-label">Primary Button Label</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="Explore Selected Works"
+                        value={profile.heroPrimaryCtaText ?? 'Explore Selected Works'}
+                        onChange={(e) => setProfile({ ...profile, heroPrimaryCtaText: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="admin-label">Primary Button Target URL/Anchor</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="#projects"
+                        value={profile.heroPrimaryCtaLink ?? '#projects'}
+                        onChange={(e) => setProfile({ ...profile, heroPrimaryCtaLink: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="admin-label">Secondary Button Label</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="Watch Intro"
+                        value={profile.heroSecondaryCtaText ?? 'Watch Intro'}
+                        onChange={(e) => setProfile({ ...profile, heroSecondaryCtaText: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="admin-label">Location Byline</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="Jaffna, Sri Lanka"
+                        value={profile.location ?? 'Jaffna, Sri Lanka'}
+                        onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="admin-label">Handwritten Action Pointer Note</label>
+                    <input
+                      type="text"
+                      className="admin-form-input"
+                      placeholder="See my work&#10;in action"
+                      value={profile.heroActionNote ?? 'See my work\nin action'}
+                      onChange={(e) => setProfile({ ...profile, heroActionNote: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* 3. Hero Statistics / Metric Cards (4 Cards) */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                        <BarChart3 size={17} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                          Hero Statistics &amp; Metric Cards (4 Cards)
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                          Controls the 4 prominent stat metric cards displayed under the Hero CTA buttons.
+                        </div>
+                      </div>
+                    </div>
+                    <span className="admin-badge-gold">4 ACTIVE METRICS</span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+                    {[
+                      { defaultVal: 'BSc (Hons)', defaultLbl: 'Degree Programme' },
+                      { defaultVal: 'Results Pending', defaultLbl: 'Academic Status' },
+                      { defaultVal: '9 Projects', defaultLbl: 'Featured Systems' },
+                      { defaultVal: 'HND Graduate', defaultLbl: 'Higher Diploma' }
+                    ].map((item, idx) => {
+                      const curVal = profile.metrics?.[idx]?.value ?? item.defaultVal;
+                      const curLbl = profile.metrics?.[idx]?.label ?? item.defaultLbl;
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            padding: '16px',
+                            borderRadius: '14px',
+                            background: 'var(--adm-surface)',
+                            border: '1.5px solid var(--adm-border)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.04)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 700, color: 'var(--adm-gold-primary)' }}>
+                              CARD 0{idx + 1}
+                            </span>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--adm-text-muted)', fontFamily: 'var(--font-mono)' }}>
+                              Metric Tile
+                            </span>
+                          </div>
+
+                          <div style={{ marginBottom: '10px' }}>
+                            <label className="admin-label" style={{ fontSize: '0.7rem' }}>Metric Value</label>
+                            <input
+                              type="text"
+                              className="admin-form-input"
+                              style={{ fontWeight: 700, color: 'var(--adm-gold-primary)' }}
+                              value={curVal}
+                              onChange={(e) => updateMetric(idx, 'value', e.target.value)}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="admin-label" style={{ fontSize: '0.7rem' }}>Metric Label</label>
+                            <input
+                              type="text"
+                              className="admin-form-input"
+                              value={curLbl}
+                              onChange={(e) => updateMetric(idx, 'label', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Portrait Identity Glass Card (Overlapping Portrait Chassis) */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                      <UserCheck size={17} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                        Portrait Identity Glass Card
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                        The frosted glass badge anchored at the base of the architectural portrait frame.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+                    <div>
+                      <label className="admin-label">Display Name</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="Uthayagunasingam Vanojan"
+                        value={profile.heroIdentityName ?? (profile.name || 'Uthayagunasingam Vanojan')}
+                        onChange={(e) => setProfile({ ...profile, heroIdentityName: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="admin-label">Designation / Role Title</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="Graduate Software Engineer · Full-Stack Developer"
+                        value={profile.heroIdentityTitle ?? 'Graduate Software Engineer · Full-Stack Developer'}
+                        onChange={(e) => setProfile({ ...profile, heroIdentityTitle: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="admin-label">Availability Status</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="Available for Opportunities"
+                        value={profile.heroIdentityStatus ?? 'Available for Opportunities'}
+                        onChange={(e) => setProfile({ ...profile, heroIdentityStatus: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="admin-label">Contact Button Link Target</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="#contact"
+                        value={profile.heroIdentityLink ?? '#contact'}
+                        onChange={(e) => setProfile({ ...profile, heroIdentityLink: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. 3D Holographic Globe HUD & Capability Selector Cards */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                      <Cpu size={17} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                        3D Holographic Globe HUD &amp; Capability Selector
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                        Interactive engineering widgets positioned on the right stage alongside the portrait.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Globe HUD Lines */}
+                  <div style={{ marginBottom: '20px', padding: '16px', borderRadius: '12px', background: 'var(--adm-surface)', border: '1px solid var(--adm-border-subtle)' }}>
+                    <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.88rem', fontWeight: 700, color: 'var(--adm-gold-primary)', marginBottom: '12px' }}>
+                      Holographic Globe HUD Card Typography
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+                      <div>
+                        <label className="admin-label">Line 1 (Top)</label>
+                        <input
+                          type="text"
+                          className="admin-form-input"
+                          placeholder="BUILDING"
+                          value={profile.heroGlobeLine1 ?? 'BUILDING'}
+                          onChange={(e) => setProfile({ ...profile, heroGlobeLine1: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="admin-label">Line 2 (Middle)</label>
+                        <input
+                          type="text"
+                          className="admin-form-input"
+                          placeholder="SCALABLE"
+                          value={profile.heroGlobeLine2 ?? 'SCALABLE'}
+                          onChange={(e) => setProfile({ ...profile, heroGlobeLine2: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="admin-label">Line 3 (Bottom)</label>
+                        <input
+                          type="text"
+                          className="admin-form-input"
+                          placeholder="SOLUTIONS"
+                          value={profile.heroGlobeLine3 ?? 'SOLUTIONS'}
+                          onChange={(e) => setProfile({ ...profile, heroGlobeLine3: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="admin-label">Tooltip / Telemetry Label</label>
+                        <input
+                          type="text"
+                          className="admin-form-input"
+                          placeholder="System Scalability Metrics"
+                          value={profile.heroGlobeTooltip ?? 'System Scalability Metrics'}
+                          onChange={(e) => setProfile({ ...profile, heroGlobeTooltip: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Capability Selector 4 Modes */}
+                  <div style={{ marginBottom: '20px', padding: '16px', borderRadius: '12px', background: 'var(--adm-surface)', border: '1px solid var(--adm-border-subtle)' }}>
+                    <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.88rem', fontWeight: 700, color: 'var(--adm-gold-primary)', marginBottom: '12px' }}>
+                      Capability Selector Card (4 Mode Pills)
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+                      {['Design', 'Develop', 'Architect', 'Innovate'].map((defMode, idx) => (
+                        <div key={idx}>
+                          <label className="admin-label">Pill 0{idx + 1} Label</label>
+                          <input
+                            type="text"
+                            className="admin-form-input"
+                            value={profile.heroCapabilities?.[idx] ?? defMode}
+                            onChange={(e) => updateHeroCapability(idx, e.target.value)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Watermark Card */}
+                  <div style={{ padding: '16px', borderRadius: '12px', background: 'var(--adm-surface)', border: '1px solid var(--adm-border-subtle)' }}>
+                    <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.88rem', fontWeight: 700, color: 'var(--adm-gold-primary)', marginBottom: '12px' }}>
+                      HUD Stage Watermark Card
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                      <div>
+                        <label className="admin-label">Watermark Number</label>
+                        <input
+                          type="text"
+                          className="admin-form-input"
+                          placeholder="01"
+                          value={profile.heroWatermarkNumber ?? '01'}
+                          onChange={(e) => setProfile({ ...profile, heroWatermarkNumber: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="admin-label">Watermark Subtitle (Line breaks supported)</label>
+                        <textarea
+                          rows={2}
+                          className="admin-form-textarea"
+                          placeholder="Dev&#10;Design&#10;Innovate"
+                          value={profile.heroWatermarkText ?? 'Dev\nDesign\nInnovate'}
+                          onChange={(e) => setProfile({ ...profile, heroWatermarkText: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 6. Hero Visual Assets & Gallery Card */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                      <Image size={17} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                        Hero Portrait &amp; Multi-Shot Gallery Cards
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                        Hero portrait photo and the interactive workstation / studio thumbnails.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '18px' }}>
+                    {/* Hero Portrait Photo */}
+                    <div style={{ padding: '16px', borderRadius: '12px', background: 'var(--adm-surface)', border: '1px solid var(--adm-border-subtle)' }}>
+                      <label className="admin-label">Executive Hero Portrait</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '8px' }}>
+                        <img
+                          src={profile.heroImage || '/hero/image2.jpeg'}
+                          alt="Hero Portrait Preview"
+                          style={{ width: '64px', height: '64px', borderRadius: '12px', objectFit: 'cover', border: '1.5px solid var(--adm-gold-primary)' }}
+                        />
+                        <div>
+                          <label className="admin-btn-primary" style={{ cursor: 'pointer', padding: '7px 14px', fontSize: '0.78rem' }}>
+                            <UploadCloud size={13} />
+                            <span>Upload New Portrait</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleUploadProfileImage(file, 'profile_hero');
+                              }}
+                              style={{ display: 'none' }}
+                            />
+                          </label>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--adm-text-muted)', marginTop: '4px' }}>
+                            Synced to Cloudinary &amp; Atlas
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Gallery Card 2: Workstation Image */}
+                    <div style={{ padding: '16px', borderRadius: '12px', background: 'var(--adm-surface)', border: '1px solid var(--adm-border-subtle)' }}>
+                      <label className="admin-label">Gallery Card 2 (Workstation URL)</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="/hero/project-analytics.jpg"
+                        value={profile.heroGalleryWorkstation ?? '/hero/project-analytics.jpg'}
+                        onChange={(e) => setProfile({ ...profile, heroGalleryWorkstation: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Gallery Card 3: Studio Image */}
+                    <div style={{ padding: '16px', borderRadius: '12px', background: 'var(--adm-surface)', border: '1px solid var(--adm-border-subtle)' }}>
+                      <label className="admin-label">Gallery Card 3 (Studio Setup URL)</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="/hero/studio-setup.jpg"
+                        value={profile.heroGalleryStudio ?? '/hero/studio-setup.jpg'}
+                        onChange={(e) => setProfile({ ...profile, heroGalleryStudio: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Sticky Action Bar */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={handleCancelHero}
+                    disabled={savingHero}
+                    className="admin-btn-secondary"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '7px',
+                      padding: '10px 22px',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      background: 'var(--adm-surface)',
+                      border: '1px solid var(--adm-border)',
+                      color: 'var(--adm-text-body)',
+                      fontWeight: 600
+                    }}
+                  >
+                    <X size={15} />
+                    <span>Discard Modifications</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveHero}
+                    disabled={savingHero}
+                    className="admin-btn-primary"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 28px',
+                      borderRadius: '10px',
+                      cursor: savingHero ? 'not-allowed' : 'pointer',
+                      fontWeight: 700
+                    }}
+                  >
+                    {savingHero ? <RefreshCw size={15} className="spin" /> : <Save size={15} />}
+                    <span>{savingHero ? 'Saving to Database...' : 'Save All Hero Cards'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* =========================================================================
+              TAB: ABOUT SECTION & EXPERIENCE CARDS
+              ========================================================================= */}
+          {activeTab === 'about' && (
+            <div>
+              {/* Header Title & Subtitle with Actions */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <span className="admin-badge-gold">02 // EDITORIAL &amp; JOURNEY</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                      ABOUT SHOWCASE &amp; CARDS
+                    </span>
+                  </div>
+                  <h2 className="admin-header-title" style={{ fontSize: '1.85rem' }}>
+                    About Section &amp; <span className="admin-gold-gradient-text">Experience Cards</span>
+                  </h2>
+                  <p className="admin-header-subtitle">
+                    Configure editorial headings, candidate biography, 4 stat cards, 3 Journey Pillar cards, and architectural glass badges.
+                  </p>
+                </div>
+
+                {/* Top Action Buttons: Cancel & Save */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={handleCancelAbout}
+                    disabled={savingAbout}
+                    className="admin-btn-secondary"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '7px',
+                      padding: '9px 18px',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      background: 'var(--adm-surface)',
+                      border: '1px solid var(--adm-border)',
+                      color: 'var(--adm-text-body)',
+                      fontWeight: 600,
+                      fontSize: '0.84rem'
+                    }}
+                  >
+                    <X size={15} />
+                    <span>Discard Changes</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveAbout}
+                    disabled={savingAbout}
+                    className="admin-btn-primary"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '9px 22px',
+                      borderRadius: '10px',
+                      cursor: savingAbout ? 'not-allowed' : 'pointer',
+                      fontWeight: 700
+                    }}
+                  >
+                    {savingAbout ? <RefreshCw size={15} className="spin" /> : <Save size={15} />}
+                    <span>{savingAbout ? 'Saving to MongoDB...' : 'Save About Cards'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* ABOUT CARDS EDITING GRID */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1040px' }}>
+                
+                {/* 1. About Eyebrow & Editorial Heading Card */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                      <Crown size={17} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                        Section Eyebrow &amp; Editorial Heading
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                        Controls the top badge tags and the grand 2-part editorial headline in the About section.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                    <div>
+                      <label className="admin-label">Eyebrow Tag Number</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="02 - ABOUT"
+                        value={profile.aboutBadge ?? '02 - ABOUT'}
+                        onChange={(e) => setProfile({ ...profile, aboutBadge: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="admin-label">Eyebrow Subtitle Pill</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="PASSION • PRECISION • PROGRESS"
+                        value={profile.aboutPillText ?? 'PASSION • PRECISION • PROGRESS'}
+                        onChange={(e) => setProfile({ ...profile, aboutPillText: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+                    <div>
+                      <label className="admin-label">Heading Lead (Prefix)</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="Turning Complex"
+                        value={profile.aboutHeadingPrefix ?? 'Turning Complex'}
+                        onChange={(e) => setProfile({ ...profile, aboutHeadingPrefix: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="admin-label">Heading Golden Gradient Text (Highlight)</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="Ideas into Scalable Real Solutions."
+                        value={profile.aboutHeadingHighlight ?? 'Ideas into Scalable Real Solutions.'}
+                        onChange={(e) => setProfile({ ...profile, aboutHeadingHighlight: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Professional Biography Narrative */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                      <FileText size={17} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                        Executive Candidate Biography Narrative
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                        The primary paragraph rendered in the left editorial column of the About section.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="admin-label">Biography Text</label>
+                    <textarea
+                      rows={5}
+                      className="admin-form-textarea"
+                      placeholder="Motivated Software Engineering graduate candidate who has completed the BSc (Hons) Software Engineering programme at ICBT Campus..."
+                      value={profile.bio ?? ''}
+                      onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* 3. About Section Stat Metrics Cards (4 Cards) */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                        <BarChart3 size={17} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                          About Statistics &amp; Metrics Cards (4 Cards)
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                          The 4 golden border stat metric cards in the About Section.
+                        </div>
+                      </div>
+                    </div>
+                    <span className="admin-badge-gold">SYNCHRONIZED METRICS</span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+                    {[
+                      { defaultVal: 'BSc (Hons)', defaultLbl: 'Degree Programme' },
+                      { defaultVal: 'Results Pending', defaultLbl: 'Academic Status' },
+                      { defaultVal: '9 Projects', defaultLbl: 'Featured Systems' },
+                      { defaultVal: 'HND Graduate', defaultLbl: 'Higher Diploma' }
+                    ].map((item, idx) => {
+                      const curVal = profile.metrics?.[idx]?.value ?? item.defaultVal;
+                      const curLbl = profile.metrics?.[idx]?.label ?? item.defaultLbl;
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            padding: '16px',
+                            borderRadius: '14px',
+                            background: 'var(--adm-surface)',
+                            border: '1.5px solid var(--adm-border)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.04)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 700, color: 'var(--adm-gold-primary)' }}>
+                              METRIC 0{idx + 1}
+                            </span>
+                          </div>
+
+                          <div style={{ marginBottom: '10px' }}>
+                            <label className="admin-label" style={{ fontSize: '0.7rem' }}>Value</label>
+                            <input
+                              type="text"
+                              className="admin-form-input"
+                              style={{ fontWeight: 700, color: 'var(--adm-gold-primary)' }}
+                              value={curVal}
+                              onChange={(e) => updateMetric(idx, 'value', e.target.value)}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="admin-label" style={{ fontSize: '0.7rem' }}>Label</label>
+                            <input
+                              type="text"
+                              className="admin-form-input"
+                              value={curLbl}
+                              onChange={(e) => updateMetric(idx, 'label', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. "My Journey" Container & 3 Pillar Cards */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                      <Layers size={17} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                        "My Journey" Container &amp; 3 Pillar Cards
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                        The dedicated journey showcase box and the 3 core engineering pillar cards.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                    <div>
+                      <label className="admin-label">Journey Box Title</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="MY JOURNEY"
+                        value={profile.aboutJourneyTitle ?? 'MY JOURNEY'}
+                        onChange={(e) => setProfile({ ...profile, aboutJourneyTitle: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="admin-label">Journey Pill Badge</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="Passion Driven Developer"
+                        value={profile.aboutJourneyBadge ?? 'Passion Driven Developer'}
+                        onChange={(e) => setProfile({ ...profile, aboutJourneyBadge: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="admin-label">Read More Button Text</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="Read More"
+                        value={profile.aboutJourneyButtonText ?? 'Read More'}
+                        onChange={(e) => setProfile({ ...profile, aboutJourneyButtonText: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '20px' }}>
+                    <label className="admin-label">Journey Box Subtitle / Overview Note</label>
+                    <input
+                      type="text"
+                      className="admin-form-input"
+                      placeholder="A quick look at my journey, values and what drives me to build better solutions."
+                      value={profile.aboutJourneySubtitle ?? 'A quick look at my journey, values and what drives me to build better solutions.'}
+                      onChange={(e) => setProfile({ ...profile, aboutJourneySubtitle: e.target.value })}
+                    />
+                  </div>
+
+                  {/* 3 Pillar Cards Grid */}
+                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.88rem', fontWeight: 700, color: 'var(--adm-gold-primary)', marginBottom: '12px' }}>
+                    The 3 Core Engineering Pillar Cards
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                    {[
+                      { defaultTitle: 'Problem Solving', defaultDesc: 'Deconstructing complex enterprise challenges into clean, modular, and maintainable logic.' },
+                      { defaultTitle: 'Clean Architecture', defaultDesc: 'Building resilient microservices, normalized databases, and scalable distributed patterns.' },
+                      { defaultTitle: 'User Focused', defaultDesc: 'Crafting intuitive, accessible, and high-performance digital experiences with cinematic aesthetics.' }
+                    ].map((item, idx) => {
+                      const curTitle = profile.journeyPillars?.[idx]?.title ?? item.defaultTitle;
+                      const curDesc = profile.journeyPillars?.[idx]?.desc ?? item.defaultDesc;
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            padding: '16px',
+                            borderRadius: '14px',
+                            background: 'var(--adm-surface)',
+                            border: '1.5px solid var(--adm-border)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.04)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 700, color: 'var(--adm-gold-primary)' }}>
+                              PILLAR CARD 0{idx + 1}
+                            </span>
+                          </div>
+
+                          <div style={{ marginBottom: '10px' }}>
+                            <label className="admin-label" style={{ fontSize: '0.7rem' }}>Pillar Card Title</label>
+                            <input
+                              type="text"
+                              className="admin-form-input"
+                              style={{ fontWeight: 700 }}
+                              value={curTitle}
+                              onChange={(e) => updateJourneyPillar(idx, 'title', e.target.value)}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="admin-label" style={{ fontSize: '0.7rem' }}>Pillar Description (Tooltip / Context)</label>
+                            <textarea
+                              rows={3}
+                              className="admin-form-textarea"
+                              value={curDesc}
+                              onChange={(e) => updateJourneyPillar(idx, 'desc', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 5. Architectural Frame Glass Badge & Visual Portrait */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                      <Image size={17} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                        Architectural Frame Glass Badge &amp; Portrait
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                        Right-column portrait chassis with gold rim and floating glass identity badge.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '18px' }}>
+                    {/* Portrait Photo Upload */}
+                    <div style={{ padding: '16px', borderRadius: '12px', background: 'var(--adm-surface)', border: '1px solid var(--adm-border-subtle)' }}>
+                      <label className="admin-label">About Section Portrait</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '8px' }}>
+                        <img
+                          src={profile.aboutImage || '/hero/image1.jpeg'}
+                          alt="About Portrait Preview"
+                          style={{ width: '64px', height: '64px', borderRadius: '12px', objectFit: 'cover', border: '1.5px solid var(--adm-gold-primary)' }}
+                        />
+                        <div>
+                          <label className="admin-btn-primary" style={{ cursor: 'pointer', padding: '7px 14px', fontSize: '0.78rem' }}>
+                            <UploadCloud size={13} />
+                            <span>Upload New Portrait</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleUploadProfileImage(file, 'profile_about');
+                              }}
+                              style={{ display: 'none' }}
+                            />
+                          </label>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--adm-text-muted)', marginTop: '4px' }}>
+                            Synced to Cloudinary &amp; Atlas
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Badge Role Title */}
+                    <div style={{ padding: '16px', borderRadius: '12px', background: 'var(--adm-surface)', border: '1px solid var(--adm-border-subtle)' }}>
+                      <label className="admin-label">Glass Badge Primary Role</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="GRADUATE SOFTWARE ENGINEER"
+                        value={profile.aboutCardRole ?? 'GRADUATE SOFTWARE ENGINEER'}
+                        onChange={(e) => setProfile({ ...profile, aboutCardRole: e.target.value })}
+                      />
+                      <label className="admin-label" style={{ marginTop: '10px' }}>Glass Badge Subtitle</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="FULL-STACK DEVELOPER"
+                        value={profile.aboutCardSubtitle ?? 'FULL-STACK DEVELOPER'}
+                        onChange={(e) => setProfile({ ...profile, aboutCardSubtitle: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Vertical Side Text */}
+                    <div style={{ padding: '16px', borderRadius: '12px', background: 'var(--adm-surface)', border: '1px solid var(--adm-border-subtle)' }}>
+                      <label className="admin-label">Frame Vertical Side Text</label>
+                      <textarea
+                        rows={3}
+                        className="admin-form-textarea"
+                        placeholder="GRADUATE SOFTWARE ENGINEER • FULL-STACK DEVELOPER"
+                        value={profile.aboutSideText ?? 'GRADUATE SOFTWARE ENGINEER • FULL-STACK DEVELOPER'}
+                        onChange={(e) => setProfile({ ...profile, aboutSideText: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 6. Journey Deep Dive Modal Content */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                      <Sparkles size={17} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                        Journey Deep Dive Modal Narrative
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                        Content rendered inside the luxury modal when visitors click "Read More" on My Journey.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                    <div>
+                      <label className="admin-label">Modal Eyebrow Badge</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="PROFESSIONAL TRAJECTORY"
+                        value={profile.journeyModalBadge ?? 'PROFESSIONAL TRAJECTORY'}
+                        onChange={(e) => setProfile({ ...profile, journeyModalBadge: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="admin-label">Modal Headline</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="Engineering Rigour &amp; Visual Mastery"
+                        value={profile.journeyModalTitle ?? 'Engineering Rigour & Visual Mastery'}
+                        onChange={(e) => setProfile({ ...profile, journeyModalTitle: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '16px' }}>
+                    <label className="admin-label">Modal Narrative Paragraph 1</label>
+                    <textarea
+                      rows={3}
+                      className="admin-form-textarea"
+                      placeholder="Motivated Software Engineering graduate candidate who has completed the BSc (Hons) Software Engineering programme at ICBT Campus..."
+                      value={profile.journeyModalParagraph1 ?? ''}
+                      onChange={(e) => setProfile({ ...profile, journeyModalParagraph1: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="admin-label">Modal Narrative Paragraph 2</label>
+                    <textarea
+                      rows={3}
+                      className="admin-form-textarea"
+                      placeholder="Skilled in React.js, Node.js, Java, Python, and SQL through academic and independent projects..."
+                      value={profile.journeyModalParagraph2 ?? ''}
+                      onChange={(e) => setProfile({ ...profile, journeyModalParagraph2: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Bottom Sticky Action Bar */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={handleCancelAbout}
+                    disabled={savingAbout}
+                    className="admin-btn-secondary"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '7px',
+                      padding: '10px 22px',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      background: 'var(--adm-surface)',
+                      border: '1px solid var(--adm-border)',
+                      color: 'var(--adm-text-body)',
+                      fontWeight: 600
+                    }}
+                  >
+                    <X size={15} />
+                    <span>Discard Modifications</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveAbout}
+                    disabled={savingAbout}
+                    className="admin-btn-primary"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 28px',
+                      borderRadius: '10px',
+                      cursor: savingAbout ? 'not-allowed' : 'pointer',
+                      fontWeight: 700
+                    }}
+                  >
+                    {savingAbout ? <RefreshCw size={15} className="spin" /> : <Save size={15} />}
+                    <span>{savingAbout ? 'Saving to Database...' : 'Save All About Cards'}</span>
+                  </button>
                 </div>
               </div>
             </div>

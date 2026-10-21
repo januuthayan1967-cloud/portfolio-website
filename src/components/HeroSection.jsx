@@ -18,11 +18,14 @@ export default function HeroSection({ profile }) {
   const introDialog = useRef(null);
   useEffect(() => { setSelectedImage(portrait); }, [portrait]);
   const images = [
-    { id: 'portrait', src: portrait, alt: name + ' — executive portrait' },
-    { id: 'workstation', src: '/hero/project-analytics.jpg', alt: 'Software engineering workstation' },
-    { id: 'studio', src: '/hero/studio-setup.jpg', alt: 'Engineering studio' }
+    { id: 'portrait', src: portrait, alt: (profile?.heroIdentityName || name) + ' — executive portrait' },
+    { id: 'workstation', src: profile?.heroGalleryWorkstation || '/hero/project-analytics.jpg', alt: 'Software engineering workstation' },
+    { id: 'studio', src: profile?.heroGalleryStudio || '/hero/studio-setup.jpg', alt: 'Engineering studio' }
   ];
-  const metrics = profile?.metrics?.length === 4 ? profile.metrics : defaultMetrics;
+  const metrics = (profile?.metrics && profile.metrics.length > 0) ? profile.metrics : defaultMetrics;
+  const badgeLines = (profile?.heroBadgeText || 'Graduate\nSoftware engineer\n& Full-stack developer').split('\n');
+  const actionNoteLines = (profile?.heroActionNote || 'See my work\nin action').split('\n');
+  const watermarkLines = (profile?.heroWatermarkText || 'Dev\nDesign\nInnovate').split('\n');
 
   return (
     <section id="hero" className="cinematic-hero">
@@ -37,26 +40,43 @@ export default function HeroSection({ profile }) {
       </div>
       <div className="cinematic-layout">
         <div className="cinematic-copy">
-          <a className="engagement-status" href="#contact">
+          <a className="engagement-status" href={profile?.heroStatusLink || "#contact"}>
             <i /><span>{profile?.statusText || 'Open for Graduate Software Engineer & Full-Stack Opportunities'}</span>
             <svg viewBox="0 0 86 12" aria-hidden="true"><path d="M0 6H82M77 1l6 5-6 5" /></svg>
           </a>
           <div className="hero-byline">
             <span>{name}</span><i aria-hidden="true">│ │ │</i>
-            <span className="hero-location"><MapPin size={17} /> Jaffna, Sri Lanka</span>
+            <span className="hero-location"><MapPin size={17} /> {profile?.location || 'Jaffna, Sri Lanka'}</span>
           </div>
           <h1 className="cinematic-headline">
-            <span>Architectural</span>
-            <span className="precision-line"><span className="precision-word">Precision.</span>
-              <span className="engineering-badge"><i /><span>Graduate<br />Software engineer<br />&amp; Full-stack developer</span></span>
+            <span>{profile?.heroTitlePrefix || 'Architectural'}</span>
+            <span className="precision-line"><span className="precision-word">{profile?.heroTitleHighlight || 'Precision.'}</span>
+              <span className="engineering-badge"><i /><span>
+                {badgeLines.map((line, idx) => (
+                  <React.Fragment key={idx}>
+                    {line}
+                    {idx < badgeLines.length - 1 && <br />}
+                  </React.Fragment>
+                ))}
+              </span></span>
             </span>
-            <span className="depth-line">Cinematic Depth.</span>
+            <span className="depth-line">{profile?.heroTitleSuffix || 'Cinematic Depth.'}</span>
           </h1>
           <p className="cinematic-tagline">{profile?.tagline || 'Motivated Software Engineering graduate candidate skilled in React.js, Node.js, Java, Python, and SQL, engineering high-performance applications.'}</p>
           <div className="cinematic-actions">
-            <a className="reference-primary" href="#projects">Explore Selected Works <ArrowUpRight size={19} /></a>
-            <button className="reference-intro" onClick={() => introDialog.current?.showModal()}><span><Play size={13} fill="currentColor" /></span>Watch Intro</button>
-            <div className="work-note" aria-hidden="true">See my work<br />in action
+            <a className="reference-primary" href={profile?.heroPrimaryCtaLink || "#projects"}>
+              {profile?.heroPrimaryCtaText || 'Explore Selected Works'} <ArrowUpRight size={19} />
+            </a>
+            <button className="reference-intro" onClick={() => introDialog.current?.showModal()}>
+              <span><Play size={13} fill="currentColor" /></span>
+              {profile?.heroSecondaryCtaText || 'Watch Intro'}
+            </button>
+            <div className="work-note" aria-hidden="true">
+              {actionNoteLines.map((l, i) => (
+                <React.Fragment key={i}>
+                  {l}{i < actionNoteLines.length - 1 && <br />}
+                </React.Fragment>
+              ))}
               <svg viewBox="0 0 64 26"><path d="M58 2Q42 30 12 15m0 0 8-1m-8 1 5 7" /></svg>
             </div>
           </div>
@@ -90,17 +110,39 @@ export default function HeroSection({ profile }) {
             <OrbitalEnergyBackground />
             <ArchitecturalPortraitFrame imageSrc={selectedImage} altText={images.find(image => image.src === selectedImage)?.alt || name}
               imagePosition={selectedImage === portrait ? 'center 43%' : 'center'} imageScale={1.03}>
-              <a className="cinematic-identity" href="#contact">
-                <div><strong>{name}</strong><span>Graduate Software Engineer · Full-Stack Developer</span><small><i /> Available for Opportunities</small></div>
+              <a className="cinematic-identity" href={profile?.heroIdentityLink || "#contact"}>
+                <div>
+                  <strong>{profile?.heroIdentityName || name}</strong>
+                  <span>{profile?.heroIdentityTitle || 'Graduate Software Engineer · Full-Stack Developer'}</span>
+                  <small><i /> {profile?.heroIdentityStatus || 'Available for Opportunities'}</small>
+                </div>
                 <span className="identity-arrow"><ArrowRight size={20} /></span>
               </a>
             </ArchitecturalPortraitFrame>
             <PortraitGallery images={images} activeImageSrc={selectedImage} onSelectImage={setSelectedImage} />
           </div>
           <aside className="cinematic-hud" aria-label="Engineering capabilities">
-            <HolographicGlobeHUD />
-            <CapabilitySelector activeMode={activeMode} onSelectMode={setActiveMode} />
-            <div className="cinematic-watermark" aria-hidden="true"><span>01</span><small>Dev<br />Design<br />Innovate</small></div>
+            <HolographicGlobeHUD
+              line1={profile?.heroGlobeLine1}
+              line2={profile?.heroGlobeLine2}
+              line3={profile?.heroGlobeLine3}
+              tooltip={profile?.heroGlobeTooltip}
+            />
+            <CapabilitySelector
+              activeMode={activeMode}
+              onSelectMode={setActiveMode}
+              customCapabilities={profile?.heroCapabilities}
+            />
+            <div className="cinematic-watermark" aria-hidden="true">
+              <span>{profile?.heroWatermarkNumber || '01'}</span>
+              <small>
+                {watermarkLines.map((l, i) => (
+                  <React.Fragment key={i}>
+                    {l}{i < watermarkLines.length - 1 && <br />}
+                  </React.Fragment>
+                ))}
+              </small>
+            </div>
           </aside>
         </div>
       </div>

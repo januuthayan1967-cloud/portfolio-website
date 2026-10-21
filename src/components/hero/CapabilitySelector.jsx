@@ -15,14 +15,20 @@ import { Palette, Code2, Layers, Lightbulb } from 'lucide-react';
 export default function CapabilitySelector({ 
   activeMode = 'Develop', 
   onSelectMode, 
-  style = {} 
+  style = {},
+  customCapabilities
 }) {
-  const capabilities = [
-    { id: 'Design', label: 'Design', icon: <Palette size={14} /> },
-    { id: 'Develop', label: 'Develop', icon: <Code2 size={14} /> },
-    { id: 'Architect', label: 'Architect', icon: <Layers size={14} /> },
-    { id: 'Innovate', label: 'Innovate', icon: <Lightbulb size={14} /> }
-  ];
+  const defaultLabels = ['Design', 'Develop', 'Architect', 'Innovate'];
+  const labels = (Array.isArray(customCapabilities) && customCapabilities.length === 4)
+    ? customCapabilities
+    : defaultLabels;
+
+  const icons = [<Palette size={14} />, <Code2 size={14} />, <Layers size={14} />, <Lightbulb size={14} />];
+  const capabilities = labels.map((label, idx) => ({
+    id: label,
+    label: label,
+    icon: icons[idx] || <Layers size={14} />
+  }));
 
   return (
     <div

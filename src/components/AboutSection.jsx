@@ -20,9 +20,10 @@ export default function AboutSection({ profile }) {
     { label: "Higher Diploma", value: "HND Graduate" }
   ];
 
-  const metrics = (profile?.metrics?.length === 4) ? profile.metrics : defaultMetrics;
+  const metrics = (profile?.metrics && profile.metrics.length > 0) ? profile.metrics : defaultMetrics;
 
-  const journeyPillars = [
+  const iconMap = { Cpu, Layers, Users, Sparkles };
+  const defaultPillars = [
     {
       title: "Problem Solving",
       icon: Cpu,
@@ -39,6 +40,14 @@ export default function AboutSection({ profile }) {
       desc: "Crafting intuitive, accessible, and high-performance digital experiences with cinematic aesthetics."
     }
   ];
+
+  const journeyPillars = (profile?.journeyPillars && profile.journeyPillars.length > 0)
+    ? profile.journeyPillars.map((p, idx) => ({
+        title: p.title,
+        desc: p.desc,
+        icon: typeof p.icon === 'string' ? (iconMap[p.icon] || [Cpu, Layers, Users][idx % 3]) : (p.icon || Cpu)
+      }))
+    : defaultPillars;
 
   return (
     <section
@@ -58,7 +67,7 @@ export default function AboutSection({ profile }) {
         <div style={{ marginBottom: '36px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
             <span className="badge-gold">
-              02 - ABOUT
+              {profile?.aboutBadge || '02 - ABOUT'}
             </span>
             <span
               className="font-mono"
@@ -77,7 +86,7 @@ export default function AboutSection({ profile }) {
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
               }}
             >
-              PASSION &bull; PRECISION &bull; PROGRESS
+              {profile?.aboutPillText || 'PASSION • PRECISION • PROGRESS'}
             </span>
           </div>
 
@@ -92,7 +101,7 @@ export default function AboutSection({ profile }) {
               margin: '0 0 8px 0'
             }}
           >
-            Turning Complex <span className="gold-gradient-text">Ideas into Scalable Real Solutions.</span>
+            {profile?.aboutHeadingPrefix || 'Turning Complex'} <span className="gold-gradient-text">{profile?.aboutHeadingHighlight || 'Ideas into Scalable Real Solutions.'}</span>
           </h2>
         </div>
 
@@ -267,7 +276,7 @@ export default function AboutSection({ profile }) {
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span className="font-heading" style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                    MY JOURNEY
+                    {profile?.aboutJourneyTitle || 'MY JOURNEY'}
                   </span>
                   <span 
                     style={{ 
@@ -281,7 +290,7 @@ export default function AboutSection({ profile }) {
                       fontWeight: 600
                     }}
                   >
-                    Passion Driven Developer
+                    {profile?.aboutJourneyBadge || 'Passion Driven Developer'}
                   </span>
                 </div>
 
@@ -303,13 +312,13 @@ export default function AboutSection({ profile }) {
                     boxShadow: '0 2px 10px rgba(214, 165, 72, 0.35)'
                   }}
                 >
-                  <span>Read More</span>
+                  <span>{profile?.aboutJourneyButtonText || 'Read More'}</span>
                   <span>&rarr;</span>
                 </button>
               </div>
 
               <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: '20px' }}>
-                A quick look at my journey, values and what drives me to build better solutions.
+                {profile?.aboutJourneySubtitle || 'A quick look at my journey, values and what drives me to build better solutions.'}
               </p>
 
               {/* 3 Journey Pillar Cards (Matches Reference Image 1) */}
@@ -326,6 +335,7 @@ export default function AboutSection({ profile }) {
                   return (
                     <div
                       key={p.title}
+                      title={p.desc}
                       style={{
                         padding: '16px 14px',
                         borderRadius: '16px',
@@ -374,7 +384,7 @@ export default function AboutSection({ profile }) {
               altText={name}
               imagePosition="center 18%"
               imageScale={1.08}
-              sideText="GRADUATE SOFTWARE ENGINEER • FULL-STACK DEVELOPER"
+              sideText={profile?.aboutSideText || "GRADUATE SOFTWARE ENGINEER • FULL-STACK DEVELOPER"}
             >
               {/* Overlay Glass Badge at Bottom of Frame (Matches Reference Image 1) */}
               <div
@@ -399,10 +409,10 @@ export default function AboutSection({ profile }) {
               >
                 <div>
                   <div className="font-heading" style={{ fontSize: '0.86rem', fontWeight: 800, color: '#F5F0E8', letterSpacing: '0.04em' }}>
-                    GRADUATE SOFTWARE ENGINEER
+                    {profile?.aboutCardRole || 'GRADUATE SOFTWARE ENGINEER'}
                   </div>
                   <div className="font-mono" style={{ fontSize: '0.62rem', color: 'var(--gold-bright, #FFD978)', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700 }}>
-                    FULL-STACK DEVELOPER
+                    {profile?.aboutCardSubtitle || 'FULL-STACK DEVELOPER'}
                   </div>
                 </div>
                 <Sparkles size={16} color="var(--gold-bright, #FFD978)" />
@@ -463,16 +473,16 @@ export default function AboutSection({ profile }) {
             </button>
 
             <div className="badge-gold" style={{ marginBottom: '12px' }}>
-              PROFESSIONAL TRAJECTORY
+              {profile?.journeyModalBadge || 'PROFESSIONAL TRAJECTORY'}
             </div>
             <h3 className="font-heading" style={{ fontSize: '1.6rem', color: 'var(--text-main)', marginBottom: '14px' }}>
-              Engineering Rigour &amp; Visual Mastery
+              {profile?.journeyModalTitle || 'Engineering Rigour & Visual Mastery'}
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.94rem', lineHeight: 1.7, marginBottom: '16px' }}>
-              Motivated Software Engineering graduate candidate who has completed the BSc (Hons) Software Engineering programme at ICBT Campus, affiliated with Cardiff Metropolitan University, UK, and is currently awaiting final results. Holds a Higher National Diploma (HND) in Computing and Software Engineering, with hands-on experience in full-stack web development, Android applications, database management, and AI-integrated systems.
+              {profile?.journeyModalParagraph1 || 'Motivated Software Engineering graduate candidate who has completed the BSc (Hons) Software Engineering programme at ICBT Campus, affiliated with Cardiff Metropolitan University, UK, and is currently awaiting final results. Holds a Higher National Diploma (HND) in Computing and Software Engineering, with hands-on experience in full-stack web development, Android applications, database management, and AI-integrated systems.'}
             </p>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.7 }}>
-              Skilled in React.js, Node.js, Java, Python, and SQL through academic and independent projects. Seeking an opportunity to contribute technical expertise and problem-solving skills as a Graduate Software Engineer.
+              {profile?.journeyModalParagraph2 || 'Skilled in React.js, Node.js, Java, Python, and SQL through academic and independent projects. Seeking an opportunity to contribute technical expertise and problem-solving skills as a Graduate Software Engineer.'}
             </p>
           </div>
         </div>

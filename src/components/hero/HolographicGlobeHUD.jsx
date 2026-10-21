@@ -10,7 +10,13 @@ import React, { useEffect, useRef } from 'react';
  * - "BUILDING SCALABLE SOLUTIONS" technical typography
  * - Small gold analytics 3-bar icon
  */
-export default function HolographicGlobeHUD({ style = {} }) {
+export default function HolographicGlobeHUD({ 
+  style = {},
+  line1 = 'BUILDING',
+  line2 = 'SCALABLE',
+  line3 = 'SOLUTIONS',
+  tooltip = 'System Scalability Metrics'
+}) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -227,7 +233,7 @@ export default function HolographicGlobeHUD({ style = {} }) {
               lineHeight: 1.2
             }}
           >
-            BUILDING
+            {line1}
           </span>
           <span
             style={{
@@ -239,7 +245,7 @@ export default function HolographicGlobeHUD({ style = {} }) {
               lineHeight: 1.2
             }}
           >
-            SCALABLE
+            {line2}
           </span>
           <span
             style={{
@@ -251,7 +257,7 @@ export default function HolographicGlobeHUD({ style = {} }) {
               lineHeight: 1.2
             }}
           >
-            SOLUTIONS
+            {line3}
           </span>
         </div>
 
@@ -264,7 +270,7 @@ export default function HolographicGlobeHUD({ style = {} }) {
             paddingBottom: '2px',
             opacity: 0.95
           }}
-          title="System Scalability Metrics"
+          title={tooltip}
         >
           <div
             style={{

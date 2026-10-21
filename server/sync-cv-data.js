@@ -43,7 +43,63 @@ export const verifiedProfile = {
     { label: "Academic Status", value: "Results Pending", icon: "Clock" },
     { label: "Featured Systems", value: "9 Projects", icon: "Layers" },
     { label: "Higher Diploma", value: "HND Graduate", icon: "Award" }
-  ]
+  ],
+  // Hero Section
+  heroTitlePrefix: "Architectural",
+  heroTitleHighlight: "Precision.",
+  heroTitleSuffix: "Cinematic Depth.",
+  heroBadgeText: "Graduate\nSoftware engineer\n& Full-stack developer",
+  heroPrimaryCtaText: "Explore Selected Works",
+  heroPrimaryCtaLink: "#projects",
+  heroSecondaryCtaText: "Watch Intro",
+  heroActionNote: "See my work\nin action",
+  heroIdentityName: "Uthayagunasingam Vanojan",
+  heroIdentityTitle: "Graduate Software Engineer · Full-Stack Developer",
+  heroIdentityStatus: "Available for Opportunities",
+  heroIdentityLink: "#contact",
+  heroGlobeLine1: "BUILDING",
+  heroGlobeLine2: "SCALABLE",
+  heroGlobeLine3: "SOLUTIONS",
+  heroGlobeTooltip: "System Scalability Metrics",
+  heroCapabilities: ["Design", "Develop", "Architect", "Innovate"],
+  heroWatermarkNumber: "01",
+  heroWatermarkText: "Dev\nDesign\nInnovate",
+  heroGalleryWorkstation: "/hero/project-analytics.jpg",
+  heroGalleryStudio: "/hero/studio-setup.jpg",
+
+  // About Section
+  aboutBadge: "02 - ABOUT",
+  aboutPillText: "PASSION • PRECISION • PROGRESS",
+  aboutHeadingPrefix: "Turning Complex",
+  aboutHeadingHighlight: "Ideas into Scalable Real Solutions.",
+  aboutJourneyTitle: "MY JOURNEY",
+  aboutJourneyBadge: "Passion Driven Developer",
+  aboutJourneySubtitle: "A quick look at my journey, values and what drives me to build better solutions.",
+  aboutJourneyButtonText: "Read More",
+  journeyPillars: [
+    {
+      title: "Problem Solving",
+      desc: "Deconstructing complex enterprise challenges into clean, modular, and maintainable logic.",
+      icon: "Cpu"
+    },
+    {
+      title: "Clean Architecture",
+      desc: "Building resilient microservices, normalized databases, and scalable distributed patterns.",
+      icon: "Layers"
+    },
+    {
+      title: "User Focused",
+      desc: "Crafting intuitive, accessible, and high-performance digital experiences with cinematic aesthetics.",
+      icon: "Users"
+    }
+  ],
+  aboutCardRole: "GRADUATE SOFTWARE ENGINEER",
+  aboutCardSubtitle: "FULL-STACK DEVELOPER",
+  aboutSideText: "GRADUATE SOFTWARE ENGINEER • FULL-STACK DEVELOPER",
+  journeyModalBadge: "PROFESSIONAL TRAJECTORY",
+  journeyModalTitle: "Engineering Rigour & Visual Mastery",
+  journeyModalParagraph1: "Motivated Software Engineering graduate candidate who has completed the BSc (Hons) Software Engineering programme at ICBT Campus, affiliated with Cardiff Metropolitan University, UK, and is currently awaiting final results. Holds a Higher National Diploma (HND) in Computing and Software Engineering, with hands-on experience in full-stack web development, Android applications, database management, and AI-integrated systems.",
+  journeyModalParagraph2: "Skilled in React.js, Node.js, Java, Python, and SQL through academic and independent projects. Seeking an opportunity to contribute technical expertise and problem-solving skills as a Graduate Software Engineer."
 };
 
 export const verifiedProjects = [
