@@ -8,3 +8,6 @@ dist
 !.env.example
 *backup*
 public/uploads/
+
+# Standalone GitHub Profile Repository Mirror
+/januuthayan1967-cloud/
