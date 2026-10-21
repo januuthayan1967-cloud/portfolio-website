@@ -1,7 +1,7 @@
 <div align="center">
 
-<!-- HERO BANNER -->
-<img src="./assets/banner.svg" alt="Vanojan — Software Engineering Graduate | Full-Stack Developer" width="100%" />
+<!-- CINEMATIC ANIMATED HERO BANNER -->
+<img src="./assets/banner-animated.gif" alt="Vanojan — Animated Cinematic Software Developer Banner" width="100%" />
 
 <br/><br/>
 
