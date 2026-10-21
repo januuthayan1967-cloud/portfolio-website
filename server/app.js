@@ -929,11 +929,15 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
 // ============================================================================
 
 // Helper to resolve currently active CV from MongoDB Atlas or local JSON fallback
-async function getActiveCvRecord() {
+async function getActiveCvRecord(includeFileData = false) {
   await ensureDb();
   if (isDbConnected()) {
     try {
-      const activeDoc = await Cv.findOne({ isActive: true }).sort({ uploadDate: -1, updatedAt: -1 }).lean();
+      let query = Cv.findOne({ isActive: true }).sort({ uploadDate: -1, updatedAt: -1 });
+      if (includeFileData) {
+        query = query.select('+fileData');
+      }
+      const activeDoc = await query.lean();
       if (activeDoc) return activeDoc;
     } catch (err) {
       console.warn('[MongoDB Atlas] Error querying active CV, checking local db fallback:', err.message);
@@ -955,7 +959,7 @@ app.get('/api/cv/active', async (req, res) => {
 
   try {
     const activeCv = await getActiveCvRecord();
-    if (!activeCv) {
+    if (!activeCv || activeCv.isActive === false) {
       return res.json({ success: true, activeCv: null });
     }
     const version = new Date(activeCv.lastUpdatedDate || activeCv.uploadDate || activeCv.updatedAt || Date.now()).getTime();
@@ -973,7 +977,7 @@ app.get('/api/cv/active', async (req, res) => {
         downloadUrl: `/api/cv/download?v=${version}`,
         viewUrl: `/api/cv/view?v=${version}`,
         isActive: true,
-        storageProvider: activeCv.cloudinaryPublicId && !activeCv.cloudinaryPublicId.startsWith('local_') ? 'cloudinary' : 'server_storage'
+        storageProvider: activeCv.cloudinaryPublicId && !activeCv.cloudinaryPublicId.startsWith('local_') && !activeCv.cloudinaryPublicId.startsWith('atlas_') ? 'cloudinary' : 'mongodb_atlas'
       }
     });
   } catch (err) {
@@ -984,12 +988,12 @@ app.get('/api/cv/active', async (req, res) => {
 
 // Helper for sending/streaming CV PDF (for download or inline view)
 async function serveCvFile(req, res, isView = false) {
-  const activeCv = await getActiveCvRecord();
-  if (!activeCv) {
+  const activeCv = await getActiveCvRecord(true);
+  if (!activeCv || activeCv.isActive === false) {
     return res.status(404).json({ error: 'No active CV is currently available.' });
   }
 
-  const filename = (activeCv.originalFilename || 'VanojanBSCCV.pdf').replace(/["\r\n]/g, '');
+  const filename = (activeCv.originalFilename || 'Vanojan_CV.pdf').replace(/["\r\n]/g, '');
   const disposition = isView ? 'inline' : 'attachment';
 
   res.setHeader('Content-Type', 'application/pdf');
@@ -998,41 +1002,58 @@ async function serveCvFile(req, res, isView = false) {
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  if (activeCv.fileHash) {
+    res.setHeader('ETag', `"${activeCv.fileHash}"`);
+  }
 
-  // If stored in Cloudinary via external URL, attempt to stream remote asset
+  // 1. Authoritative Priority: Exact authentic PDF binary directly from MongoDB Atlas
+  let pdfBuffer = null;
+  if (activeCv.fileData) {
+    if (Buffer.isBuffer(activeCv.fileData)) {
+      pdfBuffer = activeCv.fileData;
+    } else if (activeCv.fileData.buffer && Buffer.isBuffer(activeCv.fileData.buffer)) {
+      pdfBuffer = activeCv.fileData.buffer;
+    } else {
+      pdfBuffer = Buffer.from(activeCv.fileData);
+    }
+  }
+
+  if (pdfBuffer && pdfBuffer.length > 0) {
+    res.setHeader('Content-Length', pdfBuffer.length);
+    return res.send(pdfBuffer);
+  }
+
+  // 2. Secondary Priority: Verified remote Cloudinary fetch (for legacy records where fileData was not captured)
   const targetUrl = activeCv.secureUrl || activeCv.url;
   if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
     try {
       const remoteRes = await fetch(targetUrl);
       if (remoteRes.ok) {
         const arrayBuf = await remoteRes.arrayBuffer();
-        return res.send(Buffer.from(arrayBuf));
+        const remoteBuffer = Buffer.from(arrayBuf);
+        res.setHeader('Content-Length', remoteBuffer.length);
+        return res.send(remoteBuffer);
       } else {
-        console.warn(`[CV Stream Warning]: Remote CV fetch from ${targetUrl} returned HTTP ${remoteRes.status}. Using resilient local fallback.`);
+        console.warn(`[CV Stream Notice]: Remote CV fetch from ${targetUrl} returned HTTP ${remoteRes.status}.`);
       }
     } catch (fetchErr) {
-      console.warn('[CV Download Stream Fallback]:', fetchErr.message);
+      console.warn('[CV Download Stream Notice]:', fetchErr.message);
     }
   }
 
-  // Local file fallback (preserves instant download and prevents 401 ACL failures)
-  const candidatePaths = [
-    activeCv.url && !activeCv.url.startsWith('http') ? path.resolve(__dirname, '../public', activeCv.url.replace(/^\//, '')) : null,
-    path.resolve(__dirname, '../public/VanojanBSCCV.pdf'),
-    path.resolve(__dirname, '../VanojanBSCCV.pdf')
-  ].filter(Boolean);
-
-  for (const p of candidatePaths) {
-    if (fs.existsSync(p)) {
-      return res.sendFile(p);
+  // 3. Local uploaded file fallback (for local non-Cloudinary environments with an active upload path)
+  if (activeCv.url && activeCv.url.startsWith('/uploads/cv/')) {
+    const localUploadPath = path.resolve(__dirname, '../public', activeCv.url.replace(/^\//, ''));
+    if (fs.existsSync(localUploadPath)) {
+      return res.sendFile(localUploadPath);
     }
   }
 
-  if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
-    return res.redirect(307, targetUrl);
-  }
-
-  return res.status(404).json({ error: 'CV document could not be located.' });
+  // Explicit failure: NEVER silently serve public/VanojanBSCCV.pdf or an outdated fallback PDF!
+  return res.status(404).json({
+    error: 'The active CV document file is currently unavailable. Please re-upload your CV in the Admin Dashboard.'
+  });
 }
 
 // 2. Public: Download active CV with attachment header
@@ -1050,12 +1071,12 @@ async function serveHistoricalCvFile(req, res, isView = false) {
   }
 
   const query = mongoose.isValidObjectId(id) ? { _id: id } : { cloudinaryPublicId: id };
-  const cvDoc = await Cv.findOne(query).lean();
+  const cvDoc = await Cv.findOne(query).select('+fileData').lean();
   if (!cvDoc) {
     return res.status(404).json({ error: 'CV document record not found.' });
   }
 
-  const filename = (cvDoc.originalFilename || 'VanojanBSCCV.pdf').replace(/["\r\n]/g, '');
+  const filename = (cvDoc.originalFilename || 'Vanojan_CV.pdf').replace(/["\r\n]/g, '');
   const disposition = isView ? 'inline' : 'attachment';
 
   res.setHeader('Content-Type', 'application/pdf');
@@ -1064,38 +1085,55 @@ async function serveHistoricalCvFile(req, res, isView = false) {
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  if (cvDoc.fileHash) {
+    res.setHeader('ETag', `"${cvDoc.fileHash}"`);
+  }
 
+  // 1. Authoritative Priority: Exact authentic PDF binary directly from MongoDB Atlas
+  let pdfBuffer = null;
+  if (cvDoc.fileData) {
+    if (Buffer.isBuffer(cvDoc.fileData)) {
+      pdfBuffer = cvDoc.fileData;
+    } else if (cvDoc.fileData.buffer && Buffer.isBuffer(cvDoc.fileData.buffer)) {
+      pdfBuffer = cvDoc.fileData.buffer;
+    } else {
+      pdfBuffer = Buffer.from(cvDoc.fileData);
+    }
+  }
+
+  if (pdfBuffer && pdfBuffer.length > 0) {
+    res.setHeader('Content-Length', pdfBuffer.length);
+    return res.send(pdfBuffer);
+  }
+
+  // 2. Secondary Priority: Verified remote Cloudinary fetch
   const targetUrl = cvDoc.secureUrl || cvDoc.url;
   if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
     try {
       const remoteRes = await fetch(targetUrl);
       if (remoteRes.ok) {
         const arrayBuf = await remoteRes.arrayBuffer();
-        return res.send(Buffer.from(arrayBuf));
+        const remoteBuffer = Buffer.from(arrayBuf);
+        res.setHeader('Content-Length', remoteBuffer.length);
+        return res.send(remoteBuffer);
       } else {
-        console.warn(`[Historical CV Stream Warning]: Fetch from ${targetUrl} returned HTTP ${remoteRes.status}. Using fallback.`);
+        console.warn(`[Historical CV Stream Notice]: Fetch from ${targetUrl} returned HTTP ${remoteRes.status}.`);
       }
     } catch (fetchErr) {
-      console.warn('[Historical CV Stream Fallback]:', fetchErr.message);
+      console.warn('[Historical CV Stream Notice]:', fetchErr.message);
     }
   }
 
-  const candidatePaths = [
-    cvDoc.url && !cvDoc.url.startsWith('http') ? path.resolve(__dirname, '../public', cvDoc.url.replace(/^\//, '')) : null,
-    path.resolve(__dirname, '../public/VanojanBSCCV.pdf'),
-    path.resolve(__dirname, '../VanojanBSCCV.pdf')
-  ].filter(Boolean);
-
-  for (const p of candidatePaths) {
-    if (fs.existsSync(p)) {
-      return res.sendFile(p);
+  // 3. Local upload path fallback
+  if (cvDoc.url && cvDoc.url.startsWith('/uploads/cv/')) {
+    const localUploadPath = path.resolve(__dirname, '../public', cvDoc.url.replace(/^\//, ''));
+    if (fs.existsSync(localUploadPath)) {
+      return res.sendFile(localUploadPath);
     }
   }
 
-  if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
-    return res.redirect(307, targetUrl);
-  }
-
+  // NEVER silently serve public/VanojanBSCCV.pdf!
   return res.status(404).json({ error: 'Historical CV file could not be located on storage.' });
 }
 
@@ -1137,6 +1175,16 @@ app.get('/api/admin/cv', adminOnlyMiddleware, async (req, res) => {
 
 // Helper to process uploaded CV buffer and persist to Cloudinary + Atlas + Local DB
 async function processCvUpload(fileBuffer, originalName, username = 'admin', isReplace = false) {
+  // 1. Strict Validation
+  if (!fileBuffer || fileBuffer.length < 5 || fileBuffer.subarray(0, 5).toString('ascii') !== '%PDF-') {
+    throw new Error('Invalid file format: File must be a valid PDF document beginning with %PDF-.');
+  }
+
+  const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+  if (fileBuffer.length > MAX_SIZE) {
+    throw new Error('File size exceeds the 10MB maximum limit.');
+  }
+
   const timestamp = Date.now();
   const uniqueId = crypto.randomBytes(4).toString('hex');
   const safeBaseName = path.basename(originalName, path.extname(originalName)).replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -1147,7 +1195,7 @@ async function processCvUpload(fileBuffer, originalName, username = 'admin', isR
   let publicId = '';
   let resourceType = 'raw';
 
-  // 1. Upload to Cloudinary if credentials are configured
+  // 2. Upload to Cloudinary if credentials are configured
   if (isCloudinaryConfigured()) {
     const uploadOptions = {
       folder: 'vanojan_portfolio/cv',
@@ -1161,36 +1209,42 @@ async function processCvUpload(fileBuffer, originalName, username = 'admin', isR
 
     const uploadResult = await uploadStream(fileBuffer, uploadOptions);
     if (!uploadResult || !uploadResult.secure_url) {
-      throw new Error('Cloudinary failed to return a valid delivery URL for the CV.');
+      throw new Error('Cloudinary upload failed: No delivery URL returned.');
     }
     uploadedUrl = uploadResult.secure_url;
     publicId = uploadResult.public_id;
     resourceType = uploadResult.resource_type || 'raw';
+
+    // Verify Cloudinary delivery accessibility
+    try {
+      const verifyRes = await fetch(uploadedUrl, { method: 'HEAD' });
+      if (!verifyRes.ok) {
+        console.warn(`[Cloudinary Verification Notice]: Cloudinary URL returned HTTP ${verifyRes.status}. (If 401, enable 'Allow delivery of PDF and ZIP files' in Cloudinary Console -> Settings -> Security).`);
+      }
+    } catch (vErr) {
+      console.warn('[Cloudinary Verification Network Warning]:', vErr.message);
+    }
   } else {
-    // 2. Resilient local fallback when Cloudinary API keys are not supplied in current environment
+    // Local development fallback path when Cloudinary is not configured
     const localUploadDir = path.join(__dirname, '../public/uploads/cv');
     if (!fs.existsSync(localUploadDir)) {
-      fs.mkdirSync(localUploadDir, { recursive: true });
+      try {
+        fs.mkdirSync(localUploadDir, { recursive: true });
+      } catch (e) {}
     }
     const localFileName = `cv_${safeBaseName}_${timestamp}_${uniqueId}.pdf`;
     const localFilePath = path.join(localUploadDir, localFileName);
-    fs.writeFileSync(localFilePath, fileBuffer);
-
-    uploadedUrl = `/uploads/cv/${localFileName}`;
-    publicId = `local_cv_${timestamp}_${uniqueId}`;
+    try {
+      fs.writeFileSync(localFilePath, fileBuffer);
+      uploadedUrl = `/uploads/cv/${localFileName}`;
+      publicId = `local_cv_${timestamp}_${uniqueId}`;
+    } catch (e) {
+      uploadedUrl = `/api/cv/download?v=${timestamp}`;
+      publicId = `atlas_cv_${timestamp}_${uniqueId}`;
+    }
   }
 
-  // 3. Keep public/VanojanBSCCV.pdf synced in local environments if writable
-  try {
-    const staticCvPath = path.join(__dirname, '../public/VanojanBSCCV.pdf');
-    fs.writeFileSync(staticCvPath, fileBuffer);
-    const rootCvPath = path.join(__dirname, '../VanojanBSCCV.pdf');
-    fs.writeFileSync(rootCvPath, fileBuffer);
-  } catch (syncErr) {
-    // Ignore in read-only environments
-  }
-
-  // 4. Capture previous active CV's publicId for Cloudinary cleanup IF isReplace
+  // 3. Capture previous active CV's publicId for Cloudinary cleanup IF isReplace
   let previousPublicId = null;
   await ensureDb();
   if (isDbConnected()) {
@@ -1204,7 +1258,7 @@ async function processCvUpload(fileBuffer, originalName, username = 'admin', isR
     }
   }
 
-  // 5. Create new active CV document in MongoDB Atlas FIRST before deactivating any old records
+  // 4. Create new active CV document in MongoDB Atlas with authentic fileData binary buffer
   let savedCv = null;
   if (isDbConnected()) {
     try {
@@ -1215,6 +1269,7 @@ async function processCvUpload(fileBuffer, originalName, username = 'admin', isR
         url: uploadedUrl,
         secureUrl: uploadedUrl,
         fileSize,
+        fileData: fileBuffer, // Persisted directly to Atlas
         format: 'pdf',
         mimeType: 'application/pdf',
         fileHash,
@@ -1224,7 +1279,7 @@ async function processCvUpload(fileBuffer, originalName, username = 'admin', isR
         uploader: username
       });
 
-      // ONLY after new CV document is safely created and activated:
+      // ONLY after new CV document is safely created and active in Atlas:
       // Deactivate all previous CV versions
       await Cv.updateMany({ _id: { $ne: savedCv._id }, isActive: true }, { isActive: false });
 
@@ -1234,12 +1289,12 @@ async function processCvUpload(fileBuffer, originalName, username = 'admin', isR
         { upsert: true }
       );
     } catch (dbSaveErr) {
-      console.warn('[MongoDB Cv.create Warning]:', dbSaveErr.message);
-      throw new Error(`Failed to persist CV record to database: ${dbSaveErr.message}`);
+      console.error('[MongoDB Cv.create Error]:', dbSaveErr.message);
+      throw new Error(`Failed to persist verified CV record to database: ${dbSaveErr.message}`);
     }
   }
 
-  // 6. Synchronize local fallback db.json
+  // 5. Synchronize local fallback db.json (without massive buffer)
   const db = getDb();
   const cvRecord = {
     originalFilename: originalName,
@@ -1261,7 +1316,7 @@ async function processCvUpload(fileBuffer, originalName, username = 'admin', isR
   }
   saveDb(db);
 
-  // 7. Cleanup old Cloudinary asset only after the new CV is verified and activated
+  // 6. Cleanup old Cloudinary asset only after the new CV is verified and activated
   if (isReplace && previousPublicId && isCloudinaryConfigured()) {
     try {
       await deleteCloudinaryAsset(previousPublicId, { resource_type: 'raw' });
@@ -1271,9 +1326,10 @@ async function processCvUpload(fileBuffer, originalName, username = 'admin', isR
   }
 
   const resultDoc = savedCv ? (savedCv.toObject ? savedCv.toObject() : savedCv) : cvRecord;
+  const { fileData: _unused, ...cleanResult } = resultDoc;
   return {
-    ...resultDoc,
-    id: resultDoc._id ? resultDoc._id.toString() : resultDoc.id
+    ...cleanResult,
+    id: cleanResult._id ? cleanResult._id.toString() : cleanResult.id
   };
 }
 

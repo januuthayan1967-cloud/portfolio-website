@@ -361,7 +361,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     const downloadUrl = `/api/cv/download?v=${Date.now()}`;
     const link = document.createElement('a');
     link.href = downloadUrl;
-    link.setAttribute('download', activeCv?.originalFilename || 'VanojanBSCCV.pdf');
+    link.setAttribute('download', activeCv?.originalFilename || 'Vanojan_CV.pdf');
     link.target = '_blank';
     document.body.appendChild(link);
     link.click();
@@ -382,7 +382,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
     const downloadUrl = `/api/admin/cv/${id}/download?v=${Date.now()}`;
     const link = document.createElement('a');
     link.href = downloadUrl;
-    link.setAttribute('download', item.originalFilename || 'VanojanBSCCV.pdf');
+    link.setAttribute('download', item.originalFilename || 'Vanojan_CV.pdf');
     link.target = '_blank';
     document.body.appendChild(link);
     link.click();
@@ -1869,7 +1869,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                               margin: 0
                             }}
                           >
-                            {activeCv.originalFilename || 'VanojanBSCCV.pdf'}
+                            {activeCv.originalFilename || 'Vanojan_CV.pdf'}
                           </h3>
                           <span
                             style={{
@@ -2163,7 +2163,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                             </div>
                             <div style={{ minWidth: 0, flex: 1 }}>
                               <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--adm-text-title)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {item.originalFilename || 'VanojanBSCCV.pdf'}
+                                {item.originalFilename || 'Vanojan_CV.pdf'}
                               </div>
                               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)', marginTop: '3px' }}>
                                 <span>{formattedSize}</span> &bull; <span>Uploaded {formattedDate}</span>
@@ -3916,7 +3916,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
             </div>
 
             <p style={{ color: 'var(--adm-text-muted)', fontSize: '0.88rem', lineHeight: 1.5, marginBottom: '24px' }}>
-              Are you sure you want to remove <strong style={{ color: 'var(--adm-text-title)' }}>{activeCv?.originalFilename || 'VanojanBSCCV.pdf'}</strong>? Once removed, the &ldquo;Download CV&rdquo; buttons across your public portfolio will be gracefully disabled until you upload a new version.
+              Are you sure you want to remove <strong style={{ color: 'var(--adm-text-title)' }}>{activeCv?.originalFilename || 'Vanojan_CV.pdf'}</strong>? Once removed, the &ldquo;Download CV&rdquo; buttons across your public portfolio will be gracefully disabled until you upload a new version.
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
@@ -4011,7 +4011,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: 'var(--adm-text-title)', fontSize: '0.9rem', marginBottom: '6px' }}>
                 <FileText size={16} color="var(--adm-gold-primary)" />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {cvToDelete.originalFilename || 'VanojanBSCCV.pdf'}
+                  {cvToDelete.originalFilename || 'Vanojan_CV.pdf'}
                 </span>
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)', display: 'flex', flexDirection: 'column', gap: '4px' }}>

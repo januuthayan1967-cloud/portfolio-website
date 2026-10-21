@@ -21,7 +21,7 @@
     "linkedin": "https://www.linkedin.com/in/uthayagunasingam-vanojan-1b75a2327/",
     "twitter": "",
     "statusText": "Open for Graduate Software Engineer & Full-Stack Opportunities",
-    "resumeUrl": "/api/cv/download?v=1792082299353",
+    "resumeUrl": "/api/cv/download?v=1792547969953",
     "emailNotifications": true,
     "emailRepliesEnabled": true,
     "metrics": [
@@ -322,7 +322,6 @@
     {
       "category": "Languages",
       "icon": "Code",
-      "order": 0,
       "items": [
         {
           "name": "JavaScript",
@@ -356,12 +355,13 @@
           "name": "C#",
           "level": 80
         }
-      ]
+      ],
+      "createdAt": "2026-10-15T15:59:11.239Z",
+      "updatedAt": "2026-10-15T15:59:11.239Z"
     },
     {
       "category": "Frontend Development",
       "icon": "Layout",
-      "order": 1,
       "items": [
         {
           "name": "React",
@@ -383,12 +383,13 @@
           "name": "Framer Motion",
           "level": 85
         }
-      ]
+      ],
+      "createdAt": "2026-10-15T15:59:11.240Z",
+      "updatedAt": "2026-10-15T15:59:11.240Z"
     },
     {
       "category": "Backend Development",
       "icon": "Server",
-      "order": 2,
       "items": [
         {
           "name": "Node.js",
@@ -414,12 +415,13 @@
           "name": "JWT Auth",
           "level": 92
         }
-      ]
+      ],
+      "createdAt": "2026-10-15T15:59:11.240Z",
+      "updatedAt": "2026-10-15T15:59:11.240Z"
     },
     {
       "category": "Databases",
       "icon": "Database",
-      "order": 3,
       "items": [
         {
           "name": "MongoDB Atlas",
@@ -433,12 +435,13 @@
           "name": "SQLite",
           "level": 90
         }
-      ]
+      ],
+      "createdAt": "2026-10-15T15:59:11.241Z",
+      "updatedAt": "2026-10-15T15:59:11.241Z"
     },
     {
       "category": "Development Tools",
       "icon": "Terminal",
-      "order": 4,
       "items": [
         {
           "name": "Git & GitHub",
@@ -476,12 +479,13 @@
           "name": "phpMyAdmin",
           "level": 88
         }
-      ]
+      ],
+      "createdAt": "2026-10-15T15:59:11.241Z",
+      "updatedAt": "2026-10-15T15:59:11.241Z"
     },
     {
       "category": "Additional Technologies",
       "icon": "Cpu",
-      "order": 5,
       "items": [
         {
           "name": "WebRTC",
@@ -507,7 +511,9 @@
           "name": "JUnit & Robolectric",
           "level": 88
         }
-      ]
+      ],
+      "createdAt": "2026-10-15T15:59:11.242Z",
+      "updatedAt": "2026-10-15T15:59:11.242Z"
     }
   ],
   "education": [
@@ -563,10 +569,10 @@
     }
   ],
   "analytics": {
-    "totalVisits": 33,
+    "totalVisits": 34,
     "uniqueVisitors": 4,
-    "pageViews": 33,
-    "directInquiries": 43,
+    "pageViews": 34,
+    "directInquiries": 44,
     "projectViews": 2190,
     "avgSessionSeconds": 56,
     "history": [
@@ -616,17 +622,17 @@
     "profileImageUpdatedAt": "2026-10-13T17:34:48.914Z"
   },
   "activeCv": {
-    "originalFilename": "VanojanBSCCV.pdf",
-    "cloudinaryPublicId": "local_cv_migrated_1792082299353",
+    "originalFilename": "VanojanBScCV.pdf",
+    "cloudinaryPublicId": "local_cv_1792547969953_3dc35935",
     "cloudinaryResourceType": "raw",
-    "url": "/VanojanBSCCV.pdf?v=1792082299353",
-    "secureUrl": "/VanojanBSCCV.pdf?v=1792082299353",
-    "fileSize": 119699,
+    "url": "/uploads/cv/cv_VanojanBScCV_1792547969953_3dc35935.pdf",
+    "secureUrl": "/uploads/cv/cv_VanojanBScCV_1792547969953_3dc35935.pdf",
+    "fileSize": 119746,
     "format": "pdf",
     "mimeType": "application/pdf",
-    "fileHash": "e12320eb67f0ef95d141ab5f975aee56ef1cf525dbf5683c546d3d6570f22215",
-    "uploadDate": "2026-10-15T16:38:31.650Z",
-    "lastUpdatedDate": "2026-10-15T16:38:31.651Z",
+    "fileHash": "1d9ffbabdf10e93d21d5fe0655c00900505db1fbd04e14e63b65e904c2bafb0d",
+    "uploadDate": "2026-10-21T01:59:30.474Z",
+    "lastUpdatedDate": "2026-10-21T01:59:30.474Z",
     "isActive": true
   }
 }

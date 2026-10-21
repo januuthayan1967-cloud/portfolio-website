@@ -176,7 +176,7 @@ export default function AboutSection({ profile }) {
               {Boolean(resumeUrl && resumeUrl.trim() !== '' && resumeUrl !== '#') ? (
                 <a
                   href={resumeUrl.startsWith('/api/cv') || resumeUrl.startsWith('http') ? resumeUrl : `/api/cv/download?v=${Date.now()}`}
-                  download={profile?.activeCv?.originalFilename || "VanojanBSCCV.pdf"}
+                  download={profile?.activeCv?.originalFilename || "Vanojan_CV.pdf"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-gold reference-primary"

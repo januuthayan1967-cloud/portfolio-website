@@ -27,6 +27,10 @@ const cvSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  fileData: {
+    type: Buffer,
+    select: false
+  },
   format: {
     type: String,
     default: 'pdf'
@@ -61,6 +65,7 @@ const cvSchema = new mongoose.Schema({
   toJSON: {
     transform: (doc, ret) => {
       delete ret.__v;
+      delete ret.fileData;
       return ret;
     }
   }

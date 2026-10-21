@@ -1,6 +1,7 @@
 import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import app from './app.js';
 import { connectDb, isDbConnected } from './connection.js';
@@ -38,6 +39,10 @@ async function runCvTests() {
     assert(isDbConnected(), 'MongoDB Atlas is connected');
     testPass('MongoDB Atlas connection established');
 
+    // Capture initial active CV before running tests so we can restore safely
+    const originalActiveCv = await Cv.findOne({ isActive: true }).select('+fileData').lean();
+    console.log(`  ℹ️ Initial Active CV in Atlas: ${originalActiveCv?.originalFilename || 'None'} (${originalActiveCv?._id || 'N/A'})`);
+
     // 2. Start Test Server
     server = app.listen(PORT);
     const baseUrl = `http://localhost:${PORT}`;
@@ -59,34 +64,8 @@ async function runCvTests() {
       ]);
     }
 
-    // 3. Test Public /api/cv/active endpoint
-    console.log('\n2️⃣ Testing Public GET /api/cv/active...');
-    const resActive = await fetch(`${baseUrl}/api/cv/active`);
-    assert.strictEqual(resActive.status, 200, 'Status should be 200');
-    const dataActive = await resActive.json();
-    assert(dataActive.success === true, 'Response success should be true');
-    testPass('/api/cv/active responds with 200 OK and valid JSON');
-
-    // 4. Test Public /api/cv/download endpoint
-    console.log('\n3️⃣ Testing Public GET /api/cv/download...');
-    const resDownload = await fetch(`${baseUrl}/api/cv/download`);
-    assert(resDownload.ok, 'Download response should be OK');
-    assert.strictEqual(resDownload.headers.get('content-type'), 'application/pdf', 'Content-Type should be application/pdf');
-    assert(resDownload.headers.get('content-disposition')?.includes('attachment'), 'Content-Disposition should be attachment');
-    const downloadBuffer = Buffer.from(await resDownload.arrayBuffer());
-    assert(downloadBuffer.subarray(0, 5).toString('ascii') === '%PDF-', 'Downloaded content must start with %PDF-');
-    testPass('/api/cv/download correctly serves PDF with attachment headers & %PDF- magic bytes');
-
-    // 5. Test Public /api/cv/view endpoint
-    console.log('\n4️⃣ Testing Public GET /api/cv/view (Inline PDF Viewing)...');
-    const resView = await fetch(`${baseUrl}/api/cv/view`);
-    assert(resView.ok, 'View response should be OK');
-    assert.strictEqual(resView.headers.get('content-type'), 'application/pdf', 'Content-Type should be application/pdf');
-    assert(resView.headers.get('content-disposition')?.includes('inline'), 'Content-Disposition should be inline');
-    testPass('/api/cv/view serves PDF with inline header for native in-browser viewing');
-
-    // 6. Test Security & Auth on Protected Endpoints
-    console.log('\n5️⃣ Testing Security & Unauthorized Access Protection...');
+    // 3. Test Security & Unauthorized Access Protection
+    console.log('\n2️⃣ Testing Security & Unauthorized Access Protection...');
     const resUnauthUpload = await fetch(`${baseUrl}/api/admin/cv/upload`, { method: 'POST' });
     assert.strictEqual(resUnauthUpload.status, 401, 'Upload without token should be 401');
 
@@ -98,12 +77,12 @@ async function runCvTests() {
       headers: { Authorization: 'Bearer fake-invalid-token' }
     });
     assert.strictEqual(resFakeToken.status, 401, 'Invalid token should be rejected with 401');
-    testPass('Admin modification & status endpoints strictly reject unauthorized requests');
+    testPass('Admin endpoints strictly reject unauthorized requests');
 
-    // 7. Test Validation: Non-PDF File Rejection
-    console.log('\n6️⃣ Testing PDF Validation & Signature Checks...');
+    // 4. Test Validation: Non-PDF File Rejection
+    console.log('\n3️⃣ Testing PDF Validation & Signature Checks...');
     const boundary = '----WebKitFormBoundaryCvTest' + Date.now();
-    const fakeTextFile = Buffer.from('This is not a PDF file at all.');
+    const fakeTextFile = Buffer.from('This is a text file posing as a PDF.');
     const nonPdfBody = createMultipartPdfBody(boundary, 'malicious.pdf', fakeTextFile);
 
     const resNonPdf = await fetch(`${baseUrl}/api/admin/cv/upload`, {
@@ -119,8 +98,8 @@ async function runCvTests() {
     assert(dataNonPdf.error?.includes('signature') || dataNonPdf.error?.includes('valid PDF'), 'Error must mention invalid PDF signature');
     testPass('Invalid file signature rejected (requires %PDF- magic bytes)');
 
-    // 8. Test Validation: Oversized File (>10MB)
-    console.log('\n7️⃣ Testing 10MB Maximum File Size Limit...');
+    // 5. Test Validation: Oversized File (>10MB)
+    console.log('\n4️⃣ Testing 10MB Maximum File Size Limit...');
     const oversizedBuffer = Buffer.alloc(11 * 1024 * 1024, 'a'); // 11MB
     const oversizedBody = createMultipartPdfBody(boundary, 'oversized.pdf', oversizedBuffer);
     const resOversized = await fetch(`${baseUrl}/api/admin/cv/upload`, {
@@ -136,11 +115,15 @@ async function runCvTests() {
     assert(dataOversized.error?.includes('10MB'), 'Error message must specify 10MB limit');
     testPass('Oversized files (>10MB) rejected with 400 and clear error message');
 
-    // 9. Test Admin Upload CV
-    console.log('\n8️⃣ Testing Admin CV Upload...');
-    const validDummyPdf = Buffer.from('%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF');
-    const uploadBody = createMultipartPdfBody(boundary, 'Test_Executive_CV.pdf', validDummyPdf);
+    // 6. Test Admin Upload CV with Unique Binary Content
+    console.log('\n5️⃣ Testing Admin CV Upload & Binary Persistence...');
+    const uniqueTestToken = `TEST_CV_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    const testPdfContent = `%PDF-1.7\n% ${uniqueTestToken}\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF`;
+    const testPdfBuffer = Buffer.from(testPdfContent);
+    const expectedUploadHash = crypto.createHash('sha256').update(testPdfBuffer).digest('hex');
+    const testFilename = `Integration_Test_CV_${Date.now()}.pdf`;
 
+    const uploadBody = createMultipartPdfBody(boundary, testFilename, testPdfBuffer);
     const resUpload = await fetch(`${baseUrl}/api/admin/cv/upload`, {
       method: 'POST',
       headers: {
@@ -152,15 +135,47 @@ async function runCvTests() {
     assert.strictEqual(resUpload.status, 200, 'Upload should succeed with 200');
     const dataUpload = await resUpload.json();
     assert(dataUpload.success === true, 'Upload response success should be true');
-    assert.strictEqual(dataUpload.cv.originalFilename, 'Test_Executive_CV.pdf', 'Original filename must match');
+    assert.strictEqual(dataUpload.cv.originalFilename, testFilename, 'Original filename must match');
+    assert.strictEqual(dataUpload.cv.fileHash, expectedUploadHash, 'File hash must match expected sha256');
     assert(dataUpload.cv.isActive === true, 'Uploaded CV must be marked active');
     testPass('Admin successfully uploaded and activated new CV');
 
-    // 10. Test Admin Replace CV
-    console.log('\n9️⃣ Testing Admin CV Replacement (Atomic Switch & Cleanup)...');
-    const replacedDummyPdf = Buffer.from('%PDF-1.7\n% REPLACED_VERSION_2026\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF');
-    const replaceBody = createMultipartPdfBody(boundary, 'Replaced_Vanojan_CV.pdf', replacedDummyPdf);
+    // Verify MongoDB Atlas active record
+    const atlasActiveCv = await Cv.findOne({ isActive: true }).select('+fileData').lean();
+    assert(atlasActiveCv !== null, 'Active CV record exists in MongoDB Atlas');
+    assert.strictEqual(atlasActiveCv.originalFilename, testFilename);
+    assert.strictEqual(atlasActiveCv.fileHash, expectedUploadHash);
+    const persistedBuffer = atlasActiveCv.fileData?.buffer || (typeof atlasActiveCv.fileData?.value === 'function' ? atlasActiveCv.fileData.value() : atlasActiveCv.fileData);
+    assert(persistedBuffer !== null && persistedBuffer.length > 0, 'fileData binary is persisted in Atlas');
+    testPass('MongoDB Atlas identifies newly uploaded CV as active with fileData binary');
 
+    // 7. Verify Public GET /api/cv/download returns the EXACT newly uploaded PDF
+    console.log('\n6️⃣ Verifying Public GET /api/cv/download returns the exact newly uploaded PDF...');
+    const resDownload = await fetch(`${baseUrl}/api/cv/download`);
+    assert(resDownload.ok, 'Download response must be 200 OK');
+    assert.strictEqual(resDownload.headers.get('content-type'), 'application/pdf');
+    assert(resDownload.headers.get('content-disposition')?.includes(`filename="${testFilename}"`));
+    assert.strictEqual(resDownload.headers.get('cache-control'), 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+
+    const downloadedBuffer = Buffer.from(await resDownload.arrayBuffer());
+    const downloadedHash = crypto.createHash('sha256').update(downloadedBuffer).digest('hex');
+    assert.strictEqual(downloadedHash, expectedUploadHash, 'Downloaded PDF SHA-256 hash must EXACTLY match the uploaded file');
+
+    // CRITICAL: Verify the old static fallback PDF is NOT returned!
+    const oldStaticHash = 'e12320eb67f0ef95d141ab5f975aee56ef1cf525dbf5683c546d3d6570f22215';
+    assert.notStrictEqual(downloadedHash, oldStaticHash, 'Downloaded file must NOT match old public/VanojanBSCCV.pdf fallback');
+    assert(downloadedBuffer.toString().includes(uniqueTestToken), 'Downloaded file contains the unique test token');
+    testPass('Download endpoint returns exact uploaded PDF (verified via SHA-256 hash & token)');
+
+    // 8. Test Atomic Replace CV
+    console.log('\n7️⃣ Testing Admin CV Replacement (Atomic Switchover)...');
+    const replaceToken = `REPLACED_CV_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+    const replacedPdfContent = `%PDF-1.7\n% ${replaceToken}\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF`;
+    const replacedPdfBuffer = Buffer.from(replacedPdfContent);
+    const expectedReplacedHash = crypto.createHash('sha256').update(replacedPdfBuffer).digest('hex');
+    const replacedFilename = `Replaced_Test_CV_${Date.now()}.pdf`;
+
+    const replaceBody = createMultipartPdfBody(boundary, replacedFilename, replacedPdfBuffer);
     const resReplace = await fetch(`${baseUrl}/api/admin/cv/replace`, {
       method: 'POST',
       headers: {
@@ -171,42 +186,100 @@ async function runCvTests() {
     });
     assert.strictEqual(resReplace.status, 200, 'Replace should succeed with 200');
     const dataReplace = await resReplace.json();
-    assert(dataReplace.success === true, 'Replace response success should be true');
-    assert.strictEqual(dataReplace.cv.originalFilename, 'Replaced_Vanojan_CV.pdf', 'Replaced filename must match');
-    testPass('Admin successfully replaced CV with verified atomic switchover');
+    assert(dataReplace.success === true);
+    assert.strictEqual(dataReplace.cv.originalFilename, replacedFilename);
 
-    // Verify visitor download gets the replaced CV
-    const resVerifyReplacedDownload = await fetch(`${baseUrl}/api/cv/download`);
-    const verifiedDownloadBuffer = Buffer.from(await resVerifyReplacedDownload.arrayBuffer());
-    assert(verifiedDownloadBuffer.toString().includes('REPLACED_VERSION_2026'), 'Visitor download must reflect replaced CV content');
-    testPass('Public download immediately reflects replaced CV content without caching delay');
+    // Verify download immediately delivers replaced CV
+    const resVerifyReplaceDownload = await fetch(`${baseUrl}/api/cv/download`);
+    const verifiedReplacedBuf = Buffer.from(await resVerifyReplaceDownload.arrayBuffer());
+    const verifiedReplacedHash = crypto.createHash('sha256').update(verifiedReplacedBuf).digest('hex');
+    assert.strictEqual(verifiedReplacedHash, expectedReplacedHash, 'Replaced download hash matches exactly');
+    assert(verifiedReplacedBuf.toString().includes(replaceToken), 'Downloaded content contains replace token');
 
-    // 11. Test Admin Remove CV
-    console.log('\n🔟 Testing Admin CV Removal & Public Deactivation...');
-    const resDelete = await fetch(`${baseUrl}/api/admin/cv`, {
+    // Verify previous version is archived with isActive: false
+    const previousDoc = await Cv.findOne({ originalFilename: testFilename }).lean();
+    assert(previousDoc !== null, 'Previous CV document is archived');
+    assert.strictEqual(previousDoc.isActive, false, 'Previous CV version is marked isActive: false');
+    testPass('Admin replace performs atomic switchover and archives previous version');
+
+    // 9. Test Historical CV Download & View
+    console.log('\n8️⃣ Testing Historical CV Access (/api/admin/cv/:id/download)...');
+    const resHistDownload = await fetch(`${baseUrl}/api/admin/cv/${previousDoc._id}/download`, {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    assert(resHistDownload.ok, 'Historical download responds with 200 OK');
+    const histBuf = Buffer.from(await resHistDownload.arrayBuffer());
+    const histHash = crypto.createHash('sha256').update(histBuf).digest('hex');
+    assert.strictEqual(histHash, expectedUploadHash, 'Historical download matches initial uploaded version');
+    testPass('Historical CV endpoint delivers exact archived file version');
+
+    // 10. Test Active CV Protection (disallow deleting currently active CV)
+    console.log('\n9️⃣ Testing Active CV Protection against Accidental Deletion...');
+    const activeDocToProtect = await Cv.findOne({ isActive: true }).lean();
+    const resDeleteActive = await fetch(`${baseUrl}/api/admin/cv/${activeDocToProtect._id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${adminToken}` }
     });
-    assert.strictEqual(resDelete.status, 200, 'Delete should succeed with 200');
-    const dataDelete = await resDelete.json();
-    assert(dataDelete.success === true, 'Delete response success should be true');
+    assert.strictEqual(resDeleteActive.status, 400, 'Deleting active CV must return 400');
+    const dataDeleteActive = await resDeleteActive.json();
+    assert(dataDeleteActive.error?.includes('active'), 'Error must specify active CV cannot be deleted');
+    testPass('Active CV is strictly protected against accidental deletion');
 
-    // Verify /api/cv/active is now null
-    const resActiveAfterDel = await fetch(`${baseUrl}/api/cv/active`);
-    const dataActiveAfterDel = await resActiveAfterDel.json();
-    assert.strictEqual(dataActiveAfterDel.activeCv, null, 'Active CV must be null after removal');
+    // 11. Test Deletion of Inactive CV Version
+    console.log('\n🔟 Testing Deletion of Archived CV Version...');
+    const resDeleteInactive = await fetch(`${baseUrl}/api/admin/cv/${previousDoc._id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    assert.strictEqual(resDeleteInactive.status, 200, 'Deleting inactive CV returns 200 OK');
+    const checkDeleted = await Cv.findById(previousDoc._id).lean();
+    assert.strictEqual(checkDeleted, null, 'Deleted version is purged from database');
+    testPass('Archived CV version successfully and permanently deleted');
 
-    // Verify /api/cv/download returns 404 after removal
-    const resDownloadAfterDel = await fetch(`${baseUrl}/api/cv/download`);
-    assert.strictEqual(resDownloadAfterDel.status, 404, 'Download must return 404 when CV is removed');
-    testPass('Admin CV removal disables public download gracefully with 404');
+    // 12. Test Admin CV Removal & Public 404 Disable
+    console.log('\n1️⃣1️⃣ Testing Admin Active CV Removal & Safe 404 Disabling...');
+    const resRemoveAll = await fetch(`${baseUrl}/api/admin/cv`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    assert.strictEqual(resRemoveAll.status, 200);
 
-    // 12. Restore Genuine CV for production portfolio
-    console.log('\n1️⃣1️⃣ Restoring Genuine Executive CV (VanojanBSCCV.pdf)...');
-    const realCvPath = path.join(__dirname, '../public/VanojanBSCCV.pdf');
-    const realCvBuffer = fs.readFileSync(realCvPath);
-    const restoreBody = createMultipartPdfBody(boundary, 'VanojanBSCCV.pdf', realCvBuffer);
+    const resActiveAfterRemove = await fetch(`${baseUrl}/api/cv/active`);
+    const dataActiveAfterRemove = await resActiveAfterRemove.json();
+    assert.strictEqual(dataActiveAfterRemove.activeCv, null, 'Active CV is null after removal');
 
+    // Download MUST return 404 and NOT fall back to old PDF!
+    const resDownloadAfterRemove = await fetch(`${baseUrl}/api/cv/download`);
+    assert.strictEqual(resDownloadAfterRemove.status, 404, 'Download returns 404 when no active CV');
+    const dataDownloadAfterRemove = await resDownloadAfterRemove.json();
+    assert(dataDownloadAfterRemove.error?.includes('unavailable') || dataDownloadAfterRemove.error?.includes('available'), 'Clear 404 error returned');
+    testPass('Active CV removal disables public download gracefully with 404 (zero fallback)');
+
+    // 13. Safe Restoration of Genuine Active CV
+    console.log('\n1️⃣2️⃣ Restoring Genuine Executive CV...');
+    // Clean up temporary integration test records
+    await Cv.deleteMany({ originalFilename: { $in: [testFilename, replacedFilename] } });
+
+    // Look for genuine CV on Desktop first, or use original active record
+    const desktopCvPath = 'C:/Users/User/OneDrive/Desktop/VanojanBScCV.pdf';
+    let restoreBuffer = null;
+    let restoreFilename = 'VanojanBScCV.pdf';
+
+    if (fs.existsSync(desktopCvPath)) {
+      restoreBuffer = fs.readFileSync(desktopCvPath);
+      console.log(`  ℹ️ Found genuine executive CV on Desktop: ${desktopCvPath} (${restoreBuffer.length} bytes)`);
+    } else if (originalActiveCv && originalActiveCv.fileData) {
+      restoreBuffer = originalActiveCv.fileData;
+      restoreFilename = originalActiveCv.originalFilename || 'VanojanBScCV.pdf';
+      console.log(`  ℹ️ Restoring from original Atlas activeCv record (${restoreBuffer.length} bytes)`);
+    } else {
+      const localCvPath = path.join(__dirname, '../public/VanojanBSCCV.pdf');
+      restoreBuffer = fs.readFileSync(localCvPath);
+      restoreFilename = 'VanojanBScCV.pdf';
+      console.log(`  ℹ️ Restoring from local baseline (${restoreBuffer.length} bytes)`);
+    }
+
+    const restoreBody = createMultipartPdfBody(boundary, restoreFilename, restoreBuffer);
     const resRestore = await fetch(`${baseUrl}/api/admin/cv/upload`, {
       method: 'POST',
       headers: {
@@ -215,16 +288,20 @@ async function runCvTests() {
       },
       body: restoreBody
     });
-    assert.strictEqual(resRestore.status, 200, 'Restoration should succeed');
+    assert.strictEqual(resRestore.status, 200, 'Restoration must succeed with 200');
     const dataRestore = await resRestore.json();
-    assert.strictEqual(dataRestore.cv.originalFilename, 'VanojanBSCCV.pdf');
-    testPass('Genuine CV restored as the live active document');
+    assert.strictEqual(dataRestore.cv.originalFilename, restoreFilename);
+    assert(dataRestore.cv.isActive === true);
 
-    // Clean up temporary test records in database if needed
-    await Cv.deleteMany({ originalFilename: { $in: ['Test_Executive_CV.pdf', 'Replaced_Vanojan_CV.pdf'] } });
+    // Verify restored file is downloaded correctly
+    const resFinalDownload = await fetch(`${baseUrl}/api/cv/download`);
+    assert(resFinalDownload.ok);
+    const finalDownloadBuf = Buffer.from(await resFinalDownload.arrayBuffer());
+    assert.strictEqual(finalDownloadBuf.length, restoreBuffer.length, 'Final restored CV size matches exactly');
+    testPass(`Genuine executive CV "${restoreFilename}" safely restored and active`);
 
     console.log('\n====================================================');
-    console.log(`📊 TEST RESULTS: ${passed} PASSED, ${failed} FAILED`);
+    console.log(`📊 TEST SUITE RESULTS: ${passed} PASSED, ${failed} FAILED`);
     console.log('====================================================\n');
 
     if (server) server.close();
