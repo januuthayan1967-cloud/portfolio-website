@@ -7,7 +7,8 @@ import {
   GraduationCap, MailCheck, KeyRound, Lock, Send, Search, Filter,
   Images, FileText, ChevronUp, ChevronDown, ChevronRight, Sun, Moon,
   Bell, Menu, MoreVertical, Crown, PieChart, BarChart3, Camera,
-  Sparkles, ShieldCheck, Download, AlertTriangle, Layers
+  Sparkles, ShieldCheck, Download, AlertTriangle, Layers,
+  Music, Volume2, VolumeX, Play, Pause, Disc, Radio, Sliders
 } from 'lucide-react';
 
 import '../../styles/admin.css';
@@ -75,6 +76,31 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
   const [deletingCvId, setDeletingCvId] = useState(null);
   const cvFileInputRef = useRef(null);
   const cvReplaceInputRef = useRef(null);
+
+  // Background Music Management State
+  const [musicTracks, setMusicTracks] = useState([]);
+  const [activeMusicTrack, setActiveMusicTrack] = useState(null);
+  const [musicSettings, setMusicSettings] = useState({
+    isEnabled: true,
+    defaultVolume: 0.55,
+    activeTrackUrl: '/audio/mybackground.mpeg',
+    activeTrackTitle: 'Cinematic Ambient Soundscape'
+  });
+  const [musicUploading, setMusicUploading] = useState(false);
+  const [musicUploadProgress, setMusicUploadProgress] = useState(0);
+  const [musicTitleInput, setMusicTitleInput] = useState('');
+  const [activateOnUpload, setActivateOnUpload] = useState(true);
+  const [savingMusicSettings, setSavingMusicSettings] = useState(false);
+  const [activatingTrackId, setActivatingTrackId] = useState(null);
+  const [deletingTrackId, setDeletingTrackId] = useState(null);
+  const [trackToDelete, setTrackToDelete] = useState(null);
+  const [editingTrack, setEditingTrack] = useState(null);
+  const [editingTrackTitle, setEditingTrackTitle] = useState('');
+  const [savingTrackTitle, setSavingTrackTitle] = useState(false);
+  const [previewTrackId, setPreviewTrackId] = useState(null);
+  const [previewPlaying, setPreviewPlaying] = useState(false);
+  const musicFileInputRef = useRef(null);
+  const previewAudioRef = useRef(null);
 
   // Message Deletion State
   const [messageToDelete, setMessageToDelete] = useState(null);
@@ -251,6 +277,18 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
           }
         })
         .catch(() => {});
+
+      // Fetch Background Music Library & Settings
+      fetch('/api/admin/music', { headers })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.success) {
+            setMusicTracks(data.tracks || []);
+            setActiveMusicTrack(data.activeTrack || null);
+            if (data.settings) setMusicSettings(data.settings);
+          }
+        })
+        .catch(() => {});
     } catch (err) {
       console.warn('[AdminDashboard] Non-fatal data loading warning:', err.message);
       showToast('Dashboard data loaded', 'info');
@@ -417,6 +455,241 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
       setDeletingCvId(null);
     }
   };
+
+  // Refresh Music Data on demand
+  const fetchMusicData = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/music', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success) {
+          setMusicTracks(data.tracks || []);
+          setActiveMusicTrack(data.activeTrack || null);
+          if (data.settings) setMusicSettings(data.settings);
+        }
+      }
+    } catch (err) {
+      console.warn('[AdminDashboard] Error refreshing music data:', err);
+    }
+  }, [token]);
+
+  // Upload New Background Music Track
+  const handleUploadMusic = async (file, customTitle, shouldActivate = true) => {
+    if (!file) return;
+
+    const allowedExts = ['.mp3', '.mpeg', '.wav', '.ogg', '.m4a', '.aac'];
+    const isAudio = file.type.startsWith('audio/') || allowedExts.some(ext => file.name.toLowerCase().endsWith(ext));
+    if (!isAudio) {
+      showToast('Please upload a valid audio file (.mp3, .mpeg, .wav, .ogg, .m4a, .aac).', 'error');
+      return;
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+      showToast('File size exceeds 15 MB limit. Please upload an audio file under 15 MB.', 'error');
+      return;
+    }
+
+    setMusicUploading(true);
+    setMusicUploadProgress(20);
+    const progressInterval = setInterval(() => {
+      setMusicUploadProgress((prev) => (prev < 88 ? prev + 12 : prev));
+    }, 180);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (customTitle && customTitle.trim()) {
+        formData.append('title', customTitle.trim());
+      }
+      formData.append('activate', shouldActivate ? 'true' : 'false');
+
+      const res = await fetch('/api/admin/music/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+
+      clearInterval(progressInterval);
+      setMusicUploadProgress(100);
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to upload music track.');
+      }
+
+      await fetchMusicData();
+      if (onDataRefresh) onDataRefresh();
+      setMusicTitleInput('');
+      showToast(data.message || 'Background music uploaded successfully!', 'success');
+    } catch (err) {
+      clearInterval(progressInterval);
+      showToast(err.message || 'Error uploading music file', 'error');
+    } finally {
+      setTimeout(() => {
+        setMusicUploading(false);
+        setMusicUploadProgress(0);
+        if (musicFileInputRef.current) musicFileInputRef.current.value = '';
+      }, 450);
+    }
+  };
+
+  // Set Track as Active Live Homepage Background
+  const handleActivateMusicTrack = async (trackId) => {
+    setActivatingTrackId(trackId);
+    try {
+      const res = await fetch(`/api/admin/music/${trackId}/activate`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to activate track.');
+      }
+      await fetchMusicData();
+      if (onDataRefresh) onDataRefresh();
+      showToast(data.message || 'Track is now active on the homepage!', 'success');
+    } catch (err) {
+      showToast(err.message || 'Error activating music track', 'error');
+    } finally {
+      setActivatingTrackId(null);
+    }
+  };
+
+  // Save Global Background Music Settings
+  const handleSaveMusicSettings = async (overrideSettings) => {
+    const payload = overrideSettings || musicSettings;
+    setSavingMusicSettings(true);
+    try {
+      const res = await fetch('/api/admin/music/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update music settings.');
+      }
+      if (data.settings) setMusicSettings(data.settings);
+      if (onDataRefresh) onDataRefresh();
+      showToast(data.message || 'Background music settings updated successfully!', 'success');
+    } catch (err) {
+      showToast(err.message || 'Error saving music settings', 'error');
+    } finally {
+      setSavingMusicSettings(false);
+    }
+  };
+
+  // Delete Track from MongoDB and Cloudinary
+  const handleDeleteMusicTrack = async () => {
+    if (!trackToDelete) return;
+    const id = trackToDelete._id || trackToDelete.id;
+    setDeletingTrackId(id);
+    try {
+      const res = await fetch(`/api/admin/music/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to delete music track.');
+      }
+      setTrackToDelete(null);
+      await fetchMusicData();
+      if (onDataRefresh) onDataRefresh();
+      showToast(data.message || 'Music track deleted successfully.', 'success');
+    } catch (err) {
+      showToast(err.message || 'Error deleting track', 'error');
+    } finally {
+      setDeletingTrackId(null);
+    }
+  };
+
+  // Rename Track Title
+  const handleSaveTrackTitle = async () => {
+    if (!editingTrack || !editingTrackTitle.trim()) return;
+    const id = editingTrack._id || editingTrack.id;
+    setSavingTrackTitle(true);
+    try {
+      const res = await fetch(`/api/admin/music/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ title: editingTrackTitle.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update track title.');
+      }
+      setEditingTrack(null);
+      setEditingTrackTitle('');
+      await fetchMusicData();
+      if (onDataRefresh) onDataRefresh();
+      showToast('Track title updated successfully!', 'success');
+    } catch (err) {
+      showToast(err.message || 'Error updating track title', 'error');
+    } finally {
+      setSavingTrackTitle(false);
+    }
+  };
+
+  // Dashboard Preview Player (Listen to any track before activating)
+  const togglePreviewAudio = (track) => {
+    const trackId = track._id || track.id;
+    if (previewTrackId === trackId && previewPlaying) {
+      if (previewAudioRef.current) {
+        previewAudioRef.current.pause();
+      }
+      setPreviewPlaying(false);
+      return;
+    }
+
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+    }
+
+    const audioUrl = track.url && track.url.startsWith('http')
+      ? track.url
+      : `/api/music/stream/${trackId}?v=${Date.now()}`;
+
+    const audio = new Audio(audioUrl);
+    audio.volume = musicSettings.defaultVolume || 0.55;
+    audio.onended = () => {
+      setPreviewPlaying(false);
+      setPreviewTrackId(null);
+    };
+    audio.onerror = () => {
+      setPreviewPlaying(false);
+      showToast('Could not load audio preview. File may be loading or unavailable.', 'error');
+    };
+
+    previewAudioRef.current = audio;
+    audio.play()
+      .then(() => {
+        setPreviewTrackId(trackId);
+        setPreviewPlaying(true);
+      })
+      .catch((err) => {
+        console.warn('[Admin preview] Playback blocked:', err);
+        setPreviewPlaying(false);
+      });
+  };
+
+  // Stop preview audio on component unmount
+  useEffect(() => {
+    return () => {
+      if (previewAudioRef.current) {
+        previewAudioRef.current.pause();
+        previewAudioRef.current = null;
+      }
+    };
+  }, []);
 
   // Fetch Real Visitor Analytics Report
   const fetchAnalyticsReport = useCallback(async (range = '7d', isSilent = false) => {
@@ -1411,6 +1684,7 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                 { id: 'overview', label: 'Analytics Overview', icon: LayoutDashboard },
                 { id: 'hero', label: 'Hero Section & Cards', icon: Sparkles },
                 { id: 'about', label: 'About Section & Cards', icon: Crown },
+                { id: 'music', label: 'Background Music', icon: Music, badge: activeMusicTrack ? 'Live' : undefined },
                 { id: 'cv', label: 'CV / Resume Management', icon: FileText, badge: activeCv ? 'Live' : undefined },
                 { id: 'projects', label: 'Projects & Gallery', icon: FolderGit2, badge: projects.length },
                 { id: 'media', label: 'Cloudinary Assets', icon: Image, badge: mediaList.length },
@@ -1468,6 +1742,17 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
               <div className="admin-quick-action-inner">
                 <Crown size={14} color="var(--adm-gold-primary)" />
                 <span>Edit About Cards</span>
+              </div>
+              <ChevronRight size={13} color="var(--adm-text-faint)" />
+            </button>
+
+            <button
+              className="admin-quick-action-item"
+              onClick={() => setActiveTab('music')}
+            >
+              <div className="admin-quick-action-inner">
+                <Music size={14} color="var(--adm-gold-primary)" />
+                <span>Background Music</span>
               </div>
               <ChevronRight size={13} color="var(--adm-text-faint)" />
             </button>
@@ -2984,6 +3269,805 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* =========================================================================
+              TAB: BACKGROUND MUSIC MANAGEMENT (Cloudinary & Atlas Backed)
+              ========================================================================= */}
+          {activeTab === 'music' && (
+            <div>
+              {/* Header Title & Subtitle */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <span className="admin-badge-gold">03 // AMBIENT SOUNDSCAPE</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--adm-text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                      AUDIO STREAMING PIPELINE
+                    </span>
+                  </div>
+                  <h2 className="admin-header-title" style={{ fontSize: '1.85rem' }}>
+                    Background Music &amp; <span className="admin-gold-gradient-text">Ambience</span>
+                  </h2>
+                  <p className="admin-header-subtitle">
+                    Autonomous audio engine with Cloudinary cloud streaming and MongoDB Atlas fallback. Upload, preview, activate, and manage cinematic ambient soundtracks.
+                  </p>
+                </div>
+
+                {/* Status Badges */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '6px 14px',
+                      borderRadius: '9999px',
+                      background: musicSettings.isEnabled ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                      border: musicSettings.isEnabled ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(239, 68, 68, 0.35)',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.74rem',
+                      color: musicSettings.isEnabled ? '#10B981' : '#EF4444',
+                      fontWeight: 600
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: '7px',
+                        height: '7px',
+                        borderRadius: '50%',
+                        background: musicSettings.isEnabled ? '#10B981' : '#EF4444',
+                        boxShadow: musicSettings.isEnabled ? '0 0 8px #10B981' : 'none'
+                      }}
+                    />
+                    <span>{musicSettings.isEnabled ? 'Global Audio: Enabled' : 'Global Audio: Disabled'}</span>
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '6px 14px',
+                      borderRadius: '9999px',
+                      background: 'var(--adm-gold-pill-bg)',
+                      border: '1px solid var(--adm-border)',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.74rem',
+                      color: 'var(--adm-gold-primary)',
+                      fontWeight: 600
+                    }}
+                  >
+                    <HardDrive size={13} />
+                    <span>
+                      {cloudinaryStatus?.configured ? 'Cloudinary (vyr3hnbq)' : 'Atlas Store'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* MUSIC DASHBOARD GRID */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1080px' }}>
+                
+                {/* 1. Global Settings Card (Enable/Disable & Default Volume) */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                        <Sliders size={17} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                          Global Audio &amp; Playback Configuration
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                          Controls master volume, initial playback settings, and global soundscape visibility.
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSaveMusicSettings()}
+                      disabled={savingMusicSettings}
+                      className="admin-btn-primary"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 18px',
+                        fontSize: '0.82rem',
+                        borderRadius: '9px',
+                        fontWeight: 700,
+                        cursor: savingMusicSettings ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      {savingMusicSettings ? <RefreshCw size={14} className="spin" /> : <Save size={14} />}
+                      <span>{savingMusicSettings ? 'Saving Settings...' : 'Save Settings'}</span>
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                    {/* Master Switch */}
+                    <div
+                      style={{
+                        padding: '16px 20px',
+                        borderRadius: '12px',
+                        background: 'var(--adm-surface)',
+                        border: '1px solid var(--adm-border)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '16px'
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--adm-text-title)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {musicSettings.isEnabled ? <Volume2 size={16} color="var(--adm-gold-primary)" /> : <VolumeX size={16} color="var(--adm-text-muted)" />}
+                          <span>Master Audio Switch</span>
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--adm-text-muted)', marginTop: '4px', lineHeight: 1.4 }}>
+                          {musicSettings.isEnabled
+                            ? 'Ambient audio toggle button is active and accessible on homepage.'
+                            : 'Audio is globally disabled. Player button is hidden on homepage.'}
+                        </div>
+                      </div>
+
+                      <label style={{ position: 'relative', display: 'inline-block', width: '48px', height: '26px', cursor: 'pointer', flexShrink: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(musicSettings.isEnabled)}
+                          onChange={(e) => setMusicSettings({ ...musicSettings, isEnabled: e.target.checked })}
+                          style={{ opacity: 0, width: 0, height: 0 }}
+                        />
+                        <span
+                          style={{
+                            position: 'absolute',
+                            cursor: 'pointer',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: musicSettings.isEnabled ? 'var(--adm-gold-primary)' : 'rgba(255,255,255,0.15)',
+                            transition: '0.3s',
+                            borderRadius: '34px'
+                          }}
+                        >
+                          <span
+                            style={{
+                              position: 'absolute',
+                              content: '""',
+                              height: '18px',
+                              width: '18px',
+                              left: musicSettings.isEnabled ? '24px' : '4px',
+                              bottom: '4px',
+                              backgroundColor: '#ffffff',
+                              transition: '0.3s',
+                              borderRadius: '50%',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                            }}
+                          />
+                        </span>
+                      </label>
+                    </div>
+
+                    {/* Volume Slider */}
+                    <div
+                      style={{
+                        padding: '16px 20px',
+                        borderRadius: '12px',
+                        background: 'var(--adm-surface)',
+                        border: '1px solid var(--adm-border)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                          Default Playback Volume
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            color: 'var(--adm-gold-primary)',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            background: 'var(--adm-gold-pill-bg)',
+                            border: '1px solid var(--adm-border)'
+                          }}
+                        >
+                          {Math.round((musicSettings.defaultVolume ?? 0.55) * 100)}%
+                        </span>
+                      </div>
+
+                      <input
+                        type="range"
+                        min="0.05"
+                        max="1.0"
+                        step="0.05"
+                        value={musicSettings.defaultVolume ?? 0.55}
+                        onChange={(e) => setMusicSettings({ ...musicSettings, defaultVolume: parseFloat(e.target.value) })}
+                        style={{
+                          width: '100%',
+                          accentColor: 'var(--adm-gold-primary)',
+                          cursor: 'pointer',
+                          marginTop: '6px'
+                        }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: 'var(--adm-text-muted)', marginTop: '4px' }}>
+                        <span>Subtle (5%)</span>
+                        <span>Balanced (55%)</span>
+                        <span>Full (100%)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Upload New Audio Track Card */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                      <UploadCloud size={17} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                        Upload New Background Soundtrack
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                        Supported formats: MP3, MPEG, WAV, OGG, M4A, AAC (Max 15 MB). Uploads to Cloudinary with MongoDB Atlas backup.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                    <div>
+                      <label className="admin-label">Soundtrack Title (Optional)</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        placeholder="e.g. Cinematic Ambient Soundscape Vol. 2"
+                        value={musicTitleInput}
+                        onChange={(e) => setMusicTitleInput(e.target.value)}
+                        disabled={musicUploading}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--adm-text-body)', userSelect: 'none', paddingBottom: '10px' }}>
+                        <input
+                          type="checkbox"
+                          checked={activateOnUpload}
+                          onChange={(e) => setActivateOnUpload(e.target.checked)}
+                          disabled={musicUploading}
+                          style={{ accentColor: 'var(--adm-gold-primary)', width: '16px', height: '16px' }}
+                        />
+                        <span>Activate as live homepage background immediately on upload</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Dropzone Box */}
+                  <div
+                    onClick={() => {
+                      if (!musicUploading && musicFileInputRef.current) {
+                        musicFileInputRef.current.click();
+                      }
+                    }}
+                    style={{
+                      border: '2px dashed var(--adm-border)',
+                      borderRadius: '14px',
+                      padding: '32px 20px',
+                      textAlign: 'center',
+                      background: 'var(--adm-surface)',
+                      cursor: musicUploading ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.25s ease'
+                    }}
+                  >
+                    <input
+                      ref={musicFileInputRef}
+                      type="file"
+                      accept="audio/*,.mp3,.mpeg,.wav,.ogg,.m4a,.aac"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadMusic(file, musicTitleInput, activateOnUpload);
+                      }}
+                      style={{ display: 'none' }}
+                    />
+
+                    {musicUploading ? (
+                      <div>
+                        <RefreshCw size={28} className="spin" color="var(--adm-gold-primary)" style={{ margin: '0 auto 12px' }} />
+                        <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--adm-gold-primary)', marginBottom: '8px' }}>
+                          Streaming Audio to Cloud Storage ({musicUploadProgress}%)...
+                        </div>
+                        <div style={{ width: '100%', maxWidth: '320px', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', margin: '0 auto', overflow: 'hidden' }}>
+                          <div
+                            style={{
+                              width: `${musicUploadProgress}%`,
+                              height: '100%',
+                              background: 'var(--adm-gold-primary)',
+                              transition: 'width 0.2s ease'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <Disc size={32} color="var(--adm-gold-primary)" style={{ margin: '0 auto 10px', opacity: 0.85 }} />
+                        <div style={{ fontWeight: 700, fontSize: '0.94rem', color: 'var(--adm-text-title)', marginBottom: '4px' }}>
+                          Click or drag and drop an audio file here
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                          MP3 • MPEG • WAV • OGG • M4A up to 15MB
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3. Currently Active Homepage Track Spotlight */}
+                {activeMusicTrack && (
+                  <div
+                    className="admin-card"
+                    style={{
+                      border: '1.5px solid var(--adm-gold-primary)',
+                      boxShadow: '0 0 20px rgba(212, 175, 55, 0.12)',
+                      background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, var(--adm-surface) 100%)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '10px',
+                            background: 'var(--adm-gold-pill-bg)',
+                            border: '1px solid var(--adm-border)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--adm-gold-primary)'
+                          }}
+                        >
+                          <Music size={18} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--adm-gold-primary)' }}>
+                            {activeMusicTrack.title}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--adm-text-muted)', fontFamily: 'var(--font-mono)' }}>
+                            {activeMusicTrack.originalFilename} • {(activeMusicTrack.fileSize ? (activeMusicTrack.fileSize / 1024 / 1024).toFixed(2) : '2.43')} MB • {activeMusicTrack.format?.toUpperCase() || 'MPEG'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="admin-badge-gold" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--adm-gold-primary)', animation: 'pulseGold 1s infinite alternate' }} />
+                          LIVE HOMEPAGE AMBIENCE
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => togglePreviewAudio(activeMusicTrack)}
+                          className="admin-btn-primary"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 14px',
+                            fontSize: '0.78rem',
+                            borderRadius: '8px',
+                            fontWeight: 700
+                          }}
+                        >
+                          {previewTrackId === (activeMusicTrack._id || activeMusicTrack.id) && previewPlaying ? (
+                            <>
+                              <Pause size={13} />
+                              <span>Pause Preview</span>
+                            </>
+                          ) : (
+                            <>
+                              <Play size={13} fill="currentColor" />
+                              <span>Listen Preview</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Complete Audio Library (All Tracks) */}
+                <div className="admin-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div className="admin-chart-icon-box" style={{ width: '36px', height: '36px' }}>
+                        <Radio size={17} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--adm-text-title)' }}>
+                          Audio Library &amp; Available Soundtracks ({musicTracks.length})
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                          Switch active homepage soundtrack with a single click, listen to previews, or safely delete inactive tracks.
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => fetchMusicData()}
+                      className="admin-btn-secondary"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '6px 12px',
+                        fontSize: '0.75rem',
+                        borderRadius: '8px'
+                      }}
+                    >
+                      <RefreshCw size={12} />
+                      <span>Refresh Library</span>
+                    </button>
+                  </div>
+
+                  {musicTracks.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '36px 16px', color: 'var(--adm-text-muted)' }}>
+                      <Music size={32} style={{ margin: '0 auto 10px', opacity: 0.4 }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>No audio tracks in library</div>
+                      <div style={{ fontSize: '0.74rem', marginTop: '4px' }}>Upload an audio file above to begin.</div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {musicTracks.map((track) => {
+                        const trackId = track._id || track.id;
+                        const isThisActive = Boolean(track.isActive);
+                        const isThisPreviewing = previewTrackId === trackId && previewPlaying;
+                        const isActivating = activatingTrackId === trackId;
+                        const isDeleting = deletingTrackId === trackId;
+
+                        return (
+                          <div
+                            key={trackId}
+                            style={{
+                              padding: '16px 18px',
+                              borderRadius: '12px',
+                              background: isThisActive ? 'rgba(212, 175, 55, 0.04)' : 'var(--adm-surface)',
+                              border: isThisActive ? '1.5px solid var(--adm-gold-primary)' : '1px solid var(--adm-border)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              flexWrap: 'wrap',
+                              gap: '14px',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            {/* Track Info */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: '240px', flex: '1 1 auto' }}>
+                              <button
+                                type="button"
+                                onClick={() => togglePreviewAudio(track)}
+                                title={isThisPreviewing ? 'Pause preview' : 'Play preview'}
+                                style={{
+                                  width: '40px',
+                                  height: '40px',
+                                  borderRadius: '50%',
+                                  background: isThisPreviewing ? 'var(--adm-gold-primary)' : 'var(--adm-gold-pill-bg)',
+                                  border: '1px solid var(--adm-border)',
+                                  color: isThisPreviewing ? '#0a101c' : 'var(--adm-gold-primary)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  cursor: 'pointer',
+                                  flexShrink: 0,
+                                  transition: 'all 0.2s ease'
+                                }}
+                              >
+                                {isThisPreviewing ? <Pause size={16} /> : <Play size={16} fill="currentColor" />}
+                              </button>
+
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                  <span style={{ fontWeight: 700, fontSize: '0.92rem', color: isThisActive ? 'var(--adm-gold-primary)' : 'var(--adm-text-title)' }}>
+                                    {track.title}
+                                  </span>
+
+                                  {isThisActive && (
+                                    <span
+                                      style={{
+                                        fontFamily: 'var(--font-mono)',
+                                        fontSize: '0.65rem',
+                                        fontWeight: 700,
+                                        padding: '2px 8px',
+                                        borderRadius: '9999px',
+                                        background: 'rgba(16, 185, 129, 0.15)',
+                                        color: '#10B981',
+                                        border: '1px solid rgba(16, 185, 129, 0.3)'
+                                      }}
+                                    >
+                                      ACTIVE
+                                    </span>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingTrack(track);
+                                      setEditingTrackTitle(track.title);
+                                    }}
+                                    title="Rename title"
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: 'var(--adm-text-muted)',
+                                      cursor: 'pointer',
+                                      padding: '2px',
+                                      display: 'inline-flex',
+                                      alignItems: 'center'
+                                    }}
+                                  >
+                                    <Edit3 size={12} />
+                                  </button>
+                                </div>
+
+                                <div style={{ fontSize: '0.72rem', color: 'var(--adm-text-muted)', fontFamily: 'var(--font-mono)', marginTop: '3px' }}>
+                                  {track.originalFilename} • {(track.fileSize ? (track.fileSize / 1024 / 1024).toFixed(2) : '2.43')} MB • {track.format?.toUpperCase() || 'MPEG'}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                              {!isThisActive ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleActivateMusicTrack(trackId)}
+                                  disabled={isActivating}
+                                  className="admin-btn-primary"
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '7px 16px',
+                                    fontSize: '0.78rem',
+                                    borderRadius: '8px',
+                                    fontWeight: 700,
+                                    cursor: isActivating ? 'not-allowed' : 'pointer'
+                                  }}
+                                >
+                                  {isActivating ? <RefreshCw size={13} className="spin" /> : <Check size={13} />}
+                                  <span>{isActivating ? 'Activating...' : 'Set as Active'}</span>
+                                </button>
+                              ) : (
+                                <div
+                                  style={{
+                                    padding: '6px 14px',
+                                    borderRadius: '8px',
+                                    background: 'var(--adm-gold-pill-bg)',
+                                    border: '1px solid var(--adm-border)',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 700,
+                                    color: 'var(--adm-gold-primary)'
+                                  }}
+                                >
+                                  Currently Playing
+                                </div>
+                              )}
+
+                              {/* Delete button (disabled if active and audio enabled per Requirement 15) */}
+                              <button
+                                type="button"
+                                onClick={() => setTrackToDelete(track)}
+                                disabled={isThisActive && musicSettings.isEnabled}
+                                title={
+                                  isThisActive && musicSettings.isEnabled
+                                    ? 'Cannot delete active track while global audio is enabled. Activate another track or disable audio first.'
+                                    : 'Delete track'
+                                }
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  padding: '7px 12px',
+                                  fontSize: '0.76rem',
+                                  borderRadius: '8px',
+                                  background: 'rgba(239, 68, 68, 0.08)',
+                                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                                  color: isThisActive && musicSettings.isEnabled ? 'var(--adm-text-muted)' : '#EF4444',
+                                  cursor: isThisActive && musicSettings.isEnabled ? 'not-allowed' : 'pointer',
+                                  opacity: isThisActive && musicSettings.isEnabled ? 0.45 : 1
+                                }}
+                              >
+                                <Trash2 size={13} />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Delete Track Confirmation Modal */}
+              {trackToDelete && (
+                <div
+                  style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    backdropFilter: 'blur(6px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 9999,
+                    padding: '16px'
+                  }}
+                  onClick={() => setTrackToDelete(null)}
+                >
+                  <div
+                    className="admin-card"
+                    style={{
+                      maxWidth: '460px',
+                      width: '100%',
+                      padding: '28px',
+                      borderRadius: '16px',
+                      border: '1.5px solid rgba(239, 68, 68, 0.4)',
+                      background: 'var(--adm-surface)'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                      <div
+                        style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '10px',
+                          background: 'rgba(239, 68, 68, 0.12)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#EF4444'
+                        }}
+                      >
+                        <AlertTriangle size={20} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--adm-text-title)' }}>
+                          Delete Audio Track
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--adm-text-muted)' }}>
+                          This action will remove the audio asset permanently.
+                        </div>
+                      </div>
+                    </div>
+
+                    <p style={{ fontSize: '0.86rem', color: 'var(--adm-text-body)', lineHeight: 1.5, marginBottom: '20px' }}>
+                      Are you sure you want to delete <strong style={{ color: 'var(--adm-gold-primary)' }}>"{trackToDelete.title}"</strong> ({trackToDelete.originalFilename})?
+                    </p>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setTrackToDelete(null)}
+                        className="admin-btn-secondary"
+                        style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '0.82rem' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDeleteMusicTrack}
+                        disabled={Boolean(deletingTrackId)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 18px',
+                          borderRadius: '8px',
+                          background: '#EF4444',
+                          border: 'none',
+                          color: '#ffffff',
+                          fontWeight: 700,
+                          fontSize: '0.82rem',
+                          cursor: deletingTrackId ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {deletingTrackId ? <RefreshCw size={13} className="spin" /> : <Trash2 size={13} />}
+                        <span>{deletingTrackId ? 'Deleting...' : 'Confirm Delete'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Edit Track Title Modal */}
+              {editingTrack && (
+                <div
+                  style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    backdropFilter: 'blur(6px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 9999,
+                    padding: '16px'
+                  }}
+                  onClick={() => setEditingTrack(null)}
+                >
+                  <div
+                    className="admin-card"
+                    style={{
+                      maxWidth: '440px',
+                      width: '100%',
+                      padding: '24px',
+                      borderRadius: '16px',
+                      border: '1.5px solid var(--adm-gold-primary)',
+                      background: 'var(--adm-surface)'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                      <Edit3 size={18} color="var(--adm-gold-primary)" />
+                      <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--adm-text-title)' }}>
+                        Rename Soundtrack Title
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '18px' }}>
+                      <label className="admin-label">Soundtrack Title</label>
+                      <input
+                        type="text"
+                        className="admin-form-input"
+                        value={editingTrackTitle}
+                        onChange={(e) => setEditingTrackTitle(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setEditingTrack(null)}
+                        className="admin-btn-secondary"
+                        style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '0.82rem' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveTrackTitle}
+                        disabled={savingTrackTitle}
+                        className="admin-btn-primary"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 18px',
+                          borderRadius: '8px',
+                          fontWeight: 700,
+                          fontSize: '0.82rem'
+                        }}
+                      >
+                        {savingTrackTitle ? <RefreshCw size={13} className="spin" /> : <Save size={13} />}
+                        <span>{savingTrackTitle ? 'Saving...' : 'Save Title'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

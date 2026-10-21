@@ -19,7 +19,8 @@ import {
   User,
   VisitorSession,
   AnalyticsEvent,
-  Cv
+  Cv,
+  MusicTrack
 } from './models/index.js';
 import {
   uploadStream,
@@ -29,7 +30,7 @@ import {
   isCloudinaryConfigured,
   generateSignedUploadParams
 } from './config/cloudinary.js';
-import { uploadSingleImage, uploadCvPdf } from './middleware/upload.js';
+import { uploadSingleImage, uploadCvPdf, uploadAudio } from './middleware/upload.js';
 import { signJwt, verifyJwt } from './utils/jwt.js';
 import bcrypt from 'bcryptjs';
 import {
@@ -177,12 +178,13 @@ app.get('/api/portfolio', async (req, res) => {
 
   if (isDbConnected()) {
     try {
-      const [profileDoc, projectsDocs, skillsDocs, eduDocs, activeCvDoc] = await Promise.all([
+      const [profileDoc, projectsDocs, skillsDocs, eduDocs, activeCvDoc, activeMusicDoc] = await Promise.all([
         Profile.findOne().lean(),
         Project.find().sort({ order: 1, createdAt: 1 }).lean(),
         SkillCategory.find().sort({ order: 1, createdAt: 1 }).lean(),
         Education.find().sort({ order: 1, createdAt: 1 }).lean(),
-        Cv.findOne({ isActive: true }).sort({ uploadDate: -1, updatedAt: -1 }).lean()
+        Cv.findOne({ isActive: true }).sort({ uploadDate: -1, updatedAt: -1 }).lean(),
+        MusicTrack.findOne({ isActive: true }).lean()
       ]);
 
       if (profileDoc && projectsDocs && projectsDocs.length > 0) {
@@ -206,6 +208,31 @@ app.get('/api/portfolio', async (req, res) => {
           cleanProfile.activeCv = null;
         }
 
+        // Synchronize dynamic Background Music metadata & settings
+        let activeTrack = null;
+        if (activeMusicDoc) {
+          activeTrack = {
+            id: activeMusicDoc._id,
+            title: activeMusicDoc.title,
+            originalFilename: activeMusicDoc.originalFilename,
+            url: activeMusicDoc.url,
+            secureUrl: activeMusicDoc.secureUrl,
+            format: activeMusicDoc.format,
+            mimeType: activeMusicDoc.mimeType,
+            fileSize: activeMusicDoc.fileSize,
+            duration: activeMusicDoc.duration,
+            isActive: true
+          };
+        }
+
+        const musicSettings = cleanProfile.musicSettings || {
+          isEnabled: true,
+          defaultVolume: 0.55,
+          activeTrackId: activeTrack?.id || null,
+          activeTrackUrl: activeTrack?.url || '/audio/mybackground.mpeg',
+          activeTrackTitle: activeTrack?.title || 'Cinematic Ambient Soundscape'
+        };
+
         const cleanProjects = projectsDocs.map(p => {
           const { _id, __v, ...rest } = p;
           return rest;
@@ -225,6 +252,8 @@ app.get('/api/portfolio', async (req, res) => {
           skills: cleanSkills,
           education: cleanEducation,
           activeCv: cleanProfile.activeCv,
+          activeTrack,
+          musicSettings,
           source: 'mongodb-atlas'
         });
       }
@@ -255,12 +284,26 @@ app.get('/api/portfolio', async (req, res) => {
     fallbackProfile.activeCv = null;
   }
 
+  const fallbackMusic = fallbackProfile.musicSettings || {
+    isEnabled: true,
+    defaultVolume: 0.55,
+    activeTrackUrl: '/audio/mybackground.mpeg',
+    activeTrackTitle: 'Cinematic Ambient Soundscape'
+  };
+
   res.json({
     profile: fallbackProfile,
     projects: db.projects || [],
     skills: db.skills || [],
     education: db.education || [],
     activeCv: fallbackProfile.activeCv || null,
+    activeTrack: {
+      id: 'default',
+      title: fallbackMusic.activeTrackTitle || 'Cinematic Ambient Soundscape',
+      url: fallbackMusic.activeTrackUrl || '/audio/mybackground.mpeg',
+      isActive: true
+    },
+    musicSettings: fallbackMusic,
     source: 'local-fallback'
   });
 });
@@ -1460,6 +1503,509 @@ app.delete('/api/admin/cv', adminOnlyMiddleware, async (req, res) => {
   } catch (err) {
     console.error('[CV Delete Error]:', err);
     res.status(500).json({ error: err.message || 'Failed to remove CV.' });
+  }
+});
+
+// ============================================================================
+// DYNAMIC BACKGROUND MUSIC MANAGEMENT (MongoDB Atlas & Cloudinary Stream)
+// ============================================================================
+
+// 1. Get Active Music Track & Settings (Public)
+app.get('/api/music/active', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  await ensureDb();
+  if (isDbConnected()) {
+    try {
+      const [activeTrack, profile] = await Promise.all([
+        MusicTrack.findOne({ isActive: true }).lean(),
+        Profile.findOne().lean()
+      ]);
+
+      const settings = profile?.musicSettings || {
+        isEnabled: true,
+        defaultVolume: 0.55,
+        activeTrackUrl: '/audio/mybackground.mpeg',
+        activeTrackTitle: 'Cinematic Ambient Soundscape'
+      };
+
+      return res.json({
+        success: true,
+        activeTrack: activeTrack ? {
+          id: activeTrack._id,
+          title: activeTrack.title,
+          originalFilename: activeTrack.originalFilename,
+          url: activeTrack.url,
+          secureUrl: activeTrack.secureUrl,
+          format: activeTrack.format,
+          fileSize: activeTrack.fileSize,
+          duration: activeTrack.duration,
+          isActive: true
+        } : null,
+        settings
+      });
+    } catch (err) {
+      console.warn('[Music Active] MongoDB query warning:', err.message);
+    }
+  }
+
+  const db = getDb();
+  res.json({
+    success: true,
+    activeTrack: {
+      id: 'default',
+      title: 'Cinematic Ambient Soundscape',
+      originalFilename: 'mybackground.mpeg',
+      url: '/audio/mybackground.mpeg',
+      format: 'mpeg',
+      fileSize: 2433230,
+      isActive: true
+    },
+    settings: db.profile?.musicSettings || {
+      isEnabled: true,
+      defaultVolume: 0.55,
+      activeTrackUrl: '/audio/mybackground.mpeg',
+      activeTrackTitle: 'Cinematic Ambient Soundscape'
+    }
+  });
+});
+
+// 2. Stream Music Track Audio (Public with HTTP 206 Partial Content Range Support)
+app.get('/api/music/stream/:id', async (req, res) => {
+  const { id } = req.params;
+  await ensureDb();
+
+  if (id === 'default' || !isDbConnected()) {
+    return res.redirect('/audio/mybackground.mpeg');
+  }
+
+  try {
+    const query = mongoose.isValidObjectId(id) ? { _id: id } : { isDefault: true };
+    const track = await MusicTrack.findOne(query).select('+fileData');
+    if (!track) {
+      return res.redirect('/audio/mybackground.mpeg');
+    }
+
+    // If hosted on Cloudinary, redirect to CDN URL
+    if (track.url && track.url.startsWith('http')) {
+      return res.redirect(track.url);
+    }
+
+    // If stored with binary buffer in MongoDB Atlas
+    if (track.fileData && track.fileData.length > 0) {
+      const buffer = track.fileData;
+      const fileSize = buffer.length;
+      const mimeType = track.mimeType || 'audio/mpeg';
+
+      const range = req.headers.range;
+      if (range) {
+        const parts = range.replace(/bytes=/, '').split('-');
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        const chunksize = (end - start) + 1;
+        const chunk = buffer.subarray(start, end + 1);
+
+        res.writeHead(206, {
+          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type': mimeType,
+          'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800'
+        });
+        return res.end(chunk);
+      } else {
+        res.writeHead(200, {
+          'Content-Length': fileSize,
+          'Content-Type': mimeType,
+          'Accept-Ranges': 'bytes',
+          'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800'
+        });
+        return res.end(buffer);
+      }
+    }
+
+    // Static fallback
+    if (track.url && track.url.startsWith('/audio/')) {
+      return res.redirect(track.url);
+    }
+
+    res.redirect('/audio/mybackground.mpeg');
+  } catch (err) {
+    console.error('[Music Stream Error]:', err);
+    res.redirect('/audio/mybackground.mpeg');
+  }
+});
+
+// 3. List All Music Tracks & Settings (Admin Only)
+app.get('/api/admin/music', adminOnlyMiddleware, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  await ensureDb();
+  try {
+    let tracks = [];
+    let activeTrack = null;
+    let settings = {
+      isEnabled: true,
+      defaultVolume: 0.55,
+      activeTrackUrl: '/audio/mybackground.mpeg',
+      activeTrackTitle: 'Cinematic Ambient Soundscape'
+    };
+
+    if (isDbConnected()) {
+      const [tracksList, profileDoc] = await Promise.all([
+        MusicTrack.find().sort({ isActive: -1, createdAt: -1 }).lean(),
+        Profile.findOne().lean()
+      ]);
+      tracks = tracksList || [];
+      activeTrack = tracks.find(t => t.isActive) || null;
+      if (profileDoc?.musicSettings) {
+        settings = profileDoc.musicSettings;
+      }
+    } else {
+      const db = getDb();
+      settings = db.profile?.musicSettings || settings;
+      tracks = [{
+        _id: 'default',
+        title: 'Cinematic Ambient Soundscape',
+        originalFilename: 'mybackground.mpeg',
+        url: '/audio/mybackground.mpeg',
+        secureUrl: '/audio/mybackground.mpeg',
+        format: 'mpeg',
+        mimeType: 'audio/mpeg',
+        fileSize: 2433230,
+        isActive: true,
+        isDefault: true,
+        uploadDate: new Date()
+      }];
+      activeTrack = tracks[0];
+    }
+
+    res.json({
+      success: true,
+      tracks,
+      activeTrack,
+      settings,
+      cloudinaryStatus: getCloudinaryStatus()
+    });
+  } catch (err) {
+    console.error('[Admin Music List Error]:', err);
+    res.status(500).json({ error: 'Failed to retrieve music library' });
+  }
+});
+
+// 4. Upload New Music Track (Admin Only)
+app.post('/api/admin/music/upload', adminOnlyMiddleware, uploadAudio(), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: 'No audio file uploaded.' });
+    }
+
+    const originalName = file.originalname || 'ambient_track.mp3';
+    const ext = path.extname(originalName).toLowerCase().replace('.', '') || 'mp3';
+    const baseName = path.basename(originalName, path.extname(originalName));
+    const title = req.body.title?.trim() || baseName.replace(/[-_]/g, ' ');
+    const fileSize = file.size || file.buffer.length;
+    const fileBuffer = file.buffer;
+    const mimeType = file.mimetype || 'audio/mpeg';
+    const activateNow = req.body.activate === 'true' || req.query.activate === 'true';
+
+    const timestamp = Date.now();
+    const uniqueId = crypto.randomBytes(4).toString('hex');
+    const safeBase = baseName.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+
+    let uploadedUrl = '';
+    let publicId = '';
+    let resourceType = 'video';
+
+    // 1. If Cloudinary is configured, upload to Cloudinary (resource_type: video for audio)
+    if (isCloudinaryConfigured()) {
+      try {
+        const uploadResult = await uploadStream(fileBuffer, {
+          folder: 'vanojan_portfolio/music',
+          public_id: `music_${safeBase}_${timestamp}_${uniqueId}`,
+          resource_type: 'video',
+          type: 'upload',
+          access_mode: 'public',
+          tags: ['music', 'background', 'portfolio']
+        });
+        if (uploadResult && uploadResult.secure_url) {
+          uploadedUrl = uploadResult.secure_url;
+          publicId = uploadResult.public_id;
+          resourceType = uploadResult.resource_type || 'video';
+        }
+      } catch (cErr) {
+        console.warn('[Cloudinary Music Upload Warning]:', cErr.message);
+      }
+    }
+
+    // 2. Persist in MongoDB Atlas
+    await ensureDb();
+    let newTrack = null;
+
+    if (isDbConnected()) {
+      newTrack = new MusicTrack({
+        title,
+        originalFilename: originalName,
+        cloudinaryPublicId: publicId,
+        cloudinaryResourceType: resourceType,
+        url: uploadedUrl || `/api/music/stream/temp`,
+        secureUrl: uploadedUrl || `/api/music/stream/temp`,
+        fileSize,
+        fileData: fileBuffer,
+        format: ext,
+        mimeType,
+        isActive: activateNow,
+        isDefault: false,
+        uploader: req.admin?.username || 'admin'
+      });
+
+      if (!uploadedUrl) {
+        newTrack.url = `/api/music/stream/${newTrack._id}`;
+        newTrack.secureUrl = `/api/music/stream/${newTrack._id}`;
+      }
+
+      await newTrack.save();
+
+      if (activateNow) {
+        await MusicTrack.updateMany({ _id: { $ne: newTrack._id } }, { isActive: false });
+        await Profile.findOneAndUpdate(
+          {},
+          {
+            $set: {
+              'musicSettings.activeTrackId': newTrack._id,
+              'musicSettings.activeTrackUrl': newTrack.url,
+              'musicSettings.activeTrackTitle': newTrack.title,
+              'musicSettings.activeTrackFormat': newTrack.mimeType
+            }
+          },
+          { upsert: true }
+        );
+      }
+    }
+
+    // 3. Synchronize fallback db.json
+    const db = getDb();
+    if (activateNow && db.profile) {
+      if (!db.profile.musicSettings) db.profile.musicSettings = {};
+      db.profile.musicSettings.activeTrackUrl = uploadedUrl || `/api/music/stream/${newTrack?._id}`;
+      db.profile.musicSettings.activeTrackTitle = title;
+      saveDb(db);
+    }
+
+    res.json({
+      success: true,
+      track: {
+        id: newTrack?._id,
+        title: newTrack?.title || title,
+        originalFilename: originalName,
+        url: newTrack?.url || uploadedUrl,
+        format: ext,
+        fileSize,
+        isActive: activateNow,
+        isDefault: false
+      },
+      message: activateNow ? 'Track uploaded and activated as live homepage background!' : 'Track uploaded successfully to library!'
+    });
+  } catch (err) {
+    console.error('[Music Upload Error]:', err);
+    res.status(500).json({ error: err.message || 'Failed to upload music track' });
+  }
+});
+
+// 5. Activate Track (Admin Only)
+app.put('/api/admin/music/:id/activate', adminOnlyMiddleware, async (req, res) => {
+  const { id } = req.params;
+  await ensureDb();
+  try {
+    if (!isDbConnected()) {
+      return res.status(503).json({ error: 'Database connection required to activate track' });
+    }
+
+    const track = await MusicTrack.findById(id);
+    if (!track) {
+      return res.status(404).json({ error: 'Music track not found' });
+    }
+
+    // Deactivate all others
+    await MusicTrack.updateMany({ _id: { $ne: track._id } }, { isActive: false });
+    track.isActive = true;
+    await track.save();
+
+    // Update Profile musicSettings
+    const streamUrl = track.url || `/api/music/stream/${track._id}`;
+    const profile = await Profile.findOneAndUpdate(
+      {},
+      {
+        $set: {
+          'musicSettings.activeTrackId': track._id,
+          'musicSettings.activeTrackUrl': streamUrl,
+          'musicSettings.activeTrackTitle': track.title,
+          'musicSettings.activeTrackFormat': track.mimeType || 'audio/mpeg'
+        }
+      },
+      { new: true, upsert: true }
+    );
+
+    // Update fallback db.json
+    const db = getDb();
+    if (db.profile) {
+      if (!db.profile.musicSettings) db.profile.musicSettings = {};
+      db.profile.musicSettings.activeTrackUrl = streamUrl;
+      db.profile.musicSettings.activeTrackTitle = track.title;
+      saveDb(db);
+    }
+
+    res.json({
+      success: true,
+      activeTrack: {
+        id: track._id,
+        title: track.title,
+        url: streamUrl,
+        isActive: true
+      },
+      settings: profile?.musicSettings,
+      message: `"${track.title}" is now active on the homepage.`
+    });
+  } catch (err) {
+    console.error('[Music Activate Error]:', err);
+    res.status(500).json({ error: err.message || 'Failed to activate track' });
+  }
+});
+
+// 6. Update Music Settings (Volume & Global Enable/Disable) (Admin Only)
+app.put('/api/admin/music/settings', adminOnlyMiddleware, async (req, res) => {
+  try {
+    const { isEnabled, defaultVolume } = req.body;
+    await ensureDb();
+
+    let updatedVolume = undefined;
+    if (typeof defaultVolume === 'number') {
+      updatedVolume = Math.max(0.05, Math.min(1.0, defaultVolume));
+    }
+
+    const updateFields = {};
+    if (typeof isEnabled === 'boolean') updateFields['musicSettings.isEnabled'] = isEnabled;
+    if (updatedVolume !== undefined) updateFields['musicSettings.defaultVolume'] = updatedVolume;
+
+    let profile = null;
+    if (isDbConnected()) {
+      profile = await Profile.findOneAndUpdate(
+        {},
+        { $set: updateFields },
+        { new: true, upsert: true }
+      );
+    }
+
+    // Sync fallback db.json
+    const db = getDb();
+    if (db.profile) {
+      if (!db.profile.musicSettings) db.profile.musicSettings = {};
+      if (typeof isEnabled === 'boolean') db.profile.musicSettings.isEnabled = isEnabled;
+      if (updatedVolume !== undefined) db.profile.musicSettings.defaultVolume = updatedVolume;
+      saveDb(db);
+    }
+
+    res.json({
+      success: true,
+      settings: profile?.musicSettings || db.profile?.musicSettings,
+      message: 'Background music settings updated successfully.'
+    });
+  } catch (err) {
+    console.error('[Music Settings Update Error]:', err);
+    res.status(500).json({ error: 'Failed to update music settings' });
+  }
+});
+
+// 7. Update Track Title / Metadata (Admin Only)
+app.put('/api/admin/music/:id', adminOnlyMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { title } = req.body;
+  if (!title || !title.trim()) {
+    return res.status(400).json({ error: 'Track title cannot be empty.' });
+  }
+
+  await ensureDb();
+  try {
+    const track = await MusicTrack.findById(id);
+    if (!track) {
+      return res.status(404).json({ error: 'Music track not found.' });
+    }
+
+    track.title = title.trim();
+    await track.save();
+
+    if (track.isActive) {
+      await Profile.findOneAndUpdate(
+        {},
+        { $set: { 'musicSettings.activeTrackTitle': track.title } }
+      );
+    }
+
+    res.json({
+      success: true,
+      track,
+      message: 'Track updated successfully.'
+    });
+  } catch (err) {
+    console.error('[Music Title Update Error]:', err);
+    res.status(500).json({ error: 'Failed to update track' });
+  }
+});
+
+// 8. Delete Music Track (Admin Only)
+app.delete('/api/admin/music/:id', adminOnlyMiddleware, async (req, res) => {
+  const { id } = req.params;
+  await ensureDb();
+  try {
+    if (!isDbConnected()) {
+      return res.status(503).json({ error: 'Database connection required to delete track' });
+    }
+
+    const track = await MusicTrack.findById(id);
+    if (!track) {
+      return res.status(404).json({ error: 'Music track not found.' });
+    }
+
+    // Requirement 15: Do not delete active track unless music is disabled or replacement activated
+    const profile = await Profile.findOne().lean();
+    const musicEnabled = profile?.musicSettings?.isEnabled ?? true;
+
+    if (track.isActive && musicEnabled) {
+      return res.status(400).json({
+        error: 'Cannot delete the currently active background music track. Please activate another track or disable music first.'
+      });
+    }
+
+    // Clean up from Cloudinary if stored there
+    if (track.cloudinaryPublicId && !track.cloudinaryPublicId.startsWith('local_') && isCloudinaryConfigured()) {
+      try {
+        await deleteCloudinaryAsset(track.cloudinaryPublicId, { resource_type: 'video' });
+      } catch (cErr) {
+        console.warn('[Cloudinary Destroy Warning]:', cErr.message);
+      }
+    }
+
+    if (track.isActive) {
+      await Profile.findOneAndUpdate(
+        {},
+        {
+          $set: {
+            'musicSettings.activeTrackId': null,
+            'musicSettings.activeTrackUrl': '',
+            'musicSettings.activeTrackTitle': ''
+          }
+        }
+      );
+    }
+
+    await MusicTrack.findByIdAndDelete(id);
+
+    res.json({
+      success: true,
+      message: `"${track.title}" has been deleted successfully.`
+    });
+  } catch (err) {
+    console.error('[Music Delete Error]:', err);
+    res.status(500).json({ error: err.message || 'Failed to delete music track' });
   }
 });
 

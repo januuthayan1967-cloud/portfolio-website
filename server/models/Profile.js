@@ -103,6 +103,14 @@ const profileSchema = new mongoose.Schema({
   journeyModalParagraph2: {
     type: String,
     default: 'Skilled in React.js, Node.js, Java, Python, and SQL through academic and independent projects. Seeking an opportunity to contribute technical expertise and problem-solving skills as a Graduate Software Engineer.'
+  },
+  musicSettings: {
+    isEnabled: { type: Boolean, default: true },
+    defaultVolume: { type: Number, default: 0.55 },
+    activeTrackId: { type: mongoose.Schema.Types.ObjectId, ref: 'MusicTrack', default: null },
+    activeTrackUrl: { type: String, default: '/audio/mybackground.mpeg' },
+    activeTrackTitle: { type: String, default: 'Cinematic Ambient Soundscape' },
+    activeTrackFormat: { type: String, default: 'audio/mpeg' }
   }
 }, {
   timestamps: true,

@@ -155,7 +155,10 @@ export default function App() {
       <ThreeCanvas />
 
       {/* Luxury Ambient Audio Toggle */}
-      <AudioPlayer />
+      <AudioPlayer
+        musicSettings={data.musicSettings || data.profile?.musicSettings}
+        activeTrack={data.activeTrack}
+      />
 
       {/* Main Navigation */}
       <Navbar

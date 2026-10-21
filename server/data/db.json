@@ -119,6 +119,14 @@
       "downloadUrl": "/api/cv/download?v=1792548799977",
       "viewUrl": "/api/cv/view?v=1792548799977",
       "isActive": true
+    },
+    "musicSettings": {
+      "isEnabled": true,
+      "defaultVolume": 0.55,
+      "activeTrackId": null,
+      "activeTrackUrl": "/audio/mybackground.mpeg",
+      "activeTrackTitle": "Cinematic Ambient Soundscape",
+      "activeTrackFormat": "audio/mpeg"
     }
   },
   "projects": [

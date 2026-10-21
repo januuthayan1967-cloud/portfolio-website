@@ -99,7 +99,15 @@ export const verifiedProfile = {
   journeyModalBadge: "PROFESSIONAL TRAJECTORY",
   journeyModalTitle: "Engineering Rigour & Visual Mastery",
   journeyModalParagraph1: "Motivated Software Engineering graduate candidate who has completed the BSc (Hons) Software Engineering programme at ICBT Campus, affiliated with Cardiff Metropolitan University, UK, and is currently awaiting final results. Holds a Higher National Diploma (HND) in Computing and Software Engineering, with hands-on experience in full-stack web development, Android applications, database management, and AI-integrated systems.",
-  journeyModalParagraph2: "Skilled in React.js, Node.js, Java, Python, and SQL through academic and independent projects. Seeking an opportunity to contribute technical expertise and problem-solving skills as a Graduate Software Engineer."
+  journeyModalParagraph2: "Skilled in React.js, Node.js, Java, Python, and SQL through academic and independent projects. Seeking an opportunity to contribute technical expertise and problem-solving skills as a Graduate Software Engineer.",
+  musicSettings: {
+    isEnabled: true,
+    defaultVolume: 0.55,
+    activeTrackId: null,
+    activeTrackUrl: "/audio/mybackground.mpeg",
+    activeTrackTitle: "Cinematic Ambient Soundscape",
+    activeTrackFormat: "audio/mpeg"
+  }
 };
 
 export const verifiedProjects = [

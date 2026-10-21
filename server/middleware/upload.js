@@ -115,3 +115,70 @@ export const uploadCvPdf = (fieldNames = ['file', 'cv', 'resume']) => {
     });
   };
 };
+
+const MAX_AUDIO_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+const ALLOWED_AUDIO_MIME_TYPES = new Set([
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/wave',
+  'audio/ogg',
+  'audio/aac',
+  'audio/m4a',
+  'audio/x-m4a',
+  'audio/mp4',
+  'video/mp4'
+]);
+const ALLOWED_AUDIO_EXTENSIONS = ['.mp3', '.mpeg', '.wav', '.ogg', '.m4a', '.aac'];
+
+function audioFileFilter(req, file, cb) {
+  const mime = (file.mimetype || '').toLowerCase();
+  const ext = (file.originalname || '').toLowerCase();
+  const hasValidExt = ALLOWED_AUDIO_EXTENSIONS.some(e => ext.endsWith(e));
+
+  if (!ALLOWED_AUDIO_MIME_TYPES.has(mime) && !hasValidExt) {
+    return cb(
+      new Error(`Unsupported audio format: ${file.mimetype}. Allowed formats: MP3, MPEG, WAV, OGG, M4A, AAC.`),
+      false
+    );
+  }
+  cb(null, true);
+}
+
+export const uploadAudio = (fieldNames = ['file', 'audio', 'music']) => {
+  const upload = multer({
+    storage,
+    limits: {
+      fileSize: MAX_AUDIO_FILE_SIZE
+    },
+    fileFilter: audioFileFilter
+  }).fields([
+    { name: 'file', maxCount: 1 },
+    { name: 'audio', maxCount: 1 },
+    { name: 'music', maxCount: 1 }
+  ]);
+
+  return (req, res, next) => {
+    upload(req, res, (err) => {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({
+            error: 'Audio file size exceeds the 15MB limit. Please upload a smaller audio file.'
+          });
+        }
+        return res.status(400).json({ error: `Upload error: ${err.message}` });
+      } else if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+
+      const file = req.files?.file?.[0] || req.files?.audio?.[0] || req.files?.music?.[0] || null;
+      if (!file) {
+        return res.status(400).json({ error: 'No audio file provided in upload request.' });
+      }
+
+      req.file = file;
+      next();
+    });
+  };
+};

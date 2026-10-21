@@ -1,24 +1,46 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 
-export default function AudioPlayer() {
+export default function AudioPlayer({ musicSettings, activeTrack }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
 
+  const isEnabled = musicSettings?.isEnabled ?? true;
+  const defaultVolume = typeof musicSettings?.defaultVolume === 'number' ? musicSettings.defaultVolume : 0.55;
+  const rawTrackUrl = activeTrack?.url || musicSettings?.activeTrackUrl || '/audio/mybackground.mpeg';
+  const trackTitle = activeTrack?.title || musicSettings?.activeTrackTitle || 'Cinematic Ambient Soundscape';
+
+  // Format track URL: add timestamp if remote or dynamic API endpoint to prevent caching stale music
+  const resolvedTrackUrl = React.useMemo(() => {
+    if (!rawTrackUrl) return '/audio/mybackground.mpeg';
+    if (rawTrackUrl.startsWith('/api/music/stream') && !rawTrackUrl.includes('?v=')) {
+      return `${rawTrackUrl}?v=${activeTrack?.updatedAt ? new Date(activeTrack.updatedAt).getTime() : Date.now()}`;
+    }
+    return rawTrackUrl;
+  }, [rawTrackUrl, activeTrack?.updatedAt]);
+
   useEffect(() => {
+    // If globally disabled, do not initialize audio
+    if (!isEnabled) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      }
+      setIsPlaying(false);
+      return;
+    }
+
     // Single managed HTMLAudioElement instance for background ambient audio
     const audio = new Audio();
     audio.loop = true;
     audio.preload = 'auto';
-    audio.volume = 0.55;
-
-    // Use primary custom audio file path
-    audio.src = '/audio/mybackground.mpeg';
+    audio.volume = defaultVolume;
+    audio.src = resolvedTrackUrl;
 
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     const handleEnded = () => {
-      // Ensure continuous seamless loop
       if (audio.loop) {
         audio.currentTime = 0;
         audio.play().catch(() => {});
@@ -28,9 +50,12 @@ export default function AudioPlayer() {
     };
 
     const handleError = () => {
-      // Fallback: If browser strictly rejects .mpeg extension, try .mp3
-      if (audio.src && audio.src.endsWith('/audio/mybackground.mpeg')) {
-        console.warn('Audio fallback: switching from /audio/mybackground.mpeg to /audio/mybackground.mp3');
+      console.warn(`[AudioPlayer] Error loading audio track: ${audio.src}. Attempting fallback...`);
+      // Fallback chain: custom URL -> /audio/mybackground.mpeg -> /audio/mybackground.mp3
+      if (audio.src && !audio.src.includes('/audio/mybackground.mpeg') && !audio.src.includes('/audio/mybackground.mp3')) {
+        audio.src = '/audio/mybackground.mpeg';
+        audio.load();
+      } else if (audio.src && audio.src.includes('/audio/mybackground.mpeg')) {
         audio.src = '/audio/mybackground.mp3';
         audio.load();
       }
@@ -52,7 +77,36 @@ export default function AudioPlayer() {
       audio.src = '';
       audioRef.current = null;
     };
-  }, []);
+  }, [isEnabled]);
+
+  // Update volume smoothly when settings change
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = defaultVolume;
+    }
+  }, [defaultVolume]);
+
+  // Update track source dynamically if active track changes while retaining playback state
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !isEnabled) return;
+
+    // Check if URL actually changed
+    const currentSrc = audio.src;
+    const isDifferent = !currentSrc.includes(resolvedTrackUrl.split('?')[0]);
+
+    if (isDifferent) {
+      const wasPlaying = !audio.paused && isPlaying;
+      audio.src = resolvedTrackUrl;
+      audio.load();
+      if (wasPlaying) {
+        audio.play().catch((err) => {
+          console.warn('[AudioPlayer] Playback resume prevented by browser policy:', err);
+          setIsPlaying(false);
+        });
+      }
+    }
+  }, [resolvedTrackUrl, isEnabled]);
 
   const toggleAudio = () => {
     const audio = audioRef.current;
@@ -67,7 +121,6 @@ export default function AudioPlayer() {
             setIsPlaying(true);
           })
           .catch((err) => {
-            // Autoplay rejection or abort handling
             if (err.name !== 'AbortError') {
               console.warn('Audio playback prevented by browser policy:', err);
             }
@@ -81,6 +134,11 @@ export default function AudioPlayer() {
     }
   };
 
+  // If background music is globally disabled in Admin settings, hide the player
+  if (!isEnabled) {
+    return null;
+  }
+
   return (
     <div
       style={{
@@ -92,7 +150,7 @@ export default function AudioPlayer() {
     >
       <button
         onClick={toggleAudio}
-        title={isPlaying ? 'Mute ambient soundscape' : 'Enable cinematic ambient soundscape'}
+        title={isPlaying ? `Mute ambient track: "${trackTitle}"` : `Play ambient track: "${trackTitle}"`}
         className="glass-panel"
         style={{
           display: 'flex',
