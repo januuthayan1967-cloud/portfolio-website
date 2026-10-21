@@ -1976,11 +1976,20 @@ app.delete('/api/admin/music/:id', adminOnlyMiddleware, async (req, res) => {
     }
 
     // Clean up from Cloudinary if stored there
-    if (track.cloudinaryPublicId && !track.cloudinaryPublicId.startsWith('local_') && isCloudinaryConfigured()) {
+    if (track.cloudinaryPublicId && !track.cloudinaryPublicId.startsWith('local_')) {
+      let cResult = null;
       try {
-        await deleteCloudinaryAsset(track.cloudinaryPublicId, { resource_type: 'video' });
+        cResult = await deleteCloudinaryAsset(track.cloudinaryPublicId, { resource_type: 'video' });
       } catch (cErr) {
-        console.warn('[Cloudinary Destroy Warning]:', cErr.message);
+        cResult = { error: cErr.message, result: 'error' };
+      }
+
+      const isSuccess = cResult && (cResult.result === 'ok' || cResult.result === 'not found');
+      if (!isSuccess) {
+        console.error('[Cloudinary Music Delete Failure]:', cResult);
+        return res.status(502).json({
+          error: `Failed to permanently delete audio asset from cloud storage: ${cResult?.error || 'Cloudinary rejection'}. The database record has been preserved.`
+        });
       }
     }
 

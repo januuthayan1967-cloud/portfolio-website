@@ -97,7 +97,7 @@ export function deleteCloudinaryImage(publicId, options = {}) {
 export function deleteCloudinaryAsset(publicId, options = {}) {
   return new Promise((resolve) => {
     if (!isCloudinaryConfigured()) {
-      return resolve({ result: 'not_configured' });
+      return resolve({ error: 'Cloudinary credentials are not configured on this server.', result: 'not_configured' });
     }
     const opts = {
       resource_type: options.resource_type || (publicId.endsWith('.pdf') ? 'raw' : 'image'),
@@ -106,7 +106,7 @@ export function deleteCloudinaryAsset(publicId, options = {}) {
     cloudinary.uploader.destroy(publicId, opts, (error, result) => {
       if (error) {
         console.warn(`[Cloudinary Destroy Warning]: ${error.message}`);
-        return resolve({ error: error.message });
+        return resolve({ error: error.message, result: 'error' });
       }
       resolve(result || { result: 'ok' });
     });
