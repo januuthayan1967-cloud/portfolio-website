@@ -588,6 +588,13 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
   const handleDeleteMusicTrack = async () => {
     if (!trackToDelete) return;
     const id = trackToDelete._id || trackToDelete.id;
+    if (previewTrackId === id && previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current.src = '';
+      previewAudioRef.current = null;
+      setPreviewPlaying(false);
+      setPreviewTrackId(null);
+    }
     setDeletingTrackId(id);
     try {
       const res = await fetch(`/api/admin/music/${id}`, {
@@ -641,7 +648,10 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
 
   // Dashboard Preview Player (Listen to any track before activating)
   const togglePreviewAudio = (track) => {
+    if (!track) return;
     const trackId = track._id || track.id;
+
+    // Case 1: If currently playing this exact track, pause it
     if (previewTrackId === trackId && previewPlaying) {
       if (previewAudioRef.current) {
         previewAudioRef.current.pause();
@@ -650,42 +660,106 @@ export default function AdminDashboard({ token, onLogout, onClose, onDataRefresh
       return;
     }
 
-    if (previewAudioRef.current) {
-      previewAudioRef.current.pause();
+    // Case 2: If this exact track is already loaded in audio ref and was paused, resume playback
+    if (previewTrackId === trackId && previewAudioRef.current && !previewPlaying) {
+      const playPromise = previewAudioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setPreviewPlaying(true);
+          })
+          .catch((err) => {
+            if (err.name !== 'AbortError') {
+              console.warn('[Admin preview] Playback resume blocked:', err);
+              showToast('Audio playback blocked by browser. Please click to interact.', 'error');
+            }
+            setPreviewPlaying(false);
+          });
+      }
+      return;
     }
 
-    const audioUrl = track.url && track.url.startsWith('http')
-      ? track.url
-      : `/api/music/stream/${trackId}?v=${Date.now()}`;
+    // Case 3: Switching to a new track or initial play
+    // Clean up previous audio instance completely
+    if (previewAudioRef.current) {
+      previewAudioRef.current.onended = null;
+      previewAudioRef.current.onerror = null;
+      previewAudioRef.current.onplay = null;
+      previewAudioRef.current.onpause = null;
+      previewAudioRef.current.pause();
+      previewAudioRef.current.src = '';
+      previewAudioRef.current = null;
+    }
 
-    const audio = new Audio(audioUrl);
+    // Determine correct audio source URL with secure HTTPS and direct static/CDN path support
+    let audioUrl = track.secureUrl || track.url;
+    if (audioUrl) {
+      if (audioUrl.startsWith('http:')) {
+        audioUrl = audioUrl.replace(/^http:/, 'https:');
+      }
+    } else {
+      audioUrl = `/api/music/stream/${trackId}?v=${Date.now()}`;
+    }
+
+    const audio = new Audio();
+    audio.preload = 'auto';
     audio.volume = musicSettings.defaultVolume || 0.55;
-    audio.onended = () => {
+    audio.src = audioUrl;
+
+    const handleEnded = () => {
       setPreviewPlaying(false);
       setPreviewTrackId(null);
     };
-    audio.onerror = () => {
-      setPreviewPlaying(false);
-      showToast('Could not load audio preview. File may be loading or unavailable.', 'error');
+
+    const handleError = () => {
+      console.warn(`[Admin Preview] Error loading track audio: ${audio.src}. Attempting fallback...`);
+      // Fallback chain: custom URL -> /audio/mybackground.mpeg -> /audio/mybackground.mp3
+      if (audio.src && !audio.src.includes('/audio/mybackground.mpeg') && !audio.src.includes('/audio/mybackground.mp3')) {
+        audio.src = '/audio/mybackground.mpeg';
+        audio.load();
+        audio.play().catch(() => {});
+      } else if (audio.src && audio.src.includes('/audio/mybackground.mpeg')) {
+        audio.src = '/audio/mybackground.mp3';
+        audio.load();
+        audio.play().catch(() => {});
+      } else {
+        setPreviewPlaying(false);
+        showToast('Could not load audio preview. File may be unavailable or format unsupported.', 'error');
+      }
     };
 
+    audio.onended = handleEnded;
+    audio.onerror = handleError;
+
     previewAudioRef.current = audio;
-    audio.play()
-      .then(() => {
-        setPreviewTrackId(trackId);
-        setPreviewPlaying(true);
-      })
-      .catch((err) => {
-        console.warn('[Admin preview] Playback blocked:', err);
-        setPreviewPlaying(false);
-      });
+
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          setPreviewTrackId(trackId);
+          setPreviewPlaying(true);
+        })
+        .catch((err) => {
+          if (err.name !== 'AbortError') {
+            console.warn('[Admin preview] Playback blocked:', err);
+            showToast('Playback blocked by browser policy. Click Play to listen.', 'error');
+          }
+          setPreviewPlaying(false);
+        });
+    }
   };
 
   // Stop preview audio on component unmount
   useEffect(() => {
     return () => {
       if (previewAudioRef.current) {
+        previewAudioRef.current.onended = null;
+        previewAudioRef.current.onerror = null;
+        previewAudioRef.current.onplay = null;
+        previewAudioRef.current.onpause = null;
         previewAudioRef.current.pause();
+        previewAudioRef.current.src = '';
         previewAudioRef.current = null;
       }
     };
